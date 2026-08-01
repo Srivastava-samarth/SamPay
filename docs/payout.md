@@ -4,9 +4,9 @@
 
 A Payout represents a financial transaction initiated by a Merchant User to transfer funds from the Merchant Wallet to one of the Merchant's linked Bank Accounts.
 
-Payouts are used by Merchants to withdraw funds from SamPay back into their own bank accounts.
+Payouts allow Merchants to withdraw funds from SamPay back into their own bank accounts.
 
-Unlike Payments, Payouts never transfer funds to external recipients. They can only be made to Bank Accounts owned by the Merchant.
+Unlike Payments and Refunds, Payouts do not pass through the Settlement workflow. Once a Payout request is validated, SamPay directly initiates the transfer to the selected linked Bank Account.
 
 ---
 
@@ -16,10 +16,9 @@ The Payout domain is responsible for:
 
 - Processing Merchant payouts.
 - Validating payout requests.
-- Validating linked Bank Accounts.
+- Validating destination Bank Accounts.
 - Reserving Wallet funds.
-- Coordinating Compliance validation.
-- Moving funds from Wallet to the Payout Vault.
+- Initiating bank transfers.
 - Recording payout lifecycle.
 - Publishing payout events.
 
@@ -27,7 +26,7 @@ The Payout domain is **not** responsible for:
 
 - Wallet Management.
 - Bank Account Management.
-- Settlement Execution.
+- Settlement.
 - Ledger Management.
 - Notification Delivery.
 - Compliance Decision Making.
@@ -64,7 +63,7 @@ A Payout owns the following information:
 | net_amount | Amount transferred after fee deduction |
 | currency | Supported currency (INR) |
 | merchant_reference | Merchant supplied reference (optional) |
-| description | Payout description (optional) |
+| description | Optional payout description |
 | idempotency_key | Prevents duplicate payout creation |
 | status | Current payout status |
 | created_at | Record creation timestamp |
@@ -96,7 +95,7 @@ Funds have been successfully transferred to the Merchant's linked Bank Account.
 
 Payout processing failed.
 
-Reserved Wallet balance is immediately released back to the Merchant Wallet.
+Any reserved Wallet balance is immediately released.
 
 ---
 
@@ -128,7 +127,7 @@ Check Wallet Balance
 Enough Balance    Insufficient Balance
         │               │
         │               ▼
-        │        Payout Rejected
+        │        Reject Payout
         │
         ▼
 Reserve Wallet Balance
@@ -141,10 +140,17 @@ Compliance Validation
       Pass            Fail
         │               │
         ▼               ▼
-Debit Wallet      Release Reserved Funds
-Credit Payout Vault      │
-        │                ▼
-        ▼             FAILED
+Call Bank API     Release Reserved Funds
+        │               │
+        ├───────┐       ▼
+        │       │    FAILED
+     Success   Failure
+        │       │
+        ▼       ▼
+Debit Wallet  Release Reserved Funds
+Create Ledger Entry
+        │
+        ▼
 COMPLETED
         │
         ▼
@@ -159,13 +165,12 @@ Publish PayoutCompleted Event
 
 - Every Payout belongs to exactly one Merchant.
 - Every Payout is initiated by exactly one User.
-- Merchant funds are always used for payout processing.
 
 ---
 
 ## Destination Bank Account
 
-- A Payout can only be made to a Bank Account owned by the Merchant.
+- Payouts can only be made to Bank Accounts owned by the Merchant.
 - Destination Bank Account must be ACTIVE.
 - Destination Bank Account must be VERIFIED (if verification is enabled).
 
@@ -173,26 +178,54 @@ Publish PayoutCompleted Event
 
 ## Wallet Balance
 
-- Wallet must contain sufficient available balance before processing.
-- Automatic Wallet funding is **not** performed during Payouts.
-- If sufficient balance is unavailable, the Payout request is rejected.
+- Merchant Wallet must contain sufficient available balance.
+- Wallet funds are reserved before initiating the bank transfer.
+- Automatic Wallet funding is never performed during Payouts.
 
 ---
 
 ## Wallet Reservation
 
-- Wallet funds are reserved before Compliance validation.
-- Row-level locking is used during reservation.
+- Wallet funds are reserved before contacting the bank.
+- Row-level locking is used while reserving funds.
 - Reserved funds prevent concurrent overspending.
+
+---
+
+## Successful Payout
+
+After the bank transfer succeeds:
+
+- Reserved funds are permanently debited from the Wallet.
+- Wallet History is created.
+- Ledger entries are created.
+- Payout is marked COMPLETED.
 
 ---
 
 ## Failed Payout
 
-If a Payout fails after Wallet reservation:
+If the bank transfer fails:
 
-- Reserved funds are immediately released.
-- Merchant Wallet balance is restored.
+- Reserved Wallet funds are immediately released.
+- Wallet balance is restored.
+- Payout is marked FAILED.
+
+---
+
+## Primary Bank Account
+
+### Automatic Wallet Funding
+
+Automatic Wallet funding for Payments always debits the Merchant's Primary Linked Bank Account.
+
+---
+
+### Payout Destination
+
+A Merchant may transfer funds to any ACTIVE linked Bank Account.
+
+If no destination is provided, the Primary Linked Bank Account is used by default.
 
 ---
 
@@ -238,23 +271,6 @@ The following fields cannot be modified after creation:
 
 ---
 
-## Primary Bank Account Rules
-
-### Automatic Wallet Funding (Payments)
-
-When a Payment requires automatic Wallet funding due to insufficient balance:
-
-- Funds are always debited from the Merchant's **Primary Linked Bank Account**.
-- Secondary linked Bank Accounts are never considered for automatic funding.
-- Merchants can change which account is used by changing their Primary Bank Account.
-
-### Payout Destination
-
-- A Merchant may transfer funds to **any ACTIVE linked Bank Account** they own.
-- If no destination Bank Account is specified, the Merchant's **Primary Linked Bank Account** is used by default.
-
----
-
 # Domain Events
 
 - PayoutCreated
@@ -273,13 +289,13 @@ These events are consumed by:
 # APIs
 
 ```http
-POST   /payouts
+POST /payouts
 
-GET    /payouts
+GET /payouts
 
-GET    /payouts/{payoutId}
+GET /payouts/{payoutId}
 
-POST   /payouts/{payoutId}/cancel
+POST /payouts/{payoutId}/cancel
 ```
 
 Payouts cannot be updated or deleted.
@@ -293,8 +309,7 @@ Payouts cannot be updated or deleted.
 | Merchant | N : 1 |
 | User | N : 1 |
 | Wallet | Source of Funds |
-| Linked Bank Account | Destination of Funds |
-| Payout Vault | Temporary holding before bank transfer |
+| Linked Bank Account | Destination |
 | Compliance | Validates Payout |
 | Ledger | Records financial movements |
 | Notification | Consumes Payout events |
@@ -303,8 +318,9 @@ Payouts cannot be updated or deleted.
 
 # Notes
 
-- Payouts always transfer funds from the Merchant Wallet to one of the Merchant's own linked Bank Accounts.
-- Automatic Wallet funding is never performed during Payouts.
-- The Payment workflow always uses the Primary Linked Bank Account for automatic Wallet funding.
+- Payouts transfer funds directly from the Merchant Wallet to a linked Bank Account.
+- Payouts do not participate in the Settlement workflow.
+- Wallet balance is reserved before initiating the bank transfer.
+- Reserved funds are released immediately if the transfer fails.
+- Every successful Wallet debit creates Wallet History and Ledger entries within the same database transaction.
 - Every Payout belongs to a Merchant and is initiated by a User acting on behalf of that Merchant.
-- Every balance modification creates corresponding History and Ledger records.
