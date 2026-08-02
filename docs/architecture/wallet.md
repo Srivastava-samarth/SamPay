@@ -4,11 +4,11 @@
 
 Every Merchant in SamPay owns exactly one Wallet.
 
-A Wallet is the source of funds for Payments, Refunds and Payouts, and the destination of incoming Settlements.
+A Wallet maintains the Merchant's spendable, reserved and pending balances.
 
-The Wallet maintains the Merchant's balances and ensures that funds are reserved, settled and updated safely during financial operations.
+Financial operations modify Wallet balances, while Settlement moves pending funds into spendable funds.
 
-Wallet balances are modified only through financial workflows and are never updated manually.
+Wallet balances may only be modified through financial workflows and are never updated manually.
 
 ---
 
@@ -18,8 +18,9 @@ The Wallet domain is responsible for:
 
 - Maintaining Merchant balances.
 - Reserving funds for outgoing transactions.
+- Releasing reserved funds when transactions fail.
+- Debiting reserved funds after successful transactions.
 - Receiving incoming pending funds.
-- Releasing reserved funds on failures.
 - Making settled funds available for spending.
 
 The Wallet domain is **not** responsible for:
@@ -27,9 +28,9 @@ The Wallet domain is **not** responsible for:
 - Processing Payments.
 - Processing Payouts.
 - Processing Refunds.
-- Settlement execution.
-- Ledger management.
-- Compliance validation.
+- Executing Settlements.
+- Managing the Ledger.
+- Performing Compliance validation.
 
 ---
 
@@ -52,10 +53,9 @@ A Wallet maintains three independent balances:
 | id | Internal UUID |
 | merchant_id | Owner Merchant |
 | currency | Supported currency (INR) |
-| available_balance | Spendable balance |
+| available_balance | Spendable balance (stored in the smallest currency unit) |
 | reserved_balance | Balance reserved for outgoing transactions |
 | pending_balance | Incoming balance awaiting settlement |
-| status | ACTIVE / SUSPENDED / CLOSED |
 | created_at | Record creation timestamp |
 | updated_at | Record last update timestamp |
 
@@ -65,7 +65,7 @@ A Wallet maintains three independent balances:
 
 ## Available Balance
 
-Funds that are immediately available for use.
+Funds immediately available for use.
 
 Available Balance may be used for:
 
@@ -93,8 +93,10 @@ Funds received from another Merchant but not yet settled.
 Pending Balance:
 
 - Is visible to the Merchant.
-- Cannot be used for Payments, Refunds or Payouts.
-- Becomes Available Balance once Settlement completes.
+- Cannot be spent.
+- Cannot be transferred.
+- Cannot be reserved.
+- Becomes Available Balance after Settlement.
 
 ---
 
@@ -109,7 +111,7 @@ Available Balance
 Reserved Balance
         │
         ▼
-Debit Wallet
+Reservation Consumed
 ```
 
 If the Payment fails:
@@ -130,12 +132,9 @@ Payment Vault
         │
         ▼
 Pending Balance
-```
-
-Settlement:
-
-```text
-Pending Balance
+        │
+        ▼
+Settlement
         │
         ▼
 Available Balance
@@ -145,7 +144,7 @@ Available Balance
 
 ## Refund
 
-Outgoing Refund:
+### Outgoing Refund
 
 ```text
 Available Balance
@@ -154,16 +153,19 @@ Available Balance
 Reserved Balance
         │
         ▼
-Debit Wallet
+Reservation Consumed
 ```
 
-Incoming Refund:
+### Incoming Refund
 
 ```text
 Refund Vault
         │
         ▼
 Pending Balance
+        │
+        ▼
+Settlement
         │
         ▼
 Available Balance
@@ -180,8 +182,13 @@ Available Balance
 Reserved Balance
         │
         ▼
+Reservation Consumed
+        │
+        ▼
 Bank Transfer
 ```
+
+If the Wallet has insufficient Available Balance, the Payout workflow may automatically top up the Wallet from the Merchant's Primary Linked Bank Account before reserving funds.
 
 If the Payout fails:
 
@@ -194,13 +201,27 @@ Available Balance
 
 ---
 
+# Balance Operations
+
+The Wallet supports the following balance operations:
+
+- Reserve Funds
+- Release Reserved Funds
+- Consume Reserved Funds
+- Credit Pending Balance
+- Settle Pending Balance
+
+All balance modifications must occur inside a single database transaction.
+
+---
+
 # Business Rules
 
 ## Wallet Creation
 
-A Wallet is automatically created when a Merchant is onboarded.
-
-Every Merchant owns exactly one Wallet.
+- Every Merchant owns exactly one Wallet.
+- A Wallet is automatically provisioned during Merchant onboarding.
+- A Wallet cannot exist without a Merchant.
 
 ---
 
@@ -208,35 +229,39 @@ Every Merchant owns exactly one Wallet.
 
 Version 1 supports INR only.
 
+All balances are stored using the smallest currency unit (paise) as BIGINT values.
+
+Example:
+
+₹100.25 → 10025
+
 ---
 
 ## Available Balance
 
-Only Available Balance may be spent.
-
-Available Balance can never become negative.
+- Only Available Balance may be spent.
+- Available Balance can never become negative.
 
 ---
 
 ## Reserved Balance
 
-Reserved Balance exists only while an outgoing transaction is in progress.
-
-Reserved Balance is automatically released when the transaction fails.
+- Reserved Balance exists only while an outgoing transaction is in progress.
+- Reserved Balance is automatically released when the transaction fails.
 
 ---
 
 ## Pending Balance
 
-Pending Balance represents incoming funds awaiting settlement.
+Pending Balance represents incoming funds awaiting Settlement.
 
 Pending Balance:
 
 - Is visible to the Merchant.
+- Cannot be spent.
 - Cannot be transferred.
 - Cannot be withdrawn.
 - Cannot be reserved.
-- Cannot be used for Payments or Refunds.
 
 Only Settlement may move Pending Balance into Available Balance.
 
@@ -248,7 +273,7 @@ Wallet updates use row-level locking.
 
 Only one balance modification may occur at a time.
 
-This prevents double spending during concurrent requests.
+This prevents double spending during concurrent financial operations.
 
 ---
 
@@ -257,16 +282,19 @@ This prevents double spending during concurrent requests.
 Every balance modification must:
 
 - Update the Wallet.
-- Create a Wallet History record.
-- Create a corresponding Ledger entry.
-
-All three operations must be committed within the same database transaction.
+- Create the corresponding Ledger entry.
+- Commit atomically within the same database transaction.
 
 ---
 
 ## Immutability
 
-Wallet balances are modified only by financial workflows.
+Wallet balances may only be modified by:
+
+- Payment
+- Refund
+- Payout
+- Settlement
 
 Direct balance updates are never permitted.
 
@@ -280,8 +308,6 @@ Read-only APIs may be exposed.
 
 ```http
 GET /wallet
-
-GET /wallet/history
 ```
 
 ---
@@ -294,7 +320,7 @@ GET /wallet/history
 | Payment | Uses Wallet Balance |
 | Refund | Uses Wallet Balance |
 | Payout | Uses Wallet Balance |
-| Settlement | Credits Pending Balance and settles it into Available Balance |
+| Settlement | Moves Pending Balance to Available Balance |
 | Ledger | Records every balance movement |
 
 ---
@@ -302,9 +328,19 @@ GET /wallet/history
 # Notes
 
 - Every Merchant owns exactly one Wallet.
+- Wallet maintains the Merchant's current financial state.
 - Available Balance represents spendable funds.
 - Reserved Balance represents funds locked for outgoing transactions.
-- Pending Balance represents incoming funds awaiting settlement.
+- Pending Balance represents incoming funds awaiting Settlement.
+- Wallet balances are stored using the smallest currency unit.
 - Wallet balances can never become negative.
-- Every balance modification creates Wallet History and Ledger entries within the same database transaction.
-- Wallet stores the current financial state, while Ledger stores the complete financial history.
+- Every balance modification creates a corresponding Ledger entry.
+- Ledger stores the complete financial history, while Wallet stores only the current financial state.
+
+---
+
+# Version
+
+**Architecture Status:** ✅ Frozen (V1)
+
+**Last Updated:** 2026-08-03

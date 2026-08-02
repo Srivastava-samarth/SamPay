@@ -8,14 +8,14 @@ Every financial resource in the system belongs to exactly one Merchant.
 
 ---
 
-## Merchant Types
+# Merchant Types
 
 - INDIVIDUAL
 - CORPORATE
 
 ---
 
-## Responsibilities
+# Responsibilities
 
 The Merchant domain is responsible for:
 
@@ -25,43 +25,46 @@ The Merchant domain is responsible for:
 - Managing Merchant Configuration
 - Managing Linked Bank Accounts
 - Owning Financial Resources
+- Provisioning a Wallet during Merchant onboarding
 
 The Merchant domain is **not** responsible for:
 
+- Authentication
+- Authorization
 - Processing Payments
 - Processing Payouts
 - Processing Refunds
 - Settlement Execution
 - Ledger Balance Calculation
+- Compliance Validation
+- Notification Delivery
 
 ---
 
-## Merchant Owns
+# Merchant Owns
 
 ```text
 Merchant
 │
 ├── Users
 ├── Wallet
-├── Bank Accounts
+├── Linked Bank Accounts
 ├── Payments
 ├── Payouts
 ├── Refunds
-├── Settlements
-├── Ledger Account
-├── Compliance Profile
+├── Ledger
 └── Webhook Configuration
 ```
 
 ---
 
-## Merchant Lifecycle
+# Merchant Lifecycle
 
 ```text
 REGISTERED
       │
       ▼
-PENDING_KYC
+KYC_PENDING
       │
       ▼
 ACTIVE
@@ -75,7 +78,7 @@ SUSPENDED BLOCKED
 
 ---
 
-## Merchant Attributes
+# Merchant Attributes
 
 | Field | Description |
 |--------|-------------|
@@ -87,44 +90,52 @@ SUSPENDED BLOCKED
 | merchant_notification_email | Business notification email |
 | status | Merchant status |
 | kyc_status | KYC status |
-| daily_transaction_limit | Maximum transaction limit per day |
 | created_at | Created timestamp |
 | updated_at | Updated timestamp |
 
 ---
 
-## Business Rules
+# Business Rules
 
-### Identity
+## Identity
 
 - Merchant ID is immutable.
 - Merchant Reference is immutable.
 - Entity Type cannot be changed.
 
-### Users
+---
+
+## Users
 
 - Every Merchant must always have one Owner.
 - Ownership must be transferred before removing the current Owner.
 
-### Wallet
+---
+
+## Wallet
 
 - Every Merchant owns exactly one Wallet in Version 1.
+- Wallet is automatically provisioned during Merchant onboarding.
 - Wallet cannot exist without a Merchant.
 
-### Bank Accounts
+---
+
+## Bank Accounts
 
 - Maximum three linked bank accounts.
 - Exactly one Primary Bank Account.
-- Primary account cannot be removed until another account is marked as Primary.
+- Primary Bank Account cannot be deleted until another linked account is promoted as Primary.
 
-### Merchant Status
+---
+
+## Merchant Status
 
 - Merchant cannot become ACTIVE until KYC is approved.
 - Suspended or Blocked Merchants cannot initiate new Payments, Payouts or Refunds.
 
 ---
 
-## Domain Events
+# Domain Events
 
 - MerchantRegistered
 - MerchantKYCSubmitted
@@ -141,11 +152,11 @@ SUSPENDED BLOCKED
 
 ---
 
-## APIs
+# APIs
 
-### Merchant
+## Merchant
 
-```
+```http
 POST   /merchants
 GET    /merchants/{merchantId}
 PATCH  /merchants/{merchantId}
@@ -153,70 +164,130 @@ POST   /merchants/{merchantId}/activate
 POST   /merchants/{merchantId}/deactivate
 ```
 
-### Users
+---
 
-```
+## Users
+
+```http
 POST   /merchants/{merchantId}/users
 DELETE /merchants/{merchantId}/users/{userId}
 ```
 
-### Bank Accounts
+---
 
-```
+## Linked Bank Accounts
+
+```http
 POST   /merchants/{merchantId}/bank-accounts
 DELETE /merchants/{merchantId}/bank-accounts/{bankAccountId}
 ```
 
-### Webhooks
+---
 
-```
+## Webhooks
+
+```http
 PATCH /merchants/{merchantId}/webhook
 ```
 
 ---
 
-## Business Scenarios
+# Business Scenarios
 
-### Merchant Registration
+## Merchant Registration
 
-1. Merchant registers.
-2. Merchant enters `REGISTERED` state.
-3. KYC process starts.
-4. Merchant cannot perform financial operations.
-5. Once KYC is approved, Merchant becomes `ACTIVE`.
-6. Wallet is created automatically.
+```text
+Merchant Registration
+        │
+        ▼
+Compliance Validation
+        │
+        ▼
+Merchant Created
+        │
+        ▼
+Wallet Provisioned
+        │
+        ▼
+Notification Sent
+```
 
----
+Initially, the Merchant is created in the **REGISTERED** state.
 
-### Add Merchant User
-
-1. Merchant Owner invites a User.
-2. User accepts the invitation.
-3. Role is assigned.
-4. User can now access Merchant resources.
-
----
-
-### Link Bank Account
-
-1. Merchant submits bank account details.
-2. System validates ownership.
-3. Bank account is linked.
-4. Merchant can link a maximum of three bank accounts.
+The Merchant progresses to **ACTIVE** only after successful KYC approval.
 
 ---
 
-## Relationships
+## Add Merchant User
+
+```text
+Merchant Owner
+        │
+        ▼
+Invite User
+        │
+        ▼
+User Accepts Invitation
+        │
+        ▼
+Role Assigned
+        │
+        ▼
+User Gains Access
+```
+
+---
+
+## Link Bank Account
+
+```text
+Merchant
+        │
+        ▼
+Submit Bank Account
+        │
+        ▼
+Validate Ownership
+        │
+        ▼
+Link Account
+        │
+        ▼
+Mark Primary (if applicable)
+```
+
+A Merchant may link a maximum of three bank accounts.
+
+---
+
+# Relationships
 
 | Entity | Relationship |
 |----------|--------------|
 | User | 1:N |
 | Wallet | 1:1 |
-| Bank Account | 1:N |
+| Linked Bank Account | 1:N |
 | Payment | 1:N |
 | Payout | 1:N |
 | Refund | 1:N |
-| Settlement | 1:N |
-| Ledger Account | 1:1 |
-| Compliance Profile | 1:1 |
+| Ledger | 1:N |
 | Webhook Configuration | 1:1 |
+
+---
+
+# Notes
+
+- Every Merchant owns exactly one Wallet.
+- Wallet is automatically provisioned during onboarding.
+- Authentication is delegated to the Authentication domain.
+- Compliance validation is performed before Merchant creation.
+- Notification is handled asynchronously after successful business events.
+- Merchant owns business resources but does not execute financial operations directly.
+
+---
+
+# Version
+
+**Architecture Status:** ✅ Frozen (V1)
+
+**Last Updated:** 2026-08-02
