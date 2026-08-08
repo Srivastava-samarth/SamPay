@@ -3,8 +3,11 @@ module github.com/Srivastava-samarth/sampay
 go 1.25.0
 
 require (
+	github.com/ericlagergren/decimal v0.0.0-20240411145413-00de7ca16731
 	github.com/gin-gonic/gin v1.12.0
+	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
+	github.com/shopspring/decimal v1.4.0
 	gorm.io/driver/postgres v1.6.2
 	gorm.io/gorm v1.31.2
 )
