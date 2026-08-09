@@ -17,9 +17,9 @@ func GenerateMerchantReference() string {
 	return "mrc_" + hex.EncodeToString(id[:])[:12]
 }
 
-func GenerateBankAccountNumber() *string {
+func GenerateBankAccountNumber() string {
     n := rand.Int63n(9000000000000) + 1000000000000
     accountNumber := strconv.FormatInt(n, 10)
 
-    return &accountNumber
+    return accountNumber
 }

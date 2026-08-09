@@ -1,9 +1,13 @@
 package dto
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type ComplianceCheckResponse struct {
-	MerchantID       string     `json:"merchant_id"`
+	MerchantID       uuid.UUID     `json:"merchant_id"`
 	KYC              KYCData    `json:"kyc" gorm:"type:jsonb"`
 	KYCDate          time.Time `json:"kyc_date"`
 	ComplianceStatus string     `json:"compliance_status" gorm:"default:pending;not null"`

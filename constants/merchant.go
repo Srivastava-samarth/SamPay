@@ -6,3 +6,8 @@ const (
 	MerchantStatusSuspended = "suspended"
 	MerchantStatusInactive = "inactive"
 )
+
+const (
+	MerchantTypeIndividual = "individual"
+	MerrchantTypeCorporate = "corporate"
+)

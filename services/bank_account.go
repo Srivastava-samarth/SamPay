@@ -2,7 +2,6 @@ package services
 
 import (
 	"errors"
-	"math/rand"
 
 	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
@@ -15,7 +14,7 @@ import (
 
 
 func CreateBankAccount(merchantID uuid.UUID, db *gorm.DB) (*models.BankAccount, error) {
-	merchant, err := repositories.GetMerchantByID(string(merchantID), db)
+	merchant, err := repositories.GetMerchantByID(merchantID, db)
 	if err != nil{
 		return nil, err
 	}
@@ -38,7 +37,7 @@ func CreateBankAccount(merchantID uuid.UUID, db *gorm.DB) (*models.BankAccount, 
 	createBankAccountRequest := &dto.CreateBankAccountRequest{
 		BankName: "Sampay",
 		AccountType: accountType,
-		AccountNumber: *utils.GenerateBankAccountNumber(),
+		AccountNumber: utils.GenerateBankAccountNumber(),
 		AccountName: merchant.MerchantName,
 		MerchantID: merchantID,
 	}

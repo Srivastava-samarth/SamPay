@@ -6,25 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type CreateMerchantRequest struct {
-	MerchantName string `json:"merchant_name" validate:"required"`
-	Email        string `json:"email" validate:"required,email"`
-	MerchantType string `json:"merchant_type" validate:"required"`
-	PhoneNumber  string `json:"phone_number" validate:"required"`
-}
-
-type CreateMerchantInitialResponse struct {
-	ID                uuid.UUID `json:"id"`
-	MerchantReference string    `json:"merchant_reference"`
-	MerchantName      string    `json:"merchant_name"`
-	Email             string    `json:"email"`
-	PhoneNumber       string    `json:"phone_number"`
-	Status            string    `json:"status"`
-	ComplianceStatus  string    `json:"compliance_status"`
-	CreatedAt         time.Time `json:"created_at"`
-	UpdatedAt         time.Time `json:"updated_at"`
-}
-
 type IndividualMerchantOnboardingRequest struct {
 	FirstName   string `json:"first_name" validate:"required"`
 	LastName    string `json:"last_name" validate:"required"`
@@ -46,19 +27,29 @@ type CompanyMerchantOnboardingRequest struct {
 	OwnerTaxID           string `json:"owner_tax_id" validate:"required"`
 }
 
-type CreateMerchantResponse struct {
-	ID                uuid.UUID `json:"id"`
-	MerchantReference string    `json:"merchant_reference"`
-	MerchantName      string    `json:"merchant_name"`
-	Email             string    `json:"email"`
-	PhoneNumber       string    `json:"phone_number"`
-	Status            string    `json:"status"`
-	OwnerUserID       uuid.UUID `json:"owner_user_id"`
-	WalletID          uuid.UUID `json:"wallet_id"`
-	KYC               KYCData   `json:"kyc" gorm:"type:jsonb"`
-	KYCDate           time.Time `json:"kyc_date"`
-	ComplianceStatus  string    `json:"compliance_status" gorm:"default:pending;not null"`
-	ComplianceDate    time.Time `json:"compliance_date"`
-	ComplianceReason  string    `json:"compliance_reason"`
-	CreatedAt         time.Time `json:"created_at"`
+type CreateMerchantOnboardingResponse struct {
+	ID                  uuid.UUID  `json:"id"`
+	MerchantReference   string     `json:"merchant_reference"`
+	MerchantName        string     `json:"merchant_name"`
+	Email               string     `json:"email"`
+	PhoneNumber         string     `json:"phone_number"`
+	MerchantType        string     `json:"merchant_type"`
+	Status              string     `json:"status"`
+	ComplianceStatus    string     `json:"compliance_status"`
+	OwnerUserID         *uuid.UUID `json:"owner_user_id,omitempty"`
+	WalletID            *uuid.UUID `json:"wallet_id,omitempty"`
+	LinkedBankAccountID *uuid.UUID `json:"linked_bank_account_id,omitempty"`
+	CreatedAt           time.Time  `json:"created_at"`
+	UpdatedAt           time.Time  `json:"updated_at"`
+}
+
+type CreateMerchantOnboardingRequest struct {
+	MerchantType string `json:"merchant_type" validate:"required,oneof=individual company"`
+
+	MerchantName string `json:"merchant_name" validate:"required"`
+	Email        string `json:"email" validate:"required,email"`
+	PhoneNumber  string `json:"phone_number" validate:"required"`
+
+	Individual *IndividualMerchantOnboardingRequest `json:"individual,omitempty"`
+	Company    *CompanyMerchantOnboardingRequest    `json:"company,omitempty"`
 }

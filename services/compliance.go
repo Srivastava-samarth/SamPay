@@ -6,12 +6,13 @@ import (
 	"github.com/Srivastava-samarth/sampay/constants"
 	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/Srivastava-samarth/sampay/respositories"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-func PerformIndividualComplianceCheck(request *dto.IndividualMerchantOnboardingRequest, merchantID string, email string, db *gorm.DB) (*dto.ComplianceCheckResponse, error) {
+func PerformIndividualComplianceCheck(request dto.CreateMerchantOnboardingRequest, merchantID uuid.UUID, db *gorm.DB) (*dto.ComplianceCheckResponse, error) {
 
-	name, country, dob := request.FirstName+" "+request.LastName, request.Country, request.DateOfBirth
+	name, country, dob := request.Individual.FirstName+" "+request.Individual.LastName, request.Individual.Country, request.Individual.DateOfBirth
 	// Perform compliance checks based on the provided information
 	// For example, you can check if the name is valid, if the country is allowed, and if the date of birth meets certain criteria.
 	// You can also integrate with external compliance services or databases for more comprehensive checks.
@@ -46,6 +47,7 @@ func PerformIndividualComplianceCheck(request *dto.IndividualMerchantOnboardingR
 	for _, restrictedCountry := range constants.RestrictedCountries {
 		if sip.Country == restrictedCountry {
 			return &dto.ComplianceCheckResponse{
+				MerchantID: merchantID,
 				ComplianceStatus: constants.ComplianceStatusRejected,
 				ComplianceDate:   time.Now(),
 				ComplianceReason: "sanctioned_country",
@@ -58,13 +60,14 @@ func PerformIndividualComplianceCheck(request *dto.IndividualMerchantOnboardingR
 		}
 	}
 
-	blockedUser, err := repositories.GetBlockedUserByEmail(email, db)
+	blockedUser, err := repositories.GetBlockedUserByEmail(request.Email, db)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, err
 	}
 
 	if blockedUser {
 		return &dto.ComplianceCheckResponse{
+			MerchantID: merchantID,
 			ComplianceStatus: constants.ComplianceStatusRejected,
 			ComplianceDate:   time.Now(),
 			ComplianceReason: "blocked_user",
@@ -78,6 +81,7 @@ func PerformIndividualComplianceCheck(request *dto.IndividualMerchantOnboardingR
 
 	// no issues found, return approved status
 	return &dto.ComplianceCheckResponse{
+		MerchantID: merchantID,
 		ComplianceStatus: constants.ComplianceStatusApproved,
 		ComplianceDate:   time.Now(),
 		ComplianceReason: "compliance_check_passed",
