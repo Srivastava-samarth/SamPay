@@ -11,7 +11,7 @@ type Merchant struct {
 	MerchantReference string     `json:"merchant_reference" gorm:"unique"`
 	MerchantName      string     `json:"merchant_name"`
 	Email             string     `json:"email"`
-	PhoneNumber       *string    `json:"phone_number"`
+	PhoneNumber       string    `json:"phone_number"`
 	Status            string     `json:"status"`
 	MerchantType      string     `json:"merchant_type" gorm:"not null"`
 	KYC               []byte     `json:"-" gorm:"type:jsonb"`

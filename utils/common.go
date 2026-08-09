@@ -1,7 +1,25 @@
-package utils 
+package utils
 
-import "github.com/google/uuid"
+import (
+	"encoding/hex"
+	"math/rand"
+	"strconv"
 
-func GenerateUUID() string {
-	return uuid.New().String()
+	"github.com/google/uuid"
+)
+
+func GenerateUUID() uuid.UUID {
+	return uuid.New()
+}
+
+func GenerateMerchantReference() string {
+	id := uuid.New()
+	return "mrc_" + hex.EncodeToString(id[:])[:12]
+}
+
+func GenerateBankAccountNumber() *string {
+    n := rand.Int63n(9000000000000) + 1000000000000
+    accountNumber := strconv.FormatInt(n, 10)
+
+    return &accountNumber
 }
