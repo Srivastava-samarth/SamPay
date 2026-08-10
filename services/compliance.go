@@ -1,6 +1,7 @@
 package services
 
 import (
+	"strings"
 	"time"
 
 	"github.com/Srivastava-samarth/sampay/constants"
@@ -89,6 +90,138 @@ func PerformIndividualComplianceCheck(request dto.CreateMerchantOnboardingReques
 		KYC: dto.KYCData{
 			Status: "approved",
 			Reason: "Merchant passed all compliance checks.",
+		},
+	}, nil
+}
+
+func PerformCorporateComplianceCheck(
+	request dto.CreateMerchantOnboardingRequest,
+	merchantID uuid.UUID,
+	db *gorm.DB,
+) (*dto.ComplianceCheckResponse, error) {
+
+	company := request.Company
+	now := time.Now()
+
+	// Check company against AML blocked entities
+	for _, amlEntity := range constants.AMLBlockedEntities {
+		if strings.EqualFold(amlEntity.Name, company.LegalName) &&
+			strings.EqualFold(amlEntity.Country, company.IncorporationCountry) {
+
+			return &dto.ComplianceCheckResponse{
+				MerchantID:       merchantID,
+				ComplianceStatus: constants.ComplianceStatusRejected,
+				ComplianceDate:   now,
+				ComplianceReason: "aml_match",
+				KYCDate:          now,
+				KYC: dto.KYCData{
+					Status: "rejected",
+					Reason: "Company matched an AML blocked entity.",
+				},
+			}, nil
+		}
+	}
+
+	// Check company incorporation country
+	for _, restrictedCountry := range constants.RestrictedCountries {
+		if strings.EqualFold(
+			company.IncorporationCountry,
+			restrictedCountry,
+		) {
+
+			return &dto.ComplianceCheckResponse{
+				MerchantID:       merchantID,
+				ComplianceStatus: constants.ComplianceStatusRejected,
+				ComplianceDate:   now,
+				ComplianceReason: "sanctioned_country",
+				KYCDate:          now,
+				KYC: dto.KYCData{
+					Status: "rejected",
+					Reason: "Company is incorporated in a restricted country.",
+				},
+			}, nil
+		}
+	}
+
+	// Validate company legal name
+	if strings.TrimSpace(company.LegalName) == "" {
+		return &dto.ComplianceCheckResponse{
+			MerchantID:       merchantID,
+			ComplianceStatus: constants.ComplianceStatusRejected,
+			ComplianceDate:   now,
+			ComplianceReason: "invalid_legal_name",
+			KYCDate:          now,
+			KYC: dto.KYCData{
+				Status: "rejected",
+				Reason: "Company legal name is required.",
+			},
+		}, nil
+	}
+
+	// Validate registration number
+	if strings.TrimSpace(company.RegistrationNumber) == "" {
+		return &dto.ComplianceCheckResponse{
+			MerchantID:       merchantID,
+			ComplianceStatus: constants.ComplianceStatusRejected,
+			ComplianceDate:   now,
+			ComplianceReason: "invalid_registration_number",
+			KYCDate:          now,
+			KYC: dto.KYCData{
+				Status: "rejected",
+				Reason: "Company registration number is required.",
+			},
+		}, nil
+	}
+
+	// Validate tax ID
+	if strings.TrimSpace(company.TaxID) == "" {
+		return &dto.ComplianceCheckResponse{
+			MerchantID:       merchantID,
+			ComplianceStatus: constants.ComplianceStatusRejected,
+			ComplianceDate:   now,
+			ComplianceReason: "invalid_tax_id",
+			KYCDate:          now,
+			KYC: dto.KYCData{
+				Status: "rejected",
+				Reason: "Company tax ID is required.",
+			},
+		}, nil
+	}
+
+	// Check merchant email against blocked users
+	blockedUser, err := repositories.GetBlockedUserByEmail(
+		request.Email,
+		db,
+	)
+
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+
+	if blockedUser {
+		return &dto.ComplianceCheckResponse{
+			MerchantID:       merchantID,
+			ComplianceStatus: constants.ComplianceStatusRejected,
+			ComplianceDate:   now,
+			ComplianceReason: "blocked_user",
+			KYCDate:          now,
+			KYC: dto.KYCData{
+				Status: "rejected",
+				Reason: "Merchant email is associated with a blocked user.",
+			},
+		}, nil
+	}
+
+	// All compliance checks passed
+	return &dto.ComplianceCheckResponse{
+		MerchantID:       merchantID,
+		ComplianceStatus: constants.ComplianceStatusApproved,
+		ComplianceDate:   now,
+		ComplianceReason: "compliance_check_passed",
+		KYCDate:          now,
+		KYC: dto.KYCData{
+			Status: "approved",
+			Reason: "Corporate merchant passed all compliance checks.",
 		},
 	}, nil
 }

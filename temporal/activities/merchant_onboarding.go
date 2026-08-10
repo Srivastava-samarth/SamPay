@@ -25,7 +25,7 @@ func (a *Registry) PerformComplianceCheck(
 		)
 	}
 
-	return services.PerformIndividualComplianceCheck(
+	return services.PerformCorporateComplianceCheck(
 		request,
 		merchantID,
 		a.DB,

@@ -51,3 +51,23 @@ var RestrictedCountries = []string{
 	"Sudan",
 	"Cuba",
 }
+
+type AMLRecord struct {
+	Name    string
+	Country string
+}
+
+var AMLBlockedEntities = []AMLRecord{
+	{
+		Name:    "John Doe",
+		Country: "India",
+	},
+	{
+		Name:    "Acme Holdings Ltd",
+		Country: "Singapore",
+	},
+	{
+		Name:    "Global Trading Corp",
+		Country: "United States",
+	},
+}
