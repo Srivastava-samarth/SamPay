@@ -23,7 +23,8 @@ type CompanyMerchantOnboardingRequest struct {
 	TaxID                string `json:"tax_id" validate:"required"`
 	BusinessType         string `json:"business_type" validate:"required"`
 	RegisteredAddress    string `json:"registered_address" validate:"required"`
-	OwnerName            string `json:"owner_name" validate:"required"`
+	OwnerFirstName       string `json:"owner_first_name" validate:"required"`
+	OwnerLastName        string `json:"owner_last_name" validate:"required"`
 	OwnerTaxID           string `json:"owner_tax_id" validate:"required"`
 }
 

@@ -3,9 +3,17 @@ package dto
 import "github.com/google/uuid"
 
 type CreateBankAccountRequest struct {
-	BankName      string `json:"bank_name" validate:"required"`
-	AccountNumber string `json:"account_number" validate:"required"`
-	AccountName   string `json:"account_name" validate:"required"`
-	AccountType   string `json:"account_type" validate:"required"`
-	MerchantID    uuid.UUID `json:"merchant_id" validate:"required"`
+	AccountName string    `json:"account_name" validate:"required"`
+	MerchantID  uuid.UUID `json:"merchant_id" validate:"required"`
+}
+
+type CreateBankAccountResponse struct {
+	ID            uuid.UUID `json:"id" gorm:"primaryKey"`
+	MerchantID    uuid.UUID `json:"merchant_id" gorm:"not null"`
+	AccountNumber string    `json:"-" gorm:"not null"`
+	AccountName   string    `json:"account_name" gorm:"not null"`
+	BankName      string    `json:"bank_name" gorm:"not null"`
+	IFSCCode      string    `json:"ifsc_code" gorm:"not null"`
+	AccountType   string    `json:"account_type" gorm:"not null"`
+	Status        string    `json:"status" gorm:"default:active;not null"`
 }

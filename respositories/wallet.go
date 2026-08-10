@@ -14,15 +14,16 @@ func CreateWalletForMerchant(merchantID uuid.UUID, db *gorm.DB) (*models.Wallets
 	wallet := &models.Wallets{
 		ID:               utils.GenerateUUID(),
 		MerchantID:       merchantID,
-		AvailableBalance: decimal.NewFromFloat(0.0),
-		ReservedBalance:  decimal.NewFromFloat(0.0),
+		AvailableBalance: decimal.Zero,
+		ReservedBalance:  decimal.Zero,
 		Status:           "active",
 		CreatedAt:        time.Now(),
 		UpdatedAt:        time.Now(),
 	}
-	err := db.Create(wallet).Error
-	if err != nil {
+
+	if err := db.Create(wallet).Error; err != nil {
 		return nil, err
 	}
+
 	return wallet, nil
 }

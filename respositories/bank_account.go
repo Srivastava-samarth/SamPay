@@ -4,7 +4,6 @@ import (
 	"time"
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
-	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
@@ -12,25 +11,29 @@ import (
 )
 
 
-func CreateBankAccount(bankAccount *dto.CreateBankAccountRequest, db *gorm.DB) (*models.BankAccount, error) {
-	parseBankAccountPayload := &models.BankAccount{
-		ID: utils.GenerateUUID(),
-		AccountNumber: bankAccount.AccountNumber,
-		AccountName: bankAccount.AccountName,
-		BankName: bankAccount.BankName,
-		IFSCCode: "SAMP5917AY",
-		AccountType: bankAccount.AccountType,
-		Balance: decimal.NewFromFloat(0.0),
-		Status: "active",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+func CreateBankAccount(
+	bankAccount *models.BankAccount,
+	db *gorm.DB,
+) (*models.BankAccount, error) {
+
+	newBankAccount := &models.BankAccount{
+		ID:            utils.GenerateUUID(),
+		AccountNumber: utils.GenerateBankAccountNumber(),
+		AccountName:   bankAccount.AccountName,
+		BankName:      "SamPay Bank",
+		IFSCCode:      "SAMP5917AY",
+		AccountType:   bankAccount.AccountType,
+		Balance:       decimal.Zero,
+		Status:        "active",
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
-	err := db.Create(&parseBankAccountPayload).Error
-	if err != nil {
+
+	if err := db.Create(newBankAccount).Error; err != nil {
 		return nil, err
 	}
 
-	return parseBankAccountPayload, nil
+	return newBankAccount, nil
 }
 
 func GetBankAccountByID(ID uuid.UUID, db *gorm.DB) (*models.BankAccount, error) {
@@ -41,12 +44,3 @@ func GetBankAccountByID(ID uuid.UUID, db *gorm.DB) (*models.BankAccount, error) 
 	}
 	return &bankAccount, nil
 }
-
-func GetAllBankAccountsByMerchantID(merchantID uuid.UUID, db *gorm.DB) ([]*models.BankAccount, error){
-	var bankAccounts []*models.BankAccount
-	err := db.Where("merchant_id = ? and status = ?", merchantID, "active").Find(&bankAccounts).Error
-	if err != nil {
-		return nil, err
-	}
-	return bankAccounts, nil
-} 

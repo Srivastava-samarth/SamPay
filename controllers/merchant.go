@@ -1,17 +1,19 @@
 package controllers
 
 import (
+	"net/http"
+
 	"github.com/Srivastava-samarth/sampay/dto"
+	"github.com/Srivastava-samarth/sampay/notifications"
 	services "github.com/Srivastava-samarth/sampay/services"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
-	"net/http"
 )
 
 var validate = validator.New()
 
-func CreateMerchant(db *gorm.DB) gin.HandlerFunc {
+func CreateMerchant(db *gorm.DB, notificationService *notifications.EmailService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		var request dto.CreateMerchantOnboardingRequest
@@ -36,7 +38,7 @@ func CreateMerchant(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		response, err := services.CreateMerchant(request, db)
+		response, err := services.CreateMerchant(request, db, notificationService)
 		if err != nil {
 			dto.Fail(
 				c,

@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/Srivastava-samarth/sampay/constants"
@@ -8,6 +9,7 @@ import (
 	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -61,10 +63,15 @@ func UpdateMerchantCompliance(
 		return nil, err
 	}
 
+	kycJSON, err := json.Marshal(complianceResponse.KYC)
+	if err != nil {
+		return nil, err
+	}
+
 	merchant.ComplianceDate = &complianceResponse.ComplianceDate
 	merchant.ComplianceStatus = complianceResponse.ComplianceStatus
 	merchant.ComplianceReason = complianceResponse.ComplianceReason
-	merchant.KYC = complianceResponse.KYC
+	merchant.KYC = datatypes.JSON(kycJSON)
 	merchant.KYCDate = &complianceResponse.KYCDate
 	merchant.UpdatedAt = time.Now()
 

@@ -4,16 +4,15 @@ import (
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-func CreateLinkedBankAccount(BankAccount models.BankAccount, merchantID uuid.UUID, db *gorm.DB ) (*models.LinkedBankAccount, error){
-	createLinkedBankAccountRequestPayload := &dto.CreateLinkedBankAccountRequest{
-		MerchantID: merchantID,
-		BankAccountID: BankAccount.ID,
-		Type: BankAccount.AccountType,
-		Status: BankAccount.Status,
+func CreateLinkedBankAccount(linkedBankAccountRequest *dto.CreateLinkedBankAccountRequest, db *gorm.DB ) (*dto.CreateLinkedBankAccountResponse, error){
+	createLinkedBankAccountRequestPayload := &models.LinkedBankAccount{
+		MerchantID: linkedBankAccountRequest.MerchantID,
+		BankAccountID: linkedBankAccountRequest.BankAccountID,
+		Type: linkedBankAccountRequest.Type,
+		Status: linkedBankAccountRequest.Status,
 	}
 
 	linkedBankAccount, err := repositories.CreateLinkedBankAccount(createLinkedBankAccountRequestPayload, db)
@@ -21,5 +20,13 @@ func CreateLinkedBankAccount(BankAccount models.BankAccount, merchantID uuid.UUI
 		return nil, err
 	}
 
-	return linkedBankAccount, nil
+	linkedBankAccountResponse := &dto.CreateLinkedBankAccountResponse{
+		LinkedBankAccountID: linkedBankAccount.ID,
+		BankAccountID: linkedBankAccount.BankAccountID,
+		MerchantID: linkedBankAccount.MerchantID,
+		Type: linkedBankAccount.Type,
+		Status: linkedBankAccount.Status,
+	}
+
+	return linkedBankAccountResponse, nil
 }

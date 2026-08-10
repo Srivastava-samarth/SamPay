@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"time"
+
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"gorm.io/gorm"
@@ -18,7 +20,7 @@ func GetBlockedUserByEmail(email string, db *gorm.DB) (bool, error) {
 	return true, nil
 }
 
-func CreateUser(request models.User, db *gorm.DB) (*models.User, error) {
+func CreateUser(request *models.User, db *gorm.DB) (*models.User, error) {
 	user := &models.User{
 		ID:           utils.GenerateUUID(),
 		Email:        request.Email,
@@ -26,8 +28,9 @@ func CreateUser(request models.User, db *gorm.DB) (*models.User, error) {
 		FirstName:    request.FirstName,
 		LastName:     request.LastName,
 		Status:       request.Status,
-		CreatedAt:    request.CreatedAt,
-		UpdatedAt:    request.UpdatedAt,
+		MustChangePassword: true,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 	err := db.Create(user).Error
 	if err != nil {

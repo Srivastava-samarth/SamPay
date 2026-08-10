@@ -9,6 +9,13 @@ import (
 
 type Config struct {
 	Database DatabaseConfig
+	SMTP     SMTPConfig
+}
+
+type SMTPConfig struct {
+	Host string
+	Port string
+	From string
 }
 
 type DatabaseConfig struct {
@@ -37,6 +44,11 @@ func Load() (*Config, error) {
 			Name:     os.Getenv("SAMPAY_DB_NAME"),
 			SSLMode:  os.Getenv("SAMPAY_DB_SSLMODE"),
 			TimeZone: os.Getenv("SAMPAY_DB_TIMEZONE"),
+		},
+		SMTP: SMTPConfig{
+			Host: os.Getenv("SMTP_HOST"),
+			Port: os.Getenv("SMTP_PORT"),
+			From: os.Getenv("SMTP_FROM"),
 		},
 	}
 
@@ -67,6 +79,15 @@ func (cfg Config) validate() error {
 	}
 	if cfg.Database.TimeZone == "" {
 		return errors.New("missing required configuration: SAMPAY_DB_TIMEZONE")
+	}
+	if cfg.SMTP.Host == "" {
+		return errors.New("missing required configuration: SAMPAY_SMTP_HOST")
+	}
+	if cfg.SMTP.Port == "" {
+		return errors.New("missing required configuration: SAMPAY_SMTP_PORT")
+	}
+	if cfg.SMTP.From == "" {
+		return errors.New("missing required configuration: SAMPAY_SMTP_FROM")
 	}
 	return nil
 }
