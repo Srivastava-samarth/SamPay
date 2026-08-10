@@ -1,0 +1,8 @@
+BEGIN;
+
+ALTER TABLE merchants
+    ADD COLUMN merchant_type VARCHAR(50) NOT NULL DEFAULT 'individual',
+    ADD COLUMN kyc JSONB,
+    ADD COLUMN kyc_date TIMESTAMPTZ;
+
+COMMIT;

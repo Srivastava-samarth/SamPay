@@ -1,7 +1,61 @@
-package utils 
+package utils
 
-import "github.com/google/uuid"
+import (
+	"encoding/hex"
+	"math/rand"
+	"strconv"
 
-func GenerateUUID() string {
-	return uuid.New().String()
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
+)
+
+const passwordChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
+
+func GenerateUUID() uuid.UUID {
+	return uuid.New()
+}
+
+func GenerateMerchantReference() string {
+	id := uuid.New()
+	return "mrc_" + hex.EncodeToString(id[:])[:12]
+}
+
+func GenerateBankAccountNumber() string {
+    n := rand.Int63n(9000000000000) + 1000000000000
+    accountNumber := strconv.FormatInt(n, 10)
+
+    return accountNumber
+}
+
+func GenerateTemporaryPassword(length int) (string, error) {
+	password := make([]byte, length)
+
+	for i := 0; i < length; {
+		var b [1]byte
+
+		if _, err := rand.Read(b[:]); err != nil {
+			return "", err
+		}
+
+		if int(b[0]) >= 256-(256%len(passwordChars)) {
+			continue
+		}
+
+		password[i] = passwordChars[int(b[0])%len(passwordChars)]
+		i++
+	}
+
+	return string(password), nil
+}
+
+func HashPassword(password string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword(
+		[]byte(password),
+		bcrypt.DefaultCost,
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return string(hash), nil
 }
