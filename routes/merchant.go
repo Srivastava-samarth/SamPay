@@ -2,18 +2,18 @@ package routes
 
 import (
 	"github.com/Srivastava-samarth/sampay/controllers"
-	"github.com/Srivastava-samarth/sampay/notifications"
 	"github.com/gin-gonic/gin"
+	"go.temporal.io/sdk/client"
 	"gorm.io/gorm"
 )
 
 func MerchantRoutes(
 	router *gin.RouterGroup,
 	db *gorm.DB,
-	notificationService *notifications.EmailService,
+	temporalClient client.Client,
 ) {
 	router.POST(
 		"/merchants",
-		controllers.CreateMerchant(db, notificationService),
+		controllers.CreateMerchant(db, temporalClient),
 	)
 }

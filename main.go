@@ -7,11 +7,14 @@ import (
 	"github.com/Srivastava-samarth/sampay/database"
 	"github.com/Srivastava-samarth/sampay/notifications"
 	"github.com/Srivastava-samarth/sampay/routes"
+	"github.com/Srivastava-samarth/sampay/temporal"
+	"github.com/Srivastava-samarth/sampay/temporal/activities"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/gin-gonic/gin"
+	"go.temporal.io/sdk/worker"
 )
 
-func main(){
+func main() {
 	logger := utils.NewLogger()
 
 	cfg, err := config.Load()
@@ -24,9 +27,34 @@ func main(){
 		logger.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	 notificationService, err := notifications.NewEmailService(cfg.SMTP)
+	notificationService, err := notifications.NewEmailService(cfg.SMTP)
 
-    // router := routes.SetupRoutes(db, emailService)
+	// 4. Create Temporal client
+	temporalClient, err := temporal.NewClient(&cfg.Temporal)
+	if err != nil {
+		logger.Fatalf("Failed to create Temporal client: %v", err)
+	}
+	defer temporalClient.Close()
+
+	// 5. Create activity registry
+	activityRegistry := activities.NewRegistry(
+		db,
+		notificationService,
+	)
+
+	// 6. Start Temporal worker
+	temporalWorker := temporal.StartWorker(
+		temporalClient,
+		activityRegistry,
+	)
+
+	go func() {
+		if err := temporalWorker.Run(worker.InterruptCh()); err != nil {
+			logger.Fatalf("Temporal worker failed: %v", err)
+		}
+	}()
+
+	// router := routes.SetupRoutes(db, emailService)
 
 	router := gin.Default()
 	api := router.Group("/api/v1")
@@ -35,7 +63,7 @@ func main(){
 	routes.MerchantRoutes(
 		api,
 		db,
-		notificationService,
+		temporalClient,
 	)
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

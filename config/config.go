@@ -10,12 +10,17 @@ import (
 type Config struct {
 	Database DatabaseConfig
 	SMTP     SMTPConfig
+	Temporal TemporalConfig
 }
 
 type SMTPConfig struct {
 	Host string
 	Port string
 	From string
+}
+
+type TemporalConfig struct {
+	Host string
 }
 
 type DatabaseConfig struct {
@@ -49,6 +54,9 @@ func Load() (*Config, error) {
 			Host: os.Getenv("SMTP_HOST"),
 			Port: os.Getenv("SMTP_PORT"),
 			From: os.Getenv("SMTP_FROM"),
+		},
+		Temporal: TemporalConfig{
+			Host: os.Getenv("SAMPAY_TEMPORAL_HOST"),
 		},
 	}
 
@@ -88,6 +96,9 @@ func (cfg Config) validate() error {
 	}
 	if cfg.SMTP.From == "" {
 		return errors.New("missing required configuration: SAMPAY_SMTP_FROM")
+	}
+	if cfg.Temporal.Host == "" {
+		return errors.New("missing required configuration: SAMPAY_TEMPORAL_HOST")
 	}
 	return nil
 }

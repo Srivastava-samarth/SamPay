@@ -4,16 +4,22 @@ import (
 	"net/http"
 
 	"github.com/Srivastava-samarth/sampay/dto"
-	"github.com/Srivastava-samarth/sampay/notifications"
 	services "github.com/Srivastava-samarth/sampay/services"
+	"github.com/Srivastava-samarth/sampay/temporal"
+	"github.com/Srivastava-samarth/sampay/temporal/workflows"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"go.temporal.io/sdk/client"
 	"gorm.io/gorm"
 )
 
 var validate = validator.New()
 
-func CreateMerchant(db *gorm.DB, notificationService *notifications.EmailService) gin.HandlerFunc {
+func CreateMerchant(
+	db *gorm.DB,
+	temporalClient client.Client,
+) gin.HandlerFunc {
+
 	return func(c *gin.Context) {
 
 		var request dto.CreateMerchantOnboardingRequest
@@ -28,22 +34,40 @@ func CreateMerchant(db *gorm.DB, notificationService *notifications.EmailService
 			return
 		}
 
-		if err := validate.Struct(request); err != nil {
+		// Create initial merchant here
+		merchant, err := services.CreateInitialMerchant(
+			request,
+			db,
+		)
+
+		if err != nil {
 			dto.Fail(
 				c,
-				http.StatusBadRequest,
-				"VALIDATION_ERROR",
+				http.StatusInternalServerError,
+				"MERCHANT_CREATION_FAILED",
 				err.Error(),
 			)
 			return
 		}
 
-		response, err := services.CreateMerchant(request, db, notificationService)
+		workflowOptions := client.StartWorkflowOptions{
+			ID: "merchant-onboarding-" + merchant.ID.String(),
+			TaskQueue: temporal.MerchantOnboardingTaskQueue,
+		}
+
+		_, err = temporalClient.ExecuteWorkflow(
+			c.Request.Context(),
+			workflowOptions,
+			workflows.MerchantONboardingWorkflow,
+			request,
+			merchant.ID,
+		)
+
 		if err != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
-				"MERCHANT_ONBOARDING_FAILED",
+				"WORKFLOW_START_FAILED",
 				err.Error(),
 			)
 			return
@@ -52,7 +76,7 @@ func CreateMerchant(db *gorm.DB, notificationService *notifications.EmailService
 		dto.Respond(
 			c,
 			http.StatusAccepted,
-			response,
+			merchant,
 		)
 	}
 }

@@ -18,6 +18,21 @@ type MerchantProvisioningResult struct {
 	TemporaryPassword string
 }
 
+type MerchantService struct {
+	DB              *gorm.DB
+	WorkflowStarter MerchantOnboardingWorkflowStarter
+} 
+
+func NewMerchantService(
+	db *gorm.DB,
+	workflowStarter MerchantOnboardingWorkflowStarter,
+) *MerchantService {
+	return &MerchantService{
+		DB:              db,
+		WorkflowStarter: workflowStarter,
+	}
+}
+
 var validate = validator.New()
 
 func GetMerchantByID(merchantID uuid.UUID, db *gorm.DB) (*models.Merchant, error) {
@@ -28,8 +43,7 @@ func GetMerchantByID(merchantID uuid.UUID, db *gorm.DB) (*models.Merchant, error
 	return merchant, nil
 }
 
-func CreateMerchant(merchantRequest dto.CreateMerchantOnboardingRequest, db *gorm.DB, notificationService *notifications.EmailService) (*dto.CreateMerchantOnboardingResponse, error){
-
+func CreateInitialMerchant(merchantRequest dto.CreateMerchantOnboardingRequest, db *gorm.DB) (*dto.CreateMerchantOnboardingResponse, error){
 	initialMerchantRequest := models.Merchant{
 		MerchantName: merchantRequest.MerchantName,
 		Email: merchantRequest.Email,
@@ -46,8 +60,6 @@ func CreateMerchant(merchantRequest dto.CreateMerchantOnboardingRequest, db *gor
 		return nil, err
 	}
 
-	go ProcessMerchantOnboarding(merchantRequest,initialMerchant.ID,db,notificationService)
-
 	response := &dto.CreateMerchantOnboardingResponse{
 		ID:                initialMerchant.ID,
 		MerchantReference: initialMerchant.MerchantReference,
@@ -62,6 +74,41 @@ func CreateMerchant(merchantRequest dto.CreateMerchantOnboardingRequest, db *gor
 
 	return response, nil
 }
+
+// func CreateMerchant(merchantRequest dto.CreateMerchantOnboardingRequest, db *gorm.DB, notificationService *notifications.EmailService) (*dto.CreateMerchantOnboardingResponse, error){
+
+// 	initialMerchantRequest := models.Merchant{
+// 		MerchantName: merchantRequest.MerchantName,
+// 		Email: merchantRequest.Email,
+// 		MerchantType: merchantRequest.MerchantType,
+// 		PhoneNumber: merchantRequest.PhoneNumber,
+// 		Status: "pending",
+// 		ComplianceStatus: "pending",
+// 		CreatedAt: time.Now(),
+// 		UpdatedAt: time.Now(),
+// 	}
+
+// 	initialMerchant, err := repositories.CreateMerchant(initialMerchantRequest, db)
+// 	if err != nil{
+// 		return nil, err
+// 	}
+
+// 	go ProcessMerchantOnboarding(merchantRequest,initialMerchant.ID,db,notificationService)
+
+// 	response := &dto.CreateMerchantOnboardingResponse{
+// 		ID:                initialMerchant.ID,
+// 		MerchantReference: initialMerchant.MerchantReference,
+// 		MerchantName:      initialMerchant.MerchantName,
+// 		Email:             initialMerchant.Email,
+// 		MerchantType:      initialMerchant.MerchantType,
+// 		Status:            initialMerchant.Status,
+// 		ComplianceStatus:  initialMerchant.ComplianceStatus,
+// 		CreatedAt:         initialMerchant.CreatedAt,
+// 		UpdatedAt:         initialMerchant.UpdatedAt,
+// 	}
+
+// 	return response, nil
+// }
 
 func ProcessMerchantOnboarding(
 	request dto.CreateMerchantOnboardingRequest,
@@ -86,7 +133,7 @@ func ProcessMerchantOnboarding(
 		return
 	}
 
-	updatedMerchant, err := repositories.UpdateMerchantCompliance(
+	updatedMerchant, err := UpdateMerchantCompliance(
 		merchantID,
 		complianceResponse,
 		db,
@@ -238,4 +285,12 @@ func ProvisionMerchant(
 	}
 
 	return provisionMerchantResult, nil
+}
+
+func UpdateMerchantCompliance(merchantID uuid.UUID,complianceResponse *dto.ComplianceCheckResponse, db *gorm.DB) (*models.Merchant, error){
+	updatedMerchant, err := repositories.UpdateMerchantCompliance(merchantID,complianceResponse,db)
+	if err != nil {
+		return nil, err 
+	}
+	return updatedMerchant, nil
 }
