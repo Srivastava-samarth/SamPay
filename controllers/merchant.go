@@ -8,12 +8,10 @@ import (
 	"github.com/Srivastava-samarth/sampay/temporal"
 	"github.com/Srivastava-samarth/sampay/temporal/workflows"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"go.temporal.io/sdk/client"
 	"gorm.io/gorm"
 )
 
-var validate = validator.New()
 
 func CreateMerchant(
 	db *gorm.DB,
