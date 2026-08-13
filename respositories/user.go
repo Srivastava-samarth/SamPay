@@ -8,9 +8,25 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetBlockedUserByEmail(email string, db *gorm.DB) (bool, error) {
+type UserRepository struct{
+	db * gorm.DB
+}
+
+func NewUserRepository(db *gorm.DB) *UserRepository{
+	return &UserRepository{
+		db: db,
+	}
+}
+
+func (wr *UserRepository) WithTx(tx *gorm.DB) *UserRepository {
+	return &UserRepository{
+		db: tx,
+	}
+}
+
+func(ur *UserRepository) GetBlockedUserByEmail(email string) (bool, error) {
 	var user models.User
-	err := db.Where("email = ?", email).First(&user).Error
+	err := ur.db.Where("email = ?", email).First(&user).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return false, nil
@@ -20,7 +36,7 @@ func GetBlockedUserByEmail(email string, db *gorm.DB) (bool, error) {
 	return true, nil
 }
 
-func CreateUser(request *models.User, db *gorm.DB) (*models.User, error) {
+func(ur *UserRepository) CreateUser(request *models.User) (*models.User, error) {
 	user := &models.User{
 		ID:           utils.GenerateUUID(),
 		Email:        request.Email,
@@ -32,8 +48,17 @@ func CreateUser(request *models.User, db *gorm.DB) (*models.User, error) {
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
-	err := db.Create(user).Error
+	err := ur.db.Create(user).Error
 	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func(ur *UserRepository) GetUserByEmail(email string) (*models.User, error){
+	var user *models.User
+	err := ur.db.Where("email= ?",email).First(&user).Error 
+	if err != nil{
 		return nil, err
 	}
 	return user, nil

@@ -5,15 +5,26 @@ import (
 	"github.com/Srivastava-samarth/sampay/dto"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/utils"
-	"gorm.io/gorm"
 )
+
+type UserService struct{
+	UserRepo *repositories.UserRepository
+}
+
+func NewUserService(
+	UserRepo *repositories.UserRepository,
+) *UserService{
+	return &UserService{
+		UserRepo: UserRepo,
+	}
+}
 
 type CreatedUserResult  struct {
 	User              *dto.CreateUserResponse
 	TemporaryPassword string
 }
 
-func CreateUser(userRequest *dto.CreateUserRequest, db *gorm.DB) (*CreatedUserResult, error) {
+func(us *UserService) CreateUser(userRequest *dto.CreateUserRequest) (*CreatedUserResult, error) {
 	password, errP := utils.GenerateTemporaryPassword(8)
 	if errP != nil {
 		return nil, errP
@@ -32,7 +43,7 @@ func CreateUser(userRequest *dto.CreateUserRequest, db *gorm.DB) (*CreatedUserRe
 		Status:       "active",
 	}
 
-	user, err := repositories.CreateUser(createUserRequestPayload, db)
+	user, err := us.UserRepo.CreateUser(createUserRequestPayload)
 	if err != nil {
 		return nil, err
 	}

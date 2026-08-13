@@ -19,44 +19,65 @@ type MerchantProvisioningResult struct {
 }
 
 type MerchantService struct {
-	DB              *gorm.DB
-	WorkflowStarter MerchantOnboardingWorkflowStarter
-} 
+	DB                       *gorm.DB
+	MerchantRepo             *repositories.MerchantRepository
+	BankService              *BankService
+	ComplianceService        *ComplianceService
+	MerchantUserService      *MerchantUserService
+	LinkedBankAccountService *LinkedBankAccountService
+	UserService              *UserService
+	WalletService            *WalletService
+	NotificationService      *notifications.EmailService
+}
 
 func NewMerchantService(
 	db *gorm.DB,
-	workflowStarter MerchantOnboardingWorkflowStarter,
+	merchantRepo *repositories.MerchantRepository,
+	bankSrvc *BankService,
+	complianceSrvc *ComplianceService,
+	merchantUserSrvc *MerchantUserService,
+	linkedBankAccountSrvc *LinkedBankAccountService,
+	userSrvc *UserService,
+	walletSrvc *WalletService,
+	notificationService *notifications.EmailService,
 ) *MerchantService {
 	return &MerchantService{
-		DB:              db,
-		WorkflowStarter: workflowStarter,
+		DB:                       db,
+		MerchantRepo:             merchantRepo,
+		BankService:              bankSrvc,
+		ComplianceService:        complianceSrvc,
+		MerchantUserService:      merchantUserSrvc,
+		LinkedBankAccountService: linkedBankAccountSrvc,
+		UserService:              userSrvc,
+		WalletService:            walletSrvc,
+		NotificationService:      notificationService,
 	}
 }
 
 var validate = validator.New()
 
-func GetMerchantByID(merchantID uuid.UUID, db *gorm.DB) (*models.Merchant, error) {
-	merchant, err := repositories.GetMerchantByID(merchantID, db)
+func (ms *MerchantService) GetMerchantByID(merchantID uuid.UUID) (*models.Merchant, error) {
+	merchant, err := ms.MerchantRepo.GetMerchantByID(merchantID)
 	if err != nil {
 		return nil, err
 	}
 	return merchant, nil
 }
 
-func CreateInitialMerchant(merchantRequest dto.CreateMerchantOnboardingRequest, db *gorm.DB) (*dto.CreateMerchantOnboardingResponse, error){
+func (ms *MerchantService) CreateInitialMerchant(merchantRequest dto.CreateMerchantOnboardingRequest) (*dto.CreateMerchantOnboardingResponse, error) {
 	initialMerchantRequest := models.Merchant{
-		MerchantName: merchantRequest.MerchantName,
-		Email: merchantRequest.Email,
-		MerchantType: merchantRequest.MerchantType,
-		PhoneNumber: merchantRequest.PhoneNumber,
-		Status: "pending",
+		MerchantName:     merchantRequest.MerchantName,
+		Email:            merchantRequest.Email,
+		MerchantType:     merchantRequest.MerchantType,
+		PhoneNumber:      merchantRequest.PhoneNumber,
+		Status:           "pending",
 		ComplianceStatus: "pending",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
 	}
 
-	initialMerchant, err := repositories.CreateMerchant(initialMerchantRequest, db)
-	if err != nil{
+	initialMerchant, err := ms.MerchantRepo.CreateMerchant(initialMerchantRequest)
+	if err != nil {
 		return nil, err
 	}
 
@@ -75,42 +96,7 @@ func CreateInitialMerchant(merchantRequest dto.CreateMerchantOnboardingRequest, 
 	return response, nil
 }
 
-// func CreateMerchant(merchantRequest dto.CreateMerchantOnboardingRequest, db *gorm.DB, notificationService *notifications.EmailService) (*dto.CreateMerchantOnboardingResponse, error){
-
-// 	initialMerchantRequest := models.Merchant{
-// 		MerchantName: merchantRequest.MerchantName,
-// 		Email: merchantRequest.Email,
-// 		MerchantType: merchantRequest.MerchantType,
-// 		PhoneNumber: merchantRequest.PhoneNumber,
-// 		Status: "pending",
-// 		ComplianceStatus: "pending",
-// 		CreatedAt: time.Now(),
-// 		UpdatedAt: time.Now(),
-// 	}
-
-// 	initialMerchant, err := repositories.CreateMerchant(initialMerchantRequest, db)
-// 	if err != nil{
-// 		return nil, err
-// 	}
-
-// 	go ProcessMerchantOnboarding(merchantRequest,initialMerchant.ID,db,notificationService)
-
-// 	response := &dto.CreateMerchantOnboardingResponse{
-// 		ID:                initialMerchant.ID,
-// 		MerchantReference: initialMerchant.MerchantReference,
-// 		MerchantName:      initialMerchant.MerchantName,
-// 		Email:             initialMerchant.Email,
-// 		MerchantType:      initialMerchant.MerchantType,
-// 		Status:            initialMerchant.Status,
-// 		ComplianceStatus:  initialMerchant.ComplianceStatus,
-// 		CreatedAt:         initialMerchant.CreatedAt,
-// 		UpdatedAt:         initialMerchant.UpdatedAt,
-// 	}
-
-// 	return response, nil
-// }
-
-func ProcessMerchantOnboarding(
+func (ms *MerchantService) ProcessMerchantOnboarding(
 	request dto.CreateMerchantOnboardingRequest,
 	merchantID uuid.UUID,
 	db *gorm.DB,
@@ -123,20 +109,19 @@ func ProcessMerchantOnboarding(
 
 	if request.MerchantType == constants.MerchantTypeIndividual {
 		complianceResponse, errC =
-			PerformIndividualComplianceCheck(request, merchantID, db)
+			ms.ComplianceService.PerformIndividualComplianceCheck(request, merchantID)
 	} else {
 		complianceResponse, errC =
-			PerformIndividualComplianceCheck(request, merchantID, db)
+			ms.ComplianceService.PerformCorporateComplianceCheck(request, merchantID)
 	}
 
 	if errC != nil {
 		return
 	}
 
-	updatedMerchant, err := UpdateMerchantCompliance(
+	updatedMerchant, err := ms.UpdateMerchantCompliance(
 		merchantID,
 		complianceResponse,
-		db,
 	)
 	if err != nil {
 		return
@@ -147,27 +132,26 @@ func ProcessMerchantOnboarding(
 		return
 	}
 
-	provisionedUser, err := ProvisionMerchant(request, merchantID, db)
+	provisionedUser, err := ms.ProvisionMerchant(request, merchantID)
 	if err != nil {
 		return
 	}
 
-	errN := notificationService.SendMerchantWelcomeEmail(provisionedUser.User,provisionedUser.TemporaryPassword)
-	if errN != nil{
+	errN := ms.NotificationService.SendMerchantWelcomeEmail(provisionedUser.User, provisionedUser.TemporaryPassword)
+	if errN != nil {
 		return
 	}
 }
 
-func ProvisionMerchant(
+func (ms *MerchantService) ProvisionMerchant(
 	merchantRequest dto.CreateMerchantOnboardingRequest,
 	merchantID uuid.UUID,
-	db *gorm.DB,
 ) (*MerchantProvisioningResult, error) {
 
-	tx := db.Begin()
+	tx := ms.DB.Begin()
 
 	if tx.Error != nil {
-		return nil,tx.Error
+		return nil, tx.Error
 	}
 
 	defer func() {
@@ -178,25 +162,33 @@ func ProvisionMerchant(
 	}()
 
 	// 1. Create Wallet
-	_, err := CreateWalletForMerchant(merchantID, tx)
+	txWalletService := NewWalletService(
+		ms.WalletService.WalletRepo.WithTx(tx),
+	)
+	_, err := txWalletService.CreateWalletForMerchant(merchantID)
 	if err != nil {
 		tx.Rollback()
-		return nil,err
+		return nil, err
 	}
 
 	// 2. Create Bank Account
+	txBankService := NewBankService(
+		ms.BankService.BankRepo.WithTx(tx),
+		ms.BankService.MerchantRepo.WithTx(tx),
+		ms.BankService.LinkedBankAccountRepo.WithTx(tx),
+	)
+
 	bankAccountRequest := &dto.CreateBankAccountRequest{
 		AccountName: merchantRequest.MerchantName,
-		MerchantID: merchantID,
+		MerchantID:  merchantID,
 	}
 
-	merchantBankAccount, err := CreateBankAccount(
+	merchantBankAccount, err :=txBankService.CreateBankAccount(
 		bankAccountRequest,
-		tx,
 	)
 	if err != nil {
 		tx.Rollback()
-		return nil,err
+		return nil, err
 	}
 
 	// 3. Create Linked Bank Account
@@ -207,13 +199,16 @@ func ProvisionMerchant(
 		Status:        merchantBankAccount.Status,
 	}
 
-	_, err = CreateLinkedBankAccount(
+	txLinkedBankAccountService := NewLinkedBankAccountService(
+		ms.LinkedBankAccountService.LinkedBankAccountRepo.WithTx(tx),
+	)
+
+	_, err = txLinkedBankAccountService.CreateLinkedBankAccount(
 		linkedBankAccountRequest,
-		tx,
 	)
 	if err != nil {
 		tx.Rollback()
-		return nil,err
+		return nil, err
 	}
 
 	// 4. Determine owner name
@@ -239,13 +234,16 @@ func ProvisionMerchant(
 		LastName:  lastName,
 	}
 
-	user, err := CreateUser(
+	txUserService := NewUserService(
+		ms.UserService.UserRepo.WithTx(tx),
+	)
+
+	user, err := txUserService.CreateUser(
 		userRequest,
-		tx,
 	)
 	if err != nil {
 		tx.Rollback()
-		return nil,err
+		return nil, err
 	}
 
 	// 6. Create Merchant User
@@ -255,42 +253,44 @@ func ProvisionMerchant(
 		Role:       "owner",
 	}
 
-	_, err = CreateMerchantUser(
+	txMerchantUserService := NewMerchantUserService(
+		ms.MerchantUserService.MerchantUserRepo.WithTx(tx),
+	)
+	_, err = txMerchantUserService.CreateMerchantUser(
 		merchantUserRequest,
-		tx,
 	)
 	if err != nil {
 		tx.Rollback()
-		return nil,err
+		return nil, err
 	}
 
-	err = repositories.UpdateMerchantStatus(
+	txMerchantRepo := ms.MerchantRepo.WithTx(tx)
+	err = txMerchantRepo.UpdateMerchantStatus(
 		merchantID,
 		"active",
-		tx,
 	)
 	if err != nil {
 		tx.Rollback()
-		return nil,err
+		return nil, err
 	}
 
 	// 8. Commit everything
 	if err := tx.Commit().Error; err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	provisionMerchantResult := &MerchantProvisioningResult{
-		User: user.User,
+		User:              user.User,
 		TemporaryPassword: user.TemporaryPassword,
 	}
 
 	return provisionMerchantResult, nil
 }
 
-func UpdateMerchantCompliance(merchantID uuid.UUID,complianceResponse *dto.ComplianceCheckResponse, db *gorm.DB) (*models.Merchant, error){
-	updatedMerchant, err := repositories.UpdateMerchantCompliance(merchantID,complianceResponse,db)
+func (ms *MerchantService) UpdateMerchantCompliance(merchantID uuid.UUID, complianceResponse *dto.ComplianceCheckResponse) (*models.Merchant, error) {
+	updatedMerchant, err := ms.MerchantRepo.UpdateMerchantCompliance(merchantID, complianceResponse)
 	if err != nil {
-		return nil, err 
+		return nil, err
 	}
 	return updatedMerchant, nil
 }

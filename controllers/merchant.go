@@ -9,14 +9,25 @@ import (
 	"github.com/Srivastava-samarth/sampay/temporal/workflows"
 	"github.com/gin-gonic/gin"
 	"go.temporal.io/sdk/client"
-	"gorm.io/gorm"
 )
 
+type MerchantController struct{
+	MerchantService *services.MerchantService
+	TemporalClient client.Client
+}
 
-func CreateMerchant(
-	db *gorm.DB,
+func NewMerchantController(
+	merchantSrvc *services.MerchantService,
 	temporalClient client.Client,
-) gin.HandlerFunc {
+) *MerchantController{
+	return &MerchantController{
+		MerchantService: merchantSrvc,
+		TemporalClient: temporalClient,
+	}
+}
+
+
+func(mc *MerchantController) CreateMerchant() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
@@ -33,9 +44,8 @@ func CreateMerchant(
 		}
 
 		// Create initial merchant here
-		merchant, err := services.CreateInitialMerchant(
+		merchant, err := mc.MerchantService.CreateInitialMerchant(
 			request,
-			db,
 		)
 
 		if err != nil {
@@ -53,7 +63,7 @@ func CreateMerchant(
 			TaskQueue: temporal.MerchantOnboardingTaskQueue,
 		}
 
-		_, err = temporalClient.ExecuteWorkflow(
+		_, err = mc.TemporalClient.ExecuteWorkflow(
 			c.Request.Context(),
 			workflowOptions,
 			workflows.MerchantONboardingWorkflow,

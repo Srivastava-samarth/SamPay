@@ -10,7 +10,23 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateWalletForMerchant(merchantID uuid.UUID, db *gorm.DB) (*models.Wallets, error) {
+type WalletRepository struct{
+	db *gorm.DB
+}
+
+func NewWalletRepository(db *gorm.DB) *WalletRepository{
+	return &WalletRepository{
+		db: db,
+	}
+}
+
+func (wr *WalletRepository) WithTx(tx *gorm.DB) *WalletRepository {
+	return &WalletRepository{
+		db: tx,
+	}
+}
+
+func(wr *WalletRepository) CreateWalletForMerchant(merchantID uuid.UUID) (*models.Wallets, error) {
 	wallet := &models.Wallets{
 		ID:               utils.GenerateUUID(),
 		MerchantID:       merchantID,
@@ -21,7 +37,7 @@ func CreateWalletForMerchant(merchantID uuid.UUID, db *gorm.DB) (*models.Wallets
 		UpdatedAt:        time.Now(),
 	}
 
-	if err := db.Create(wallet).Error; err != nil {
+	if err := wr.db.Create(wallet).Error; err != nil {
 		return nil, err
 	}
 

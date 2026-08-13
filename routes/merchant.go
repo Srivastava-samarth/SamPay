@@ -3,17 +3,25 @@ package routes
 import (
 	"github.com/Srivastava-samarth/sampay/controllers"
 	"github.com/gin-gonic/gin"
-	"go.temporal.io/sdk/client"
-	"gorm.io/gorm"
 )
 
-func MerchantRoutes(
+type MerchantRouter struct{
+	MerchantController *controllers.MerchantController
+}
+
+func NewMerchantRouter(
+	merchantController *controllers.MerchantController,
+) *MerchantRouter{
+	return &MerchantRouter{
+		MerchantController: merchantController,
+	}
+}
+
+func(mr *MerchantRouter) MerchantRoutes(
 	router *gin.RouterGroup,
-	db *gorm.DB,
-	temporalClient client.Client,
 ) {
 	router.POST(
 		"/merchants",
-		controllers.CreateMerchant(db, temporalClient),
+		mr.MerchantController.CreateMerchant(),
 	)
 }

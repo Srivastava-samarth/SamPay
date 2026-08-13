@@ -8,7 +8,23 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateMerchantUser(merchantUser *models.MerchantUser, db *gorm.DB) (*models.MerchantUser, error){
+type MerchantUserRepository struct{
+	db *gorm.DB
+}
+
+func NewMerchantUserRepository(db *gorm.DB) *MerchantUserRepository{
+	return &MerchantUserRepository{
+		db: db,
+	}
+}
+
+func (wr *MerchantUserRepository) WithTx(tx *gorm.DB) *MerchantUserRepository {
+	return &MerchantUserRepository{
+		db: tx,
+	}
+}
+
+func(mur *MerchantUserRepository) CreateMerchantUser(merchantUser *models.MerchantUser) (*models.MerchantUser, error){
 	newMerchantUser := &models.MerchantUser{
 		ID: utils.GenerateUUID(),
 		MerchantID: merchantUser.MerchantID,
@@ -18,7 +34,7 @@ func CreateMerchantUser(merchantUser *models.MerchantUser, db *gorm.DB) (*models
 		UpdatedAt: time.Now(),
 	}
 
-	err := db.Create(&newMerchantUser).Error
+	err := mur.db.Create(&newMerchantUser).Error
 	if err != nil{
 		return nil, err
 	}

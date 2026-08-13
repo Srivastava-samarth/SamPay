@@ -10,10 +10,24 @@ import (
 	"gorm.io/gorm"
 )
 
+type BankRepository struct{
+	db *gorm.DB
+}
 
-func CreateBankAccount(
+func NewBankRepository(db *gorm.DB) *BankRepository{
+	return &BankRepository{
+		db: db,
+	}
+}
+
+func (wr *BankRepository) WithTx(tx *gorm.DB) *BankRepository {
+	return &BankRepository{
+		db: tx,
+	}
+}
+
+func(br *BankRepository) CreateBankAccount(
 	bankAccount *models.BankAccount,
-	db *gorm.DB,
 ) (*models.BankAccount, error) {
 
 	newBankAccount := &models.BankAccount{
@@ -29,16 +43,16 @@ func CreateBankAccount(
 		UpdatedAt:     time.Now(),
 	}
 
-	if err := db.Create(newBankAccount).Error; err != nil {
+	if err := br.db.Create(newBankAccount).Error; err != nil {
 		return nil, err
 	}
 
 	return newBankAccount, nil
 }
 
-func GetBankAccountByID(ID uuid.UUID, db *gorm.DB) (*models.BankAccount, error) {
+func(br *BankRepository) GetBankAccountByID(ID uuid.UUID) (*models.BankAccount, error) {
 	var bankAccount models.BankAccount
-	err := db.Where("id = ?", ID).First(&bankAccount).Error
+	err := br.db.Where("id = ?", ID).First(&bankAccount).Error
 	if err != nil {
 		return nil, err
 	}
