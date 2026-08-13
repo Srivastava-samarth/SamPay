@@ -9,7 +9,23 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateLinkedBankAccount(linkedBankAccount *models.LinkedBankAccount, db *gorm.DB) (*models.LinkedBankAccount, error){
+type LinkedBankAccountRepository struct{
+	db *gorm.DB
+}
+
+func NewLinkedBankRepository(db *gorm.DB) *LinkedBankAccountRepository{
+	return &LinkedBankAccountRepository{
+		db: db,
+	}
+}
+
+func (wr *LinkedBankAccountRepository) WithTx(tx *gorm.DB) *LinkedBankAccountRepository {
+	return &LinkedBankAccountRepository{
+		db: tx,
+	}
+}
+
+func(lbr *LinkedBankAccountRepository) CreateLinkedBankAccount(linkedBankAccount *models.LinkedBankAccount) (*models.LinkedBankAccount, error){
 	parseLinkedBankAccount := &models.LinkedBankAccount{
 		ID: utils.GenerateUUID(),
 		MerchantID: linkedBankAccount.MerchantID,
@@ -19,7 +35,7 @@ func CreateLinkedBankAccount(linkedBankAccount *models.LinkedBankAccount, db *go
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	err := db.Create(&parseLinkedBankAccount).Error
+	err := lbr.db.Create(&parseLinkedBankAccount).Error
 	if err != nil {
 		return nil, err
 	}
@@ -27,10 +43,10 @@ func CreateLinkedBankAccount(linkedBankAccount *models.LinkedBankAccount, db *go
 	return parseLinkedBankAccount, nil
 }
 
-func GetAllBankAccountLinkedByMerchantID(merchantID uuid.UUID, db *gorm.DB) ([]*models.LinkedBankAccount, error){
+func(lbr *LinkedBankAccountRepository) GetAllBankAccountLinkedByMerchantID(merchantID uuid.UUID) ([]*models.LinkedBankAccount, error){
 	var linkedBankAccounts []*models.LinkedBankAccount
 
-	err := db.Where(
+	err := lbr.db.Where(
 		"merchant_id = ? AND status = ?",
 		merchantID,
 		"active",

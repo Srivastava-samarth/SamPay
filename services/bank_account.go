@@ -7,16 +7,31 @@ import (
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
-	"gorm.io/gorm"
 )
 
-func CreateBankAccount(bankAccountRequest *dto.CreateBankAccountRequest, db *gorm.DB) (*dto.CreateBankAccountResponse, error) {
-	_, err := repositories.GetMerchantByID(bankAccountRequest.MerchantID, db)
+type BankService struct {
+	BankRepo              *repositories.BankRepository
+	MerchantRepo          *repositories.MerchantRepository
+	LinkedBankAccountRepo *repositories.LinkedBankAccountRepository
+}
+
+func NewBankService(BankRepo *repositories.BankRepository,
+	MerchantRepo *repositories.MerchantRepository,
+	LinkedBankAccountRepo *repositories.LinkedBankAccountRepository) *BankService {
+	return &BankService{
+		MerchantRepo:          MerchantRepo,
+		BankRepo:              BankRepo,
+		LinkedBankAccountRepo: LinkedBankAccountRepo,
+	}
+}
+
+func (bs *BankService) CreateBankAccount(bankAccountRequest *dto.CreateBankAccountRequest) (*dto.CreateBankAccountResponse, error) {
+	_, err := bs.MerchantRepo.GetMerchantByID(bankAccountRequest.MerchantID)
 	if err != nil {
 		return nil, err
 	}
 
-	linkedBankAccounts, err := repositories.GetAllBankAccountLinkedByMerchantID(bankAccountRequest.MerchantID, db)
+	linkedBankAccounts, err := bs.LinkedBankAccountRepo.GetAllBankAccountLinkedByMerchantID(bankAccountRequest.MerchantID)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +51,7 @@ func CreateBankAccount(bankAccountRequest *dto.CreateBankAccountRequest, db *gor
 		AccountType: accountType,
 	}
 
-	bankAccountForMerchant, err := repositories.CreateBankAccount(createBankAccountPayload, db)
+	bankAccountForMerchant, err := bs.BankRepo.CreateBankAccount(createBankAccountPayload)
 	if err != nil {
 		return nil, err
 	}

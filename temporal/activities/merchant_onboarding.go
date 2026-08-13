@@ -18,17 +18,15 @@ func (a *Registry) PerformComplianceCheck(
 ) (*dto.ComplianceCheckResponse, error) {
 
 	if request.MerchantType == constants.MerchantTypeIndividual {
-		return services.PerformIndividualComplianceCheck(
+		return a.ComplianceService.PerformIndividualComplianceCheck(
 			request,
 			merchantID,
-			a.DB,
 		)
 	}
 
-	return services.PerformCorporateComplianceCheck(
+	return a.ComplianceService.PerformCorporateComplianceCheck(
 		request,
 		merchantID,
-		a.DB,
 	)
 }
 
@@ -38,10 +36,9 @@ func (a *Registry) ProvisionMerchant(
 	merchantID uuid.UUID,
 ) (*services.MerchantProvisioningResult, error) {
 
-	return services.ProvisionMerchant(
+	return a.MerchantService.ProvisionMerchant(
 		request,
 		merchantID,
-		a.DB,
 	)
 }
 
@@ -62,9 +59,8 @@ func (a *Registry) UpdateMerchantCompliance(
 	merchantID uuid.UUID,
 	complianceResponse *dto.ComplianceCheckResponse,
 ) (*models.Merchant, error) {
-	return services.UpdateMerchantCompliance(
+	return a.MerchantService.UpdateMerchantCompliance(
 		merchantID, 
-		complianceResponse, 
-		a.DB,
+		complianceResponse,
 	)
 }

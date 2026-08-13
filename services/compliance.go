@@ -11,7 +11,20 @@ import (
 	"gorm.io/gorm"
 )
 
-func PerformIndividualComplianceCheck(request dto.CreateMerchantOnboardingRequest, merchantID uuid.UUID, db *gorm.DB) (*dto.ComplianceCheckResponse, error) {
+type ComplianceService struct {
+	UserRepo *repositories.UserRepository
+}
+
+func NewComplianceService(UserRepo *repositories.UserRepository) *ComplianceService {
+	return &ComplianceService{
+		UserRepo: UserRepo,
+	}
+}
+
+func (cs *ComplianceService) PerformIndividualComplianceCheck(
+	request dto.CreateMerchantOnboardingRequest,
+	merchantID uuid.UUID,
+) (*dto.ComplianceCheckResponse, error) {
 
 	name, country, dob := request.Individual.FirstName+" "+request.Individual.LastName, request.Individual.Country, request.Individual.DateOfBirth
 	// Perform compliance checks based on the provided information
@@ -48,7 +61,7 @@ func PerformIndividualComplianceCheck(request dto.CreateMerchantOnboardingReques
 	for _, restrictedCountry := range constants.RestrictedCountries {
 		if sip.Country == restrictedCountry {
 			return &dto.ComplianceCheckResponse{
-				MerchantID: merchantID,
+				MerchantID:       merchantID,
 				ComplianceStatus: constants.ComplianceStatusRejected,
 				ComplianceDate:   time.Now(),
 				ComplianceReason: "sanctioned_country",
@@ -61,14 +74,14 @@ func PerformIndividualComplianceCheck(request dto.CreateMerchantOnboardingReques
 		}
 	}
 
-	blockedUser, err := repositories.GetBlockedUserByEmail(request.Email, db)
+	blockedUser, err := cs.UserRepo.GetBlockedUserByEmail(request.Email)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, err
 	}
 
 	if blockedUser {
 		return &dto.ComplianceCheckResponse{
-			MerchantID: merchantID,
+			MerchantID:       merchantID,
 			ComplianceStatus: constants.ComplianceStatusRejected,
 			ComplianceDate:   time.Now(),
 			ComplianceReason: "blocked_user",
@@ -82,7 +95,7 @@ func PerformIndividualComplianceCheck(request dto.CreateMerchantOnboardingReques
 
 	// no issues found, return approved status
 	return &dto.ComplianceCheckResponse{
-		MerchantID: merchantID,
+		MerchantID:       merchantID,
 		ComplianceStatus: constants.ComplianceStatusApproved,
 		ComplianceDate:   time.Now(),
 		ComplianceReason: "compliance_check_passed",
@@ -94,10 +107,9 @@ func PerformIndividualComplianceCheck(request dto.CreateMerchantOnboardingReques
 	}, nil
 }
 
-func PerformCorporateComplianceCheck(
+func (cs *ComplianceService) PerformCorporateComplianceCheck(
 	request dto.CreateMerchantOnboardingRequest,
 	merchantID uuid.UUID,
-	db *gorm.DB,
 ) (*dto.ComplianceCheckResponse, error) {
 
 	company := request.Company
@@ -189,9 +201,8 @@ func PerformCorporateComplianceCheck(
 	}
 
 	// Check merchant email against blocked users
-	blockedUser, err := repositories.GetBlockedUserByEmail(
+	blockedUser, err := cs.UserRepo.GetBlockedUserByEmail(
 		request.Email,
-		db,
 	)
 
 	if err != nil && err != gorm.ErrRecordNotFound {

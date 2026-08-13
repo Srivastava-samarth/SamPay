@@ -4,11 +4,22 @@ import (
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
-func CreateWalletForMerchant(merchantID uuid.UUID, db *gorm.DB) (*models.Wallets, error) {
-	wallet, walletErr := repositories.CreateWalletForMerchant(merchantID, db)
+type WalletService struct{
+	WalletRepo *repositories.WalletRepository
+}
+
+func NewWalletService(
+	WalletRepo *repositories.WalletRepository,
+) *WalletService{
+	return &WalletService{
+		WalletRepo: WalletRepo,
+	}
+}
+
+func(ws *WalletService) CreateWalletForMerchant(merchantID uuid.UUID) (*models.Wallets, error) {
+	wallet, walletErr := ws.WalletRepo.CreateWalletForMerchant(merchantID)
 	if walletErr != nil {
 		return nil, walletErr
 	}
