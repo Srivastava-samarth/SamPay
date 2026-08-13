@@ -11,6 +11,7 @@ type Config struct {
 	Database DatabaseConfig
 	SMTP     SMTPConfig
 	Temporal TemporalConfig
+	JWT      JWTConfig
 }
 
 type SMTPConfig struct {
@@ -31,6 +32,12 @@ type DatabaseConfig struct {
 	Name     string
 	SSLMode  string
 	TimeZone string
+}
+
+type JWTConfig struct {
+	Secret        string
+	AccessExpiry  string
+	RefreshExpiry string
 }
 
 // Load reads the configuration from environment variables and returns a Config struct.
@@ -57,6 +64,11 @@ func Load() (*Config, error) {
 		},
 		Temporal: TemporalConfig{
 			Host: os.Getenv("SAMPAY_TEMPORAL_HOST"),
+		},
+		JWT: JWTConfig{
+			Secret : os.Getenv("JWT_SECRET"),
+			AccessExpiry : os.Getenv("JWT_ACCESS_EXPIRY"),
+			RefreshExpiry: os.Getenv("JWT_REFRESH_EXPIRY"),
 		},
 	}
 
@@ -99,6 +111,15 @@ func (cfg Config) validate() error {
 	}
 	if cfg.Temporal.Host == "" {
 		return errors.New("missing required configuration: SAMPAY_TEMPORAL_HOST")
+	}
+	if cfg.JWT.Secret == "" {
+		return errors.New("missing required configuration: Secret_KEY")
+	}
+	if cfg.JWT.AccessExpiry == "" {
+		return errors.New("missing required configuration: JWT_ACCESS_EXPIRY")
+	}
+	if cfg.JWT.RefreshExpiry == "" {
+		return errors.New("missing required configuration: JWT_REFRESH_EXPIRY")
 	}
 	return nil
 }

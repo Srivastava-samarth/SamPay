@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"math/rand"
 	"strconv"
-
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
