@@ -1,4 +1,4 @@
-BEGIN
+BEGIN;
 CREATE TABLE password_reset_tokens (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL,
@@ -19,4 +19,4 @@ CREATE INDEX idx_password_reset_tokens_user_id
 CREATE INDEX idx_password_reset_tokens_expires_at
     ON password_reset_tokens(expires_at);
 
-COMMIT    
+COMMIT;    
