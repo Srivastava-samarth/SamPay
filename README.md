@@ -5,3 +5,4 @@ SamPay is a backend-focused fintech application built with Go. The project is de
 > 🚧 **Status: Under Active Development**
 >
 > SamPay is currently a work in progress. Features and architecture are being implemented incrementally.
+Merchant Onboarding completed with temporal workflow integration
