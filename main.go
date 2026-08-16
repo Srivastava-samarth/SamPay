@@ -35,10 +35,11 @@ func main() {
 	walletRepo := repositories.NewWalletRepository(db)
 	bankRepo := repositories.NewBankRepository(db)
 	userRepo := repositories.NewUserRepository(db)
+	userSessionRepo := repositories.NewUserSessionRepository(db)
+	passwordResetRepo := repositories.NewPasswordResetTokenRepository(db)
 	merchantUserRepo := repositories.NewMerchantUserRepository(db)
 	linkedBankAccountRepo := repositories.NewLinkedBankRepository(db)
 
-	
 	notificationService, err :=
 		notifications.NewEmailService(cfg.SMTP)
 
@@ -91,6 +92,17 @@ func main() {
 		notificationService,
 	)
 
+	jwtService := utils.NewJwt(&cfg.JWT)
+
+	authService := services.NewAuthService(
+		userRepo,
+		userSessionRepo,
+		merchantUserRepo,
+		jwtService,
+		notificationService,
+		passwordResetRepo,
+	)
+
 	// --------------------------------------------------
 	// Controllers
 	// --------------------------------------------------
@@ -104,32 +116,42 @@ func main() {
 		merchantController,
 	)
 
+	authController := controllers.NewAuthController(
+		authService,
+		temporalClient,
+	)
+
+	authRouter := routes.NewAuthRouter(
+		authController,
+	)
+
 	activityRegistry := activities.NewRegistry(
 		db,
 		notificationService,
 		merchantService,
 		complianceService,
+		authService,
 	)
 
-	temporalWorker := temporal.StartWorker(
+	workers := temporal.StartWorkers(
 		temporalClient,
 		activityRegistry,
 	)
 
-	go func() {
-		if err := temporalWorker.Run(worker.InterruptCh()); err != nil {
-			logger.Fatalf(
-				"Temporal worker failed: %v",
-				err,
-			)
-		}
-	}()
+	for _, w := range workers {
+		go func(w worker.Worker) {
+			if err := w.Run(worker.InterruptCh()); err != nil {
+				logger.Fatalf("Temporal worker failed: %v", err)
+			}
+		}(w)
+	}
 
 	router := gin.Default()
 
 	api := router.Group("/api/v1")
 
 	merchantRouter.MerchantRoutes(api)
+	authRouter.AuthRoutes(api)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

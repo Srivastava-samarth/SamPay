@@ -24,4 +24,8 @@ func(ar *AuthRouter) AuthRoutes(
 		"/login",
 		ar.AuthController.Login(),
 	)
+	router.POST(
+		"/forgot-password",
+		ar.AuthController.ForgotPassword(),
+	)
 }
