@@ -53,7 +53,7 @@ func (j *Jwt) GenarateTokenAndExpiry(
 	return signedToken, nil
 }
 
-func(j *Jwt) GenerateRefreshToken() (string, error) {
+func (j *Jwt) GenerateRefreshToken() (string, error) {
 	bytes := make([]byte, 32)
 
 	if _, err := rand.Read(bytes); err != nil {
@@ -61,4 +61,31 @@ func(j *Jwt) GenerateRefreshToken() (string, error) {
 	}
 
 	return base64.RawURLEncoding.EncodeToString(bytes), nil
+}
+
+func (j *Jwt) GenerateResetPasswordToken(
+	userID uuid.UUID,
+	email string,
+) (string, error) {
+	expirySeconds, err := strconv.ParseInt(j.Config.AccessExpiry, 10, 64)
+	if err != nil {
+		return "", err
+	}
+
+	expiry := time.Now().Add(time.Duration(expirySeconds) * time.Second)
+	claims := jwt.MapClaims{
+		"sub":   userID.String(),
+		"email": email,
+		"type":  "access",
+		"exp":   expiry.Unix(),
+		"iat":   time.Now().Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	signedToken, err := token.SignedString([]byte(j.Config.Secret))
+	if err != nil {
+		return "", err
+	}
+	return signedToken, nil
 }

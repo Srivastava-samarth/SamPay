@@ -99,8 +99,6 @@ func (ms *MerchantService) CreateInitialMerchant(merchantRequest dto.CreateMerch
 func (ms *MerchantService) ProcessMerchantOnboarding(
 	request dto.CreateMerchantOnboardingRequest,
 	merchantID uuid.UUID,
-	db *gorm.DB,
-	notificationService *notifications.EmailService,
 ) {
 	var (
 		complianceResponse *dto.ComplianceCheckResponse

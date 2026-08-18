@@ -10,3 +10,7 @@ type AuthResponse struct {
 	RefreshToken string `json:"refresh_token"`
 	ExpiresIn    int    `json:"expires_in"`
 }
+
+type ForgotPasswordRequest struct{
+	Email string `json:"email"`
+}

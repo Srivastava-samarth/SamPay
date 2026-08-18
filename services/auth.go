@@ -7,15 +7,18 @@ import (
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
+	"github.com/Srivastava-samarth/sampay/notifications"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/utils"
 )
 
 type AuthService struct {
-	UserRepo         *repositories.UserRepository
-	UserSessionRepo  *repositories.UserSessionRepository
-	MerchantUserRepo *repositories.MerchantUserRepository
-	JwtService       utils.Jwt
+	UserRepo            *repositories.UserRepository
+	UserSessionRepo     *repositories.UserSessionRepository
+	MerchantUserRepo    *repositories.MerchantUserRepository
+	JwtService          utils.Jwt
+	NotificationService notifications.EmailService
+	PasswordResetRepo   *repositories.PasswordResetTokenRepository
 }
 
 func NewAuthService(
@@ -23,12 +26,16 @@ func NewAuthService(
 	userSessionRepo *repositories.UserSessionRepository,
 	merchantUserRepo *repositories.MerchantUserRepository,
 	jwtService *utils.Jwt,
+	notification *notifications.EmailService,
+	passwordResetRepo *repositories.PasswordResetTokenRepository,
 ) *AuthService {
 	return &AuthService{
-		UserRepo:         userRepo,
-		UserSessionRepo:  userSessionRepo,
-		MerchantUserRepo: merchantUserRepo,
-		JwtService:       *jwtService,
+		UserRepo:            userRepo,
+		UserSessionRepo:     userSessionRepo,
+		MerchantUserRepo:    merchantUserRepo,
+		JwtService:          *jwtService,
+		NotificationService: *notification,
+		PasswordResetRepo: passwordResetRepo,
 	}
 }
 
@@ -64,11 +71,7 @@ func (as *AuthService) Authentication(authRequest *dto.AuthRequest) (*dto.AuthRe
 
 	token, err := as.JwtService.GenarateTokenAndExpiry(merchantUser.UserID, merchantUser.MerchantID, merchantUser.Role)
 	refreshToken, err := as.JwtService.GenerateRefreshToken()
-	hashedRefreshToken, err := utils.HashPassword(refreshToken)
-	if err != nil {
-		return nil, err
-	}
-
+	hashedRefreshToken := utils.HashToken(refreshToken)
 	refreshTokenExpirySeconds, err := strconv.ParseInt(
 		as.JwtService.Config.RefreshExpiry,
 		10,
@@ -100,4 +103,54 @@ func (as *AuthService) Authentication(authRequest *dto.AuthRequest) (*dto.AuthRe
 
 	return authResponse, nil
 
+}
+
+func (as *AuthService) ForgotPasswod(forgotPasswordRequest *dto.ForgotPasswordRequest) error {
+	user, errU := as.UserRepo.GetUserByEmail(forgotPasswordRequest.Email)
+	if errU != nil {
+		return errU
+	}
+
+	if user == nil {
+		return errors.New("User doen not exist !")
+	}
+
+	resetToken, errRT := as.JwtService.GenerateResetPasswordToken(user.ID, user.Email)
+	if errRT != nil {
+		return errRT
+	}
+
+	hashedResetToken := utils.HashToken(resetToken)
+
+	resetTokenExpirySeconds, err := strconv.ParseInt(
+		as.JwtService.Config.AccessExpiry,
+		10,
+		64,
+	)
+	if err != nil {
+		return err
+	}
+
+	resetTokenExpiry := time.Now().Add(
+		time.Duration(resetTokenExpirySeconds) * time.Second,
+	)
+
+	passwordResetPayload := &models.PasswordResetToken{
+		UserID: user.ID,
+		ExpiresAt: resetTokenExpiry,
+		TokenHash: hashedResetToken,
+		UsedAt: nil,
+		CreatedAt: time.Now(),
+	}
+
+	_, errPR := as.PasswordResetRepo.CreatePasswordReset(passwordResetPayload)
+	if errPR != nil{
+		return errPR
+	}
+
+	errN := as.NotificationService.SendResetPasswordEmail(user.FirstName, user.Email, resetToken)
+	if errN != nil {
+		return errN
+	}
+	return nil
 }

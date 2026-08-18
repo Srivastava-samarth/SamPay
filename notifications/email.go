@@ -75,3 +75,32 @@ SamPay Team
 	)
 }
 
+func (s *EmailService) SendResetPasswordEmail(
+	name string,
+	email string,
+	token string,
+) error {
+	subject := "SamPay: Forgot Password Reset"
+
+	body := fmt.Sprintf(`
+Hello %s,
+
+You have initiated a forgot password request through our platform.
+
+Login Email: %s
+reset password access token: %s
+
+The password reset will take place through another API which will use this access token provided to validate the request.
+As SamPay is currently a API based service, you may please access our rest password endpoint.
+
+Regards,
+SamPay Team
+`, name, email, token)
+
+	return s.Send(
+		email,
+		subject,
+		body,
+	)
+}	
+

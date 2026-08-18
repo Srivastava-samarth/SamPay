@@ -9,23 +9,52 @@ import (
 )
 
 const MerchantOnboardingTaskQueue = "MERCHANT_ONBOARDING"
+const ForgotPasswordTaskQueue = "FORGOT_PASSWORD"
 
-func StartWorker(
-	temporalClient client.Client,
-	activityRegistry *activities.Registry,
-) worker.Worker {
+type WorkerConfig struct {
+    TaskQueue string
+    Register  func(worker.Worker)
+}
 
-	w := worker.New(
-		temporalClient,
-		MerchantOnboardingTaskQueue,
-		worker.Options{},
-	)
+func StartWorkers(
+    temporalClient client.Client,
+    activityRegistry *activities.Registry,
+) []worker.Worker {
 
-	w.RegisterWorkflow(workflows.MerchantONboardingWorkflow)
+    configs := []WorkerConfig{
+        {
+            TaskQueue: MerchantOnboardingTaskQueue,
+            Register: func(w worker.Worker) {
+                w.RegisterWorkflow(workflows.MerchantONboardingWorkflow)
 
-	w.RegisterActivity(activityRegistry.PerformComplianceCheck)
-	w.RegisterActivity(activityRegistry.ProvisionMerchant)
-	w.RegisterActivity(activityRegistry.SendWelcomeEmail)
-	w.RegisterActivity(activityRegistry.UpdateMerchantCompliance)
-	return w
+                w.RegisterActivity(activityRegistry.PerformComplianceCheck)
+                w.RegisterActivity(activityRegistry.ProvisionMerchant)
+                w.RegisterActivity(activityRegistry.SendWelcomeEmail)
+                w.RegisterActivity(activityRegistry.UpdateMerchantCompliance)
+            },
+        },
+        {
+            TaskQueue: ForgotPasswordTaskQueue,
+            Register: func(w worker.Worker) {
+                w.RegisterWorkflow(workflows.ForgotPasswordWorkflow)
+
+                w.RegisterActivity(activityRegistry.ForgotPassword)
+            },
+        },
+    }
+
+    workers := make([]worker.Worker, 0, len(configs))
+
+    for _, cfg := range configs {
+        w := worker.New(
+            temporalClient,
+            cfg.TaskQueue,
+            worker.Options{},
+        )
+
+        cfg.Register(w)
+        workers = append(workers, w)
+    }
+
+    return workers
 }

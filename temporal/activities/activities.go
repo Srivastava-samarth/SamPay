@@ -13,6 +13,7 @@ type Registry struct {
 	ComplianceService   *services.ComplianceService
 	WalletService       *services.WalletService
 	MerchantService     *services.MerchantService
+	AuthService         *services.AuthService
 }
 
 func NewRegistry(
@@ -20,11 +21,13 @@ func NewRegistry(
 	notificationService *notifications.EmailService,
 	merchantSrvc *services.MerchantService,
 	complianceSrvc *services.ComplianceService,
+	authSrvc *services.AuthService,
 ) *Registry {
 	return &Registry{
 		DB:                  db,
 		NotificationService: notificationService,
 		MerchantService:     merchantSrvc,
 		ComplianceService:   complianceSrvc,
+		AuthService: authSrvc,
 	}
 }
