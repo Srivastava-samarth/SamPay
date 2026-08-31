@@ -63,3 +63,30 @@ func(ur *UserRepository) GetUserByEmail(email string) (*models.User, error){
 	}
 	return user, nil
 }
+
+func (ur *UserRepository) UpdateUser(request *models.User) (*models.User, error) {
+	err := ur.db.
+		Model(&models.User{}).
+		Where("id = ?", request.ID).
+		Updates(map[string]interface{}{
+			"password_hash":         request.PasswordHash,
+			"must_change_password":  request.MustChangePassword,
+			"updated_at":            time.Now(),
+		}).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	var updatedUser models.User
+
+	err = ur.db.
+		Where("id = ?", request.ID).
+		First(&updatedUser).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &updatedUser, nil
+}

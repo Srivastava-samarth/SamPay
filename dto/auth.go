@@ -14,3 +14,10 @@ type AuthResponse struct {
 type ForgotPasswordRequest struct{
 	Email string `json:"email"`
 }
+
+type ResetPasswordRequest struct{
+	Email string `json:"email" validate:"required"`
+	ResetToken string `json:"reset_token" validate:"required"`
+	NewPassword string `json:"new_password" validate:"required"`
+	ConfirmPassword string `json:"confirm_password" validate:"required"`
+}

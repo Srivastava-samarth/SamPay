@@ -95,6 +95,7 @@ func main() {
 	jwtService := utils.NewJwt(&cfg.JWT)
 
 	authService := services.NewAuthService(
+		db,
 		userRepo,
 		userSessionRepo,
 		merchantUserRepo,

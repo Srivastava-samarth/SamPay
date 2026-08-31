@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/base64"
+	"errors"
 	"math/rand"
 	"strconv"
 	"time"
@@ -76,7 +77,7 @@ func (j *Jwt) GenerateResetPasswordToken(
 	claims := jwt.MapClaims{
 		"sub":   userID.String(),
 		"email": email,
-		"type":  "access",
+		"type":  "password_reset",
 		"exp":   expiry.Unix(),
 		"iat":   time.Now().Unix(),
 	}
@@ -88,4 +89,56 @@ func (j *Jwt) GenerateResetPasswordToken(
 		return "", err
 	}
 	return signedToken, nil
+}
+
+func(j *Jwt) ValidateResetPaasword(
+	tokenString string,
+) (uuid.UUID, string, error){
+	token, errT := jwt.Parse(
+		tokenString,
+		func(token *jwt.Token) (interface{}, error) {
+
+			if token.Method != jwt.SigningMethodHS256 {
+				return nil, errors.New("invalid signing method")
+			}
+
+			return []byte(j.Config.Secret), nil
+		},
+	)
+
+	if errT != nil {
+		return uuid.Nil, "", errT
+	}
+
+	if !token.Valid {
+		return uuid.Nil, "", errors.New("invalid reset token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return uuid.Nil, "", errors.New("invalid token claims")
+	}
+
+	tokenType, ok := claims["type"].(string)
+	if !ok || tokenType != "password_reset" {
+		return uuid.Nil, "", errors.New("invalid reset token type")
+	}
+
+	sub, ok := claims["sub"].(string)
+	if !ok {
+		return uuid.Nil, "", errors.New("invalid user id in token")
+	}
+
+	userID, err := uuid.Parse(sub)
+	if err != nil {
+		return uuid.Nil, "", errors.New("invalid user id in token")
+	}
+
+	email, ok := claims["email"].(string)
+	if !ok || email == "" {
+		return uuid.Nil, "", errors.New("invalid email in token")
+	}
+
+	return userID, email, nil
+
 }
