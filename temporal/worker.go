@@ -10,6 +10,7 @@ import (
 
 const MerchantOnboardingTaskQueue = "MERCHANT_ONBOARDING"
 const ForgotPasswordTaskQueue = "FORGOT_PASSWORD"
+const UserOnboardingTaskQueue = "USER_ONBOARDING"
 
 type WorkerConfig struct {
     TaskQueue string
@@ -39,6 +40,16 @@ func StartWorkers(
                 w.RegisterWorkflow(workflows.ForgotPasswordWorkflow)
 
                 w.RegisterActivity(activityRegistry.ForgotPassword)
+            },
+        },
+        {
+            TaskQueue: UserOnboardingTaskQueue,
+            Register: func(w worker.Worker) {
+                w.RegisterWorkflow(workflows.UserOnboardingFlow)
+                w.RegisterActivity(activityRegistry.SendUserWelcomeEmail)
+                w.RegisterActivity(activityRegistry.GetMerchantById)
+                w.RegisterActivity(activityRegistry.CreateMerchantUser)
+                w.RegisterActivity(activityRegistry.CreateUser)
             },
         },
     }

@@ -122,8 +122,16 @@ func main() {
 		temporalClient,
 	)
 
+	userController := controllers.NewUserController(
+		temporalClient,
+	)
+
 	authRouter := routes.NewAuthRouter(
 		authController,
+	)
+
+	userRouter := routes.NewUserRouter(
+		userController,
 	)
 
 	activityRegistry := activities.NewRegistry(
@@ -132,6 +140,9 @@ func main() {
 		merchantService,
 		complianceService,
 		authService,
+		userService,
+		merchantUserService,
+		*merchantRepo,
 	)
 
 	workers := temporal.StartWorkers(
@@ -153,6 +164,7 @@ func main() {
 
 	merchantRouter.MerchantRoutes(api)
 	authRouter.AuthRoutes(api)
+	userRouter.UserRoutes(api)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
