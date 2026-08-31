@@ -181,7 +181,7 @@ func (ms *MerchantService) ProvisionMerchant(
 		MerchantID:  merchantID,
 	}
 
-	merchantBankAccount, err :=txBankService.CreateBankAccount(
+	merchantBankAccount, err := txBankService.CreateBankAccount(
 		bankAccountRequest,
 	)
 	if err != nil {
