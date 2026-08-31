@@ -10,9 +10,12 @@ import (
 	"github.com/Srivastava-samarth/sampay/notifications"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/utils"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type AuthService struct {
+	DB                  *gorm.DB
 	UserRepo            *repositories.UserRepository
 	UserSessionRepo     *repositories.UserSessionRepository
 	MerchantUserRepo    *repositories.MerchantUserRepository
@@ -22,6 +25,7 @@ type AuthService struct {
 }
 
 func NewAuthService(
+	db *gorm.DB,
 	userRepo *repositories.UserRepository,
 	userSessionRepo *repositories.UserSessionRepository,
 	merchantUserRepo *repositories.MerchantUserRepository,
@@ -30,12 +34,13 @@ func NewAuthService(
 	passwordResetRepo *repositories.PasswordResetTokenRepository,
 ) *AuthService {
 	return &AuthService{
+		DB:                  db,
 		UserRepo:            userRepo,
 		UserSessionRepo:     userSessionRepo,
 		MerchantUserRepo:    merchantUserRepo,
 		JwtService:          *jwtService,
 		NotificationService: *notification,
-		PasswordResetRepo: passwordResetRepo,
+		PasswordResetRepo:   passwordResetRepo,
 	}
 }
 
@@ -60,12 +65,12 @@ func (as *AuthService) Authentication(authRequest *dto.AuthRequest) (*dto.AuthRe
 		return nil, err
 	}
 
-	password, err := utils.HashPassword(authRequest.Password)
-	if err != nil {
-		return nil, err
-	}
+	errCHP := bcrypt.CompareHashAndPassword(
+		[]byte(user.PasswordHash),
+		[]byte(authRequest.Password),
+	)
 
-	if password != user.PasswordHash {
+	if errCHP != nil {
 		return nil, errors.New("Invalid Credentials: email or password is incorrect")
 	}
 
@@ -136,15 +141,14 @@ func (as *AuthService) ForgotPasswod(forgotPasswordRequest *dto.ForgotPasswordRe
 	)
 
 	passwordResetPayload := &models.PasswordResetToken{
-		UserID: user.ID,
+		UserID:    user.ID,
 		ExpiresAt: resetTokenExpiry,
 		TokenHash: hashedResetToken,
-		UsedAt: nil,
 		CreatedAt: time.Now(),
 	}
 
 	_, errPR := as.PasswordResetRepo.CreatePasswordReset(passwordResetPayload)
-	if errPR != nil{
+	if errPR != nil {
 		return errPR
 	}
 
@@ -152,5 +156,97 @@ func (as *AuthService) ForgotPasswod(forgotPasswordRequest *dto.ForgotPasswordRe
 	if errN != nil {
 		return errN
 	}
+	return nil
+}
+
+func (as *AuthService) ResetPassword(
+	resetPasswordRequest *dto.ResetPasswordRequest,
+) error {
+	userID, email, err := as.JwtService.ValidateResetPaasword(
+		resetPasswordRequest.ResetToken,
+	)
+	if err != nil {
+		return err
+	}
+
+	if resetPasswordRequest.Email != email {
+		return errors.New("email does not match reset token")
+	}
+
+	passwordReset, err := as.PasswordResetRepo.FindByToken(
+		resetPasswordRequest.ResetToken,
+	)
+	if err != nil {
+		return err
+	}
+
+	if passwordReset.UserID != userID {
+		return errors.New("reset token is not valid")
+	}
+
+	if !passwordReset.UsedAt.IsZero() {
+		return errors.New("reset token has already been used")
+	}
+
+	if time.Now().After(passwordReset.ExpiresAt) {
+		return errors.New("reset token expired")
+	}
+
+	if resetPasswordRequest.NewPassword !=
+		resetPasswordRequest.ConfirmPassword {
+		return errors.New("passwords do not match")
+	}
+
+	hashedPassword, err := utils.HashPassword(
+		resetPasswordRequest.NewPassword,
+	)
+	if err != nil {
+		return err
+	}
+
+	tx := as.DB.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			panic(r)
+		}
+	}()
+
+	userRepo := as.UserRepo.WithTx(tx)
+	passwordResetRepo := as.PasswordResetRepo.WithTx(tx)
+
+	updateUserRequest := &models.User{
+		ID:                 userID,
+		PasswordHash:       hashedPassword,
+		MustChangePassword: false,
+	}
+
+	_, err = userRepo.UpdateUser(updateUserRequest)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	updatePasswordResetRequest := &models.PasswordResetToken{
+		ID:     passwordReset.ID,
+		UsedAt: time.Now(),
+	}
+
+	_, err = passwordResetRepo.UpdatePasswordReset(
+		updatePasswordResetRequest,
+	)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
 	return nil
 }

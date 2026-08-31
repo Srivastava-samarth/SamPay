@@ -98,3 +98,36 @@ func (ac *AuthController) ForgotPassword() gin.HandlerFunc{
 		) 
 	}
 }
+
+func (ac *AuthController) ResetPassword() gin.HandlerFunc{
+	return func(c *gin.Context){
+		var request *dto.ResetPasswordRequest
+
+		if err := c.ShouldBindJSON(&request); err != nil{
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"INVALID_REQUEST",
+				err.Error(),
+			)
+			return
+		}
+
+		err := ac.AuthService.ResetPassword(request)
+		if err != nil{
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"PASSWORD_RESET_FAILED",
+				err.Error(),
+			)
+			return
+		}
+
+		dto.Respond(
+			c,
+			http.StatusOK,
+			"Password Reset Successful",
+		)
+	}
+}

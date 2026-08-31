@@ -28,4 +28,8 @@ func(ar *AuthRouter) AuthRoutes(
 		"/forgot-password",
 		ar.AuthController.ForgotPassword(),
 	)
+	router.POST(
+		"/reset-password",
+		ar.AuthController.ResetPassword(),
+	)
 }
