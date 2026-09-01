@@ -32,4 +32,8 @@ func(ar *AuthRouter) AuthRoutes(
 		"/reset-password",
 		ar.AuthController.ResetPassword(),
 	)
+	router.POST(
+		"/refresh-token",
+		ar.AuthController.RefreshToken(),
+	)
 }
