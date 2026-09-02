@@ -1,6 +1,7 @@
 package workflows
 
 import (
+	"errors"
 	"time"
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
@@ -36,6 +37,10 @@ func UserOnboardingFlow(
 
 	if errM != nil {
 		return nil, errM
+	}
+
+	if merchant.MerchantType == "individual"{
+		return nil, errors.New("Individual type merchnat can't create more than one user")
 	}
 
 	var user *services.CreatedUserResult

@@ -18,14 +18,28 @@ func (a *Registry) PerformComplianceCheck(
 ) (*dto.ComplianceCheckResponse, error) {
 
 	if request.MerchantType == constants.MerchantTypeIndividual {
+		individualComplianceRequest := &dto.IndividualComplianceCheckRequest{
+			FirstName: request.Individual.FirstName,
+			LastName: request.Individual.LastName,
+			Email: request.Email,
+			DateOfBirth: request.Individual.DateOfBirth,
+			Country: request.Individual.Country,
+		}
 		return a.ComplianceService.PerformIndividualComplianceCheck(
-			request,
+			individualComplianceRequest,
 			merchantID,
 		)
 	}
 
+	companyComplianceRequest := &dto.CompanyComplianceCheckRequest{
+			LegalName: request.Company.LegalName,
+			Email: request.Email,
+			RegistrationNumber: request.Company.RegistrationNumber,
+			IncorporationCountry: request.Company.IncorporationCountry,
+			TaxID: request.Company.TaxID,
+		}
 	return a.ComplianceService.PerformCorporateComplianceCheck(
-		request,
+		companyComplianceRequest,
 		merchantID,
 	)
 }

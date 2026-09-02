@@ -13,7 +13,6 @@ type IndividualMerchantOnboardingRequest struct {
 	Country     string `json:"country" validate:"required"`
 	TaxID       string `json:"tax_id" validate:"required"`
 	Address     string `json:"address" validate:"required"`
-	PhoneNumber string `json:"phone_number" validate:"required"`
 }
 
 type CompanyMerchantOnboardingRequest struct {
@@ -53,4 +52,32 @@ type CreateMerchantOnboardingRequest struct {
 
 	Individual *IndividualMerchantOnboardingRequest `json:"individual,omitempty"`
 	Company    *CompanyMerchantOnboardingRequest    `json:"company,omitempty"`
+}
+
+type UpdateIndividualMerchantRequest struct {
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+	DateOfBirth string  `json:"date_of_birth" validate:"required"`
+	Country     string  `json:"country" validate:"required"`
+	TaxID       string  `json:"tax_id" validate:"required"`
+	Address     string  `json:"address" validate:"required"`
+}
+
+type UpdateCompanyMerchantRequest struct {
+	LegalName            string `json:"legal_name"`
+	RegistrationNumber   string `json:"registration_number"`
+	IncorporationCountry string `json:"incorporation_country"`
+	TaxID                string `json:"tax_id" validate:"required"`
+	BusinessType         string `json:"business_type"`
+	RegisteredAddress    string `json:"registered_address"`
+	OwnerFirstName       string `json:"owner_first_name"`
+	OwnerLastName        string `json:"owner_last_name"`
+	OwnerTaxID           string `json:"owner_tax_id"`
+}
+
+type UpdateMerchantRequest struct {
+	MerchantName     string                           `json:"merchant_name,omitempty"`
+	PhoneNumber      string                           `json:"phone_number,omitempty"`
+	IndividualUpdate *UpdateIndividualMerchantRequest `json:"individual_update,omitempty"`
+	CompanyUpdate    *UpdateCompanyMerchantRequest    `json:"company_update,omitempty"`
 }

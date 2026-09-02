@@ -12,11 +12,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type MerchantRepository struct{
+type MerchantRepository struct {
 	db *gorm.DB
 }
 
-func NewMerchantRepository(db *gorm.DB) *MerchantRepository{
+func NewMerchantRepository(db *gorm.DB) *MerchantRepository {
 	return &MerchantRepository{
 		db: db,
 	}
@@ -28,7 +28,7 @@ func (wr *MerchantRepository) WithTx(tx *gorm.DB) *MerchantRepository {
 	}
 }
 
-func(mp *MerchantRepository) CreateMerchant(request models.Merchant) (*models.Merchant, error) {
+func (mp *MerchantRepository) CreateMerchant(request models.Merchant) (*models.Merchant, error) {
 	merchant := &models.Merchant{
 		ID:                utils.GenerateUUID(),
 		MerchantReference: utils.GenerateMerchantReference(),
@@ -48,7 +48,7 @@ func(mp *MerchantRepository) CreateMerchant(request models.Merchant) (*models.Me
 	return merchant, nil
 }
 
-func(mp *MerchantRepository) GetMerchantByID(merchantID uuid.UUID) (*models.Merchant, error) {
+func (mp *MerchantRepository) GetMerchantByID(merchantID uuid.UUID) (*models.Merchant, error) {
 	var merchant models.Merchant
 	err := mp.db.Where("id = ?", merchantID).First(&merchant).Error
 	if err != nil {
@@ -57,15 +57,16 @@ func(mp *MerchantRepository) GetMerchantByID(merchantID uuid.UUID) (*models.Merc
 	return &merchant, nil
 }
 
-func(mp *MerchantRepository) UpdateMerchant(merchant *models.Merchant) (*models.Merchant, error) {
-	err := mp.db.Save(merchant).Error
-	if err != nil {
+func (mp *MerchantRepository) GetMerchants() ([]*models.Merchant, error) {
+	var merchants []*models.Merchant
+
+	if err := mp.db.Find(&merchants).Error; err != nil {
 		return nil, err
 	}
-	return merchant, nil
+	return merchants, nil
 }
 
-func(mp *MerchantRepository) UpdateMerchantCompliance(
+func (mp *MerchantRepository) UpdateMerchantCompliance(
 	merchantID uuid.UUID,
 	complianceResponse *dto.ComplianceCheckResponse,
 ) (*models.Merchant, error) {
@@ -96,7 +97,7 @@ func(mp *MerchantRepository) UpdateMerchantCompliance(
 	return &merchant, nil
 }
 
-func(mp *MerchantRepository) UpdateMerchantStatus(merchantID uuid.UUID, status string) error{
+func (mp *MerchantRepository) UpdateMerchantStatus(merchantID uuid.UUID, status string) error {
 	var merchant models.Merchant
 
 	err := mp.db.Where("id = ?", merchantID).First(&merchant).Error
@@ -110,4 +111,26 @@ func(mp *MerchantRepository) UpdateMerchantStatus(merchantID uuid.UUID, status s
 	}
 
 	return nil
+}
+
+func (mp *MerchantRepository) UpdateMerchant(request *models.Merchant, merchantID uuid.UUID) (*models.Merchant, error) {
+	err := mp.db.
+		Model(&models.Merchant{}).
+		Where("id = ?", merchantID).
+		Updates(map[string]interface{}{
+			"merchant_name": request.MerchantName,
+			"phone_number":  request.PhoneNumber,
+			"updated_at":    time.Now(),
+		}).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	var merchant *models.Merchant
+	if err := mp.db.Where("id = ?", request.ID).First(&merchant).Error; err != nil {
+		return nil, err
+	}
+
+	return merchant, nil
 }
