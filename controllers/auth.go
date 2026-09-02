@@ -131,3 +131,34 @@ func (ac *AuthController) ResetPassword() gin.HandlerFunc{
 		)
 	}
 }
+
+func (ac *AuthController) RefreshToken() gin.HandlerFunc{
+	return func(c *gin.Context) {
+		var request *dto.RefreshTokenRequest
+		if err := c.ShouldBindJSON(&request); err != nil{
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"INVALID_REQUEST",
+				err.Error(),
+			)
+			return
+		}
+
+		response, errR := ac.AuthService.RefreshToken(request)
+		if errR != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"TOKEN_REFRESH_FAILED",
+				errR.Error(),
+			)
+			return 
+		}
+		dto.Respond(
+			c,
+			http.StatusOK,
+			response,
+		)
+	}
+}

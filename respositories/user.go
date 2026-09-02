@@ -5,6 +5,7 @@ import (
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/utils"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -89,4 +90,13 @@ func (ur *UserRepository) UpdateUser(request *models.User) (*models.User, error)
 	}
 
 	return &updatedUser, nil
+}
+
+func(ur *UserRepository) GetUserByID(userId uuid.UUID) (*models.User, error){
+	var user *models.User
+	err := ur.db.Where("id= ?", userId).First(&user).Error 
+	if err != nil{
+		return nil, err
+	}
+	return user, nil
 }

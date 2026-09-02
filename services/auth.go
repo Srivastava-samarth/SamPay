@@ -7,6 +7,7 @@ import (
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
+	"github.com/Srivastava-samarth/sampay/middlewares"
 	"github.com/Srivastava-samarth/sampay/notifications"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/utils"
@@ -19,7 +20,7 @@ type AuthService struct {
 	UserRepo            *repositories.UserRepository
 	UserSessionRepo     *repositories.UserSessionRepository
 	MerchantUserRepo    *repositories.MerchantUserRepository
-	JwtService          utils.Jwt
+	JwtService          middlewares.Jwt
 	NotificationService notifications.EmailService
 	PasswordResetRepo   *repositories.PasswordResetTokenRepository
 }
@@ -29,7 +30,7 @@ func NewAuthService(
 	userRepo *repositories.UserRepository,
 	userSessionRepo *repositories.UserSessionRepository,
 	merchantUserRepo *repositories.MerchantUserRepository,
-	jwtService *utils.Jwt,
+	jwtService *middlewares.Jwt,
 	notification *notifications.EmailService,
 	passwordResetRepo *repositories.PasswordResetTokenRepository,
 ) *AuthService {
@@ -249,4 +250,130 @@ func (as *AuthService) ResetPassword(
 	}
 
 	return nil
+}
+
+func (as *AuthService) RefreshToken(
+	refreshTokenRequest *dto.RefreshTokenRequest,
+) (*dto.AuthResponse, error) {
+
+	tx := as.DB.Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	committed := false
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			panic(r)
+		}
+
+		if !committed {
+			tx.Rollback()
+		}
+	}()
+
+	userSessionRepo := as.UserSessionRepo.WithTx(tx)
+	userRepo := as.UserRepo.WithTx(tx)
+	merchantUserRepo := as.MerchantUserRepo.WithTx(tx)
+
+	userSession, err := userSessionRepo.
+		GetUserSessionByRefreshTokenHash(refreshTokenRequest.RefreshToken)
+
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+
+	if now.After(userSession.ExpiresAt) {
+		return nil, errors.New("refresh token expired")
+	}
+
+	if userSession.RevokedAt != nil {
+	return nil, errors.New("refresh token revoked")
+}
+
+	user, err := userRepo.GetUserByID(userSession.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	merchantUser, err := merchantUserRepo.GetMerchantUserByUserID(userSession.UserID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = userSessionRepo.UpdateUserSession(
+		&models.UserSession{
+			ID:        userSession.ID,
+			ExpiresAt: time.Now(),
+			RevokedAt: &now,
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, err := as.JwtService.GenarateTokenAndExpiry(
+		user.ID,
+		merchantUser.MerchantID,
+		merchantUser.Role,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	newRefreshToken, err :=
+		as.JwtService.GenerateRefreshToken()
+
+	if err != nil {
+		return nil, err
+	}
+
+	hashedNewRefreshToken :=
+		utils.HashToken(newRefreshToken)
+
+	refreshTokenExpirySeconds, err :=
+		strconv.ParseInt(
+			as.JwtService.Config.RefreshExpiry,
+			10,
+			64,
+		)
+
+	if err != nil {
+		return nil, err
+	}
+
+	refreshTokenExpiry := now.Add(
+		time.Duration(refreshTokenExpirySeconds) * time.Second,
+	)
+
+	_, err = userSessionRepo.CreateUserSession(
+		&models.UserSession{
+			UserID:           userSession.UserID,
+			RefreshTokenHash: hashedNewRefreshToken,
+			ExpiresAt:        refreshTokenExpiry,
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	committed = true
+
+	return &dto.AuthResponse{
+		AccessToken:  accessToken,
+		RefreshToken: newRefreshToken,
+		ExpiresIn:    int(refreshTokenExpirySeconds),
+	}, nil
 }
