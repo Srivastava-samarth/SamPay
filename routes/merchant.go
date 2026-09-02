@@ -33,11 +33,17 @@ func (mr *MerchantRouter) MerchantRoutes(
 	merchant.GET(
 		"/:merchant_id",
 		middlewares.RequireRole("owner", "finance", "super_admin"),
+		middlewares.RequireMerchantAccess(),
 		mr.MerchantController.GetMerchantByID(),
 	)
 	merchant.GET(
 		"",
-		middlewares.RequireRole("owner", "super_admin"),
 		mr.MerchantController.GetMerchants(),
+	)
+	merchant.PATCH(
+		"/:merchant_id",
+		middlewares.RequireRole("owner", "super_admin"),
+		middlewares.RequireMerchantAccess(),
+		mr.MerchantController.UpdateMerchant(),
 	)
 }

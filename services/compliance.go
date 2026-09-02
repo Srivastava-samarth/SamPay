@@ -22,11 +22,11 @@ func NewComplianceService(UserRepo *repositories.UserRepository) *ComplianceServ
 }
 
 func (cs *ComplianceService) PerformIndividualComplianceCheck(
-	request dto.CreateMerchantOnboardingRequest,
+	request *dto.IndividualComplianceCheckRequest,
 	merchantID uuid.UUID,
 ) (*dto.ComplianceCheckResponse, error) {
 
-	name, country, dob := request.Individual.FirstName+" "+request.Individual.LastName, request.Individual.Country, request.Individual.DateOfBirth
+	name, country, dob := request.FirstName+" "+request.LastName, request.Country, request.DateOfBirth
 	// Perform compliance checks based on the provided information
 	// For example, you can check if the name is valid, if the country is allowed, and if the date of birth meets certain criteria.
 	// You can also integrate with external compliance services or databases for more comprehensive checks.
@@ -108,11 +108,11 @@ func (cs *ComplianceService) PerformIndividualComplianceCheck(
 }
 
 func (cs *ComplianceService) PerformCorporateComplianceCheck(
-	request dto.CreateMerchantOnboardingRequest,
+	request *dto.CompanyComplianceCheckRequest,
 	merchantID uuid.UUID,
 ) (*dto.ComplianceCheckResponse, error) {
 
-	company := request.Company
+	company := request
 	now := time.Now()
 
 	// Check company against AML blocked entities
