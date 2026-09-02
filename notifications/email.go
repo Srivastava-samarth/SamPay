@@ -104,3 +104,33 @@ SamPay Team
 	)
 }	
 
+func (s *EmailService) SendUserOnboardingEmail(
+	name string,
+	email string,
+	merchantName string,
+	role string,
+	password string,
+) error {
+	subject := "Welcome to SamPay"
+
+	body := fmt.Sprintf(`
+Hello %s,
+
+You have been onboarded by SamPay merchant %s with role %s.
+In order to access the functionalities use the login credentials.
+
+Login Email: %s
+Temporary Password: %s
+
+You must change your password after at your first login.
+
+Regards,
+SamPay Team
+`, name, merchantName, role, email, password)
+
+	return s.Send(
+		email,
+		subject,
+		body,
+	)
+}
