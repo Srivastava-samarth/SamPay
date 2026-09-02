@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func (j *Jwt) Authenticate() gin.HandlerFunc {
@@ -76,5 +77,45 @@ func RequireRole(roles ...string) gin.HandlerFunc {
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 			"message": "insufficient permissions",
 		})
+	}
+}
+
+func RequireMerchantAccess() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		merchantIDValue, exists := c.Get("merchant_id")
+		if !exists {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"message": "merchant identity not found",
+			})
+			return
+		}
+
+		tokenMerchantID, ok := merchantIDValue.(uuid.UUID)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"message": "invalid merchant identity",
+			})
+			return
+		}
+
+		requestedMerchantID, err := uuid.Parse(
+			c.Param("merchantID"),
+		)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"message": "invalid merchant id",
+			})
+			return
+		}
+
+		if tokenMerchantID != requestedMerchantID {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"message": "access denied",
+			})
+			return
+		}
+
+		c.Next()
 	}
 }
