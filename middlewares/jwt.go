@@ -1,4 +1,4 @@
-package utils
+package middlewares
 
 import (
 	"encoding/base64"
@@ -91,9 +91,9 @@ func (j *Jwt) GenerateResetPasswordToken(
 	return signedToken, nil
 }
 
-func(j *Jwt) ValidateResetPaasword(
+func (j *Jwt) ValidateResetPaasword(
 	tokenString string,
-) (uuid.UUID, string, error){
+) (uuid.UUID, string, error) {
 	token, errT := jwt.Parse(
 		tokenString,
 		func(token *jwt.Token) (interface{}, error) {
@@ -141,4 +141,66 @@ func(j *Jwt) ValidateResetPaasword(
 
 	return userID, email, nil
 
+}
+
+func (j *Jwt) ValidateAccessToken(
+	tokenString string,
+) (uuid.UUID, uuid.UUID, string, error) {
+
+	token, err := jwt.Parse(
+		tokenString,
+		func(token *jwt.Token) (interface{}, error) {
+
+			if token.Method != jwt.SigningMethodHS256 {
+				return nil, errors.New("invalid signing method")
+			}
+
+			return []byte(j.Config.Secret), nil
+		},
+	)
+
+	if err != nil {
+		return uuid.Nil, uuid.Nil, "", err
+	}
+
+	if !token.Valid {
+		return uuid.Nil, uuid.Nil, "", errors.New("invalid access token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return uuid.Nil, uuid.Nil, "", errors.New("invalid token claims")
+	}
+
+	tokenType, ok := claims["type"].(string)
+	if !ok || tokenType != "access" {
+		return uuid.Nil, uuid.Nil, "", errors.New("invalid access token type")
+	}
+
+	sub, ok := claims["sub"].(string)
+	if !ok {
+		return uuid.Nil, uuid.Nil, "", errors.New("invalid user id")
+	}
+
+	userID, err := uuid.Parse(sub)
+	if err != nil {
+		return uuid.Nil, uuid.Nil, "", errors.New("invalid user id")
+	}
+
+	merchantIDString, ok := claims["merchant_id"].(string)
+	if !ok {
+		return uuid.Nil, uuid.Nil, "", errors.New("invalid merchant id")
+	}
+
+	merchantID, err := uuid.Parse(merchantIDString)
+	if err != nil {
+		return uuid.Nil, uuid.Nil, "", errors.New("invalid merchant id")
+	}
+
+	role, ok := claims["role"].(string)
+	if !ok || role == "" {
+		return uuid.Nil, uuid.Nil, "", errors.New("invalid role")
+	}
+
+	return userID, merchantID, role, nil
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/Srivastava-samarth/sampay/config"
 	"github.com/Srivastava-samarth/sampay/controllers"
 	"github.com/Srivastava-samarth/sampay/database"
+	"github.com/Srivastava-samarth/sampay/middlewares"
 	"github.com/Srivastava-samarth/sampay/notifications"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/routes"
@@ -92,7 +93,7 @@ func main() {
 		notificationService,
 	)
 
-	jwtService := utils.NewJwt(&cfg.JWT)
+	jwtService := middlewares.NewJwt(&cfg.JWT)
 
 	authService := services.NewAuthService(
 		db,
@@ -162,9 +163,9 @@ func main() {
 
 	api := router.Group("/api/v1")
 
-	merchantRouter.MerchantRoutes(api)
+	merchantRouter.MerchantRoutes(api, jwtService.Authenticate())
 	authRouter.AuthRoutes(api)
-	userRouter.UserRoutes(api)
+	userRouter.UserRoutes(api, jwtService.Authenticate())
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

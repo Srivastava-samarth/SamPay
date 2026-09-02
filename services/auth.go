@@ -7,6 +7,7 @@ import (
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
+	"github.com/Srivastava-samarth/sampay/middlewares"
 	"github.com/Srivastava-samarth/sampay/notifications"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/utils"
@@ -19,7 +20,7 @@ type AuthService struct {
 	UserRepo            *repositories.UserRepository
 	UserSessionRepo     *repositories.UserSessionRepository
 	MerchantUserRepo    *repositories.MerchantUserRepository
-	JwtService          utils.Jwt
+	JwtService          middlewares.Jwt
 	NotificationService notifications.EmailService
 	PasswordResetRepo   *repositories.PasswordResetTokenRepository
 }
@@ -29,7 +30,7 @@ func NewAuthService(
 	userRepo *repositories.UserRepository,
 	userSessionRepo *repositories.UserSessionRepository,
 	merchantUserRepo *repositories.MerchantUserRepository,
-	jwtService *utils.Jwt,
+	jwtService *middlewares.Jwt,
 	notification *notifications.EmailService,
 	passwordResetRepo *repositories.PasswordResetTokenRepository,
 ) *AuthService {
@@ -308,7 +309,7 @@ func (as *AuthService) RefreshToken(
 	_, err = userSessionRepo.UpdateUserSession(
 		&models.UserSession{
 			ID:        userSession.ID,
-			ExpiresAt: now,
+			ExpiresAt: time.Now(),
 			RevokedAt: &now,
 		},
 	)

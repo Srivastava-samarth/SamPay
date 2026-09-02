@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/Srivastava-samarth/sampay/controllers"
+	"github.com/Srivastava-samarth/sampay/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,9 +20,13 @@ func NewUserRouter(
 
 func (ur *UserRouter) UserRoutes(
 	router *gin.RouterGroup,
+	authMiddleware gin.HandlerFunc,
 ) {
-	router.POST(
-		"/user",
+	user := router.Group("/user")
+	user.Use(authMiddleware)
+	user.POST(
+		"",
+		middlewares.RequireRole("super_admin","owner"),
 		ur.UserController.UserOnboarding(),
 	)
 }
