@@ -57,6 +57,15 @@ func(mp *MerchantRepository) GetMerchantByID(merchantID uuid.UUID) (*models.Merc
 	return &merchant, nil
 }
 
+func (mp *MerchantRepository) GetMerchants() ([]*models.Merchant, error) {
+	var merchants []*models.Merchant
+
+	if err := mp.db.Find(&merchants).Error; err != nil {
+		return nil, err
+	}
+	return merchants, nil
+}
+
 func(mp *MerchantRepository) UpdateMerchant(merchant *models.Merchant) (*models.Merchant, error) {
 	err := mp.db.Save(merchant).Error
 	if err != nil {

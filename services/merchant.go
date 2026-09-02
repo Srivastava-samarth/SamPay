@@ -64,6 +64,14 @@ func (ms *MerchantService) GetMerchantByID(merchantID uuid.UUID) (*models.Mercha
 	return merchant, nil
 }
 
+func (ms *MerchantService) GetMerchants() ([]*models.Merchant, error) {
+	merchants, errM := ms.MerchantRepo.GetMerchants()
+	if errM != nil {
+		return nil, errM
+	}
+	return merchants, nil
+}
+
 func (ms *MerchantService) CreateInitialMerchant(merchantRequest dto.CreateMerchantOnboardingRequest) (*dto.CreateMerchantOnboardingResponse, error) {
 	initialMerchantRequest := models.Merchant{
 		MerchantName:     merchantRequest.MerchantName,
