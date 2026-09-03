@@ -43,3 +43,11 @@ func(wr *WalletRepository) CreateWalletForMerchant(merchantID uuid.UUID) (*model
 
 	return wallet, nil
 }
+
+func(wr *WalletRepository) GetWalletByMerchantId(merchantId uuid.UUID) (*models.Wallets, error){
+	var wallet *models.Wallets
+	if err := wr.db.Where("merchant_id = ?", merchantId).First(&wallet).Error; err!=nil{
+		return nil, err
+	}
+	return wallet, nil
+}

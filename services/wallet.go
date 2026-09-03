@@ -25,3 +25,11 @@ func(ws *WalletService) CreateWalletForMerchant(merchantID uuid.UUID) (*models.W
 	}
 	return wallet, nil
 }
+
+func(ws *WalletService) GetWalletByMerchantID(merchantID uuid.UUID) (*models.Wallets, error){
+	wallet, errW := ws.WalletRepo.GetWalletByMerchantId(merchantID)
+	if errW != nil{
+		return nil, errW
+	}
+	return wallet, nil
+}
