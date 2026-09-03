@@ -220,7 +220,7 @@ func (mc *MerchantController) UpdateMerchant() gin.HandlerFunc {
 					c,
 					http.StatusInternalServerError,
 					"MERCHANT_UPDATION_FAILED",
-					errM.Error(),
+					errUM.Error(),
 				)
 				return
 			}
