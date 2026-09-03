@@ -29,4 +29,18 @@ func (ur *UserRouter) UserRoutes(
 		middlewares.RequireRole("super_admin","owner"),
 		ur.UserController.UserOnboarding(),
 	)
+	user.GET(
+		"/:user_id",
+		middlewares.RequireRole("super_admin","owner"),
+		ur.UserController.GetUserByID(),
+	)
+	user.GET(
+		"",
+		ur.UserController.GetUsers(),
+	)
+	user.PATCH(
+		"/:user_id",
+		middlewares.RequireRole("super_admin","owner"),
+		ur.UserController.UpdateUser(),
+	)
 }

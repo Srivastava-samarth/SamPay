@@ -341,6 +341,21 @@ func (ms *MerchantService) UpdateIndividualMerchant(
 		return nil, errUC
 	}
 
+	user, errU := ms.UserService.UserRepo.GetUserByEmail(merchant.Email)
+	if errU != nil{
+		return nil, errU
+	}
+
+	updateUserPayload := &dto.UpdateUserRequest{
+		FirstName: request.IndividualUpdate.FirstName,
+		LastName: request.IndividualUpdate.LastName,
+	}
+
+	_, errUU := ms.UserService.UpdateUser(updateUserPayload, user.ID)
+	if errUU != nil{
+		return nil, errUU
+	}
+
 	updateMerchantRequest := &models.Merchant{
 		MerchantName: request.MerchantName,
 		PhoneNumber: request.PhoneNumber,
@@ -377,6 +392,21 @@ func (ms *MerchantService) UpdateCompanyMerchant(
 	)
 	if errUC != nil {
 		return nil, errUC
+	}
+
+	user, errU := ms.UserService.UserRepo.GetUserByEmail(merchant.Email)
+	if errU != nil{
+		return nil, errU
+	}
+
+	updateUserPayload := &dto.UpdateUserRequest{
+		FirstName: request.CompanyUpdate.OwnerFirstName,
+		LastName: request.CompanyUpdate.OwnerLastName,
+	}
+
+	_, errUU := ms.UserService.UpdateUser(updateUserPayload, user.ID)
+	if errUU != nil{
+		return nil, errUU
 	}
 
 	updateMerchantRequest := &models.Merchant{
