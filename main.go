@@ -130,6 +130,7 @@ func main() {
 
 	userController := controllers.NewUserController(
 		temporalClient,
+		userService,
 	)
 
 	authRouter := routes.NewAuthRouter(

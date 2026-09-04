@@ -30,7 +30,7 @@ func (wc *WalletController) GetWallet() gin.HandlerFunc {
 		if merchantID == "" {
 			dto.Fail(
 				c,
-				http.StatusBadRequest,
+				http.StatusNotFound,
 				"MERCHANT_ID_NOT_FOUND",
 				"Merchant ID not passed in params",
 			)
@@ -68,129 +68,129 @@ func (wc *WalletController) GetWallet() gin.HandlerFunc {
 }
 
 func (wc *WalletController) GetWalletTransactions() gin.HandlerFunc {
-    return func(c *gin.Context) {
+	return func(c *gin.Context) {
 
-        merchantID := c.Param("merchant_id")
-        accountType := c.Query("type")
+		merchantID := c.Param("merchant_id")
+		accountType := c.Query("type")
 
-        if merchantID == "" || accountType == "" {
-            dto.Fail(
-                c,
-                http.StatusBadRequest,
-                "MERCHANT_ID_OR_ACCOUNT_TYPE_NOT_FOUND",
-                "Merchant ID or Account type not passed in request",
-            )
-            return
-        }
+		if merchantID == "" || accountType == "" {
+			dto.Fail(
+				c,
+				http.StatusNotFound,
+				"MERCHANT_ID_OR_ACCOUNT_TYPE_NOT_FOUND",
+				"Merchant ID or Account type not passed in request",
+			)
+			return
+		}
 
-        parsedMerchantID, err := uuid.Parse(merchantID)
-        if err != nil {
-            dto.Fail(
-                c,
-                http.StatusBadRequest,
-                "PARSING_ERROR",
-                err.Error(),
-            )
-            return
-        }
+		parsedMerchantID, err := uuid.Parse(merchantID)
+		if err != nil {
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"PARSING_ERROR",
+				err.Error(),
+			)
+			return
+		}
 
-        wallet, err := wc.WalletSrvc.GetWalletByMerchantID(parsedMerchantID)
-        if err != nil {
-            dto.Fail(
-                c,
-                http.StatusNotFound,
-                "MERCHANT_ID_NOT_FOUND",
-                "merchant id not found",
-            )
-            return
-        }
+		wallet, err := wc.WalletSrvc.GetWalletByMerchantID(parsedMerchantID)
+		if err != nil {
+			dto.Fail(
+				c,
+				http.StatusNotFound,
+				"MERCHANT_ID_NOT_FOUND",
+				"merchant id not found",
+			)
+			return
+		}
 
-        cursorParam := c.Query("cursor")
-        direction := c.DefaultQuery("direction", "next")
+		cursorParam := c.Query("cursor")
+		direction := c.DefaultQuery("direction", "next")
 
-        var cursor *uuid.UUID
+		var cursor *uuid.UUID
 
-        if cursorParam != "" {
-            parsedCursor, err := uuid.Parse(cursorParam)
-            if err != nil {
-                dto.Fail(
-                    c,
-                    http.StatusBadRequest,
-                    "INVALID_CURSOR",
-                    "Invalid cursor",
-                )
-                return
-            }
+		if cursorParam != "" {
+			parsedCursor, err := uuid.Parse(cursorParam)
+			if err != nil {
+				dto.Fail(
+					c,
+					http.StatusBadRequest,
+					"INVALID_CURSOR",
+					"Invalid cursor",
+				)
+				return
+			}
 
-            cursor = &parsedCursor
-        }
+			cursor = &parsedCursor
+		}
 
-        transactions, pagination, err := wc.LedgerSrvc.GetTransactions(
-            &accountType,
-            wallet.ID,
-            cursor,
-            direction,
-        )
+		transactions, pagination, err := wc.LedgerSrvc.GetTransactions(
+			&accountType,
+			wallet.ID,
+			cursor,
+			direction,
+		)
 
-        if err != nil {
-            dto.Fail(
-                c,
-                http.StatusInternalServerError,
-                "TRANSACTIONS_NOT_FOUND_ISSUE",
-                err.Error(),
-            )
-            return
-        }
+		if err != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"TRANSACTIONS_NOT_FOUND_ISSUE",
+				err.Error(),
+			)
+			return
+		}
 
-        var walletTransactions []dto.WalletTransactionResponse
+		var walletTransactions []dto.WalletTransactionResponse
 
-        for _, t := range transactions {
-            walletTransactions = append(
-                walletTransactions,
-                dto.WalletTransactionResponse{
-                    ID:               t.LedgerTransactionID,
-                    TransactionRef:   t.TransactionRef,
-                    Type:             t.Type,
-                    EntryType:        t.EntryType,
-                    ReferenceID:      t.ReferenceID,
-                    Amount:           t.Amount,
-                    Currency:         t.Currency,
-                    Status:           t.Status,
-                    SettlementStatus: t.SettlementStatus,
-                    CreatedAt:        t.CreatedAt,
-                },
-            )
-        }
+		for _, t := range transactions {
+			walletTransactions = append(
+				walletTransactions,
+				dto.WalletTransactionResponse{
+					ID:               t.LedgerTransactionID,
+					TransactionRef:   t.TransactionRef,
+					Type:             t.Type,
+					EntryType:        t.EntryType,
+					ReferenceID:      t.ReferenceID,
+					Amount:           t.Amount,
+					Currency:         t.Currency,
+					Status:           t.Status,
+					SettlementStatus: t.SettlementStatus,
+					CreatedAt:        t.CreatedAt,
+				},
+			)
+		}
 
-        dto.Respond(
-            c,
-            http.StatusOK,
-            gin.H{
-                "data":       walletTransactions,
-                "pagination": pagination,
-            },
-        )
-    }
+		dto.Respond(
+			c,
+			http.StatusOK,
+			gin.H{
+				"data":       walletTransactions,
+				"pagination": pagination,
+			},
+		)
+	}
 }
 
-func (wc *WalletController) GetWalletTransaction() gin.HandlerFunc{
+func (wc *WalletController) GetWalletTransaction() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		merchantID := c.Param("merchant_id")
 		transactionId := c.Query("transaction_id")
 		if merchantID == "" {
 			dto.Fail(
 				c,
-				http.StatusBadRequest,
+				http.StatusNotFound,
 				"MERCHANT_ID_NOT_FOUND",
 				"Merchant ID not passed in params",
 			)
 			return
 		}
 
-		if transactionId == ""{
+		if transactionId == "" {
 			dto.Fail(
 				c,
-				http.StatusBadRequest,
+				http.StatusNotFound,
 				"TRANSACTION_ID_NOT_FOUND",
 				"Transaction ID not passed in params",
 			)
@@ -219,7 +219,6 @@ func (wc *WalletController) GetWalletTransaction() gin.HandlerFunc{
 			return
 		}
 
-
 		wallet, errW := wc.WalletSrvc.GetWalletByMerchantID(parsedMerchantId)
 		if errW != nil {
 			dto.Fail(
@@ -231,20 +230,74 @@ func (wc *WalletController) GetWalletTransaction() gin.HandlerFunc{
 			return
 		}
 
-		transaction, errT := wc.LedgerSrvc.GeTransaction(wallet.ID,parsedTransactionId)
-		if errT != nil{
-			 dto.Fail(
-                c,
-                http.StatusInternalServerError,
-                "TRANSACTIONS_NOT_FOUND_ISSUE",
-                errT.Error(),
-            )
+		transaction, errT := wc.LedgerSrvc.GeTransaction(wallet.ID, parsedTransactionId)
+		if errT != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"TRANSACTIONS_NOT_FOUND_ISSUE",
+				errT.Error(),
+			)
 			return
 		}
 		dto.Respond(
 			c,
 			http.StatusOK,
 			transaction,
+		)
+	}
+}
+
+func (wc *WalletController) UpdateWalletStatus() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		merchantID := c.Param("merchant_id")
+		status := c.Query("status")
+		if merchantID == "" {
+			dto.Fail(
+				c,
+				http.StatusNotFound,
+				"MERCHANT_ID_NOT_FOUND",
+				"Merchant ID not passed in params",
+			)
+			return
+		}
+
+		if status == ""{
+			dto.Fail(
+				c,
+				http.StatusNotFound,
+				"STATUS_NOT_FOUND",
+				"status not passed in query param",
+			)
+			return
+		}
+
+		parsedMerchantId, errP := uuid.Parse(merchantID)
+		if errP != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"PARSING_ERROR",
+				errP.Error(),
+			)
+			return
+		}
+
+		updatedWallet, errUW := wc.WalletSrvc.UpdateWalletStatus(parsedMerchantId, status)
+		if errUW != nil{
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"UPDATE_WALLET_ERROR",
+				errUW.Error(),
+			)
+			return
+		}
+
+		dto.Respond(
+			c,
+			http.StatusOK,
+			updatedWallet,
 		)
 	}
 }

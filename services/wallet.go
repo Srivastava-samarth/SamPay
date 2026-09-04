@@ -33,3 +33,12 @@ func(ws *WalletService) GetWalletByMerchantID(merchantID uuid.UUID) (*models.Wal
 	}
 	return wallet, nil
 }
+
+func(ws *WalletService) UpdateWalletStatus(merchantId uuid.UUID, status string) (*models.Wallets, error){
+	updatedWallet, errUW := ws.WalletRepo.UpdateWalletStatus(merchantId,status)
+	if errUW != nil{
+		return nil, errUW
+	}
+
+	return updatedWallet, nil
+}
