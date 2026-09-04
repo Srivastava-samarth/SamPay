@@ -40,6 +40,7 @@ func main() {
 	passwordResetRepo := repositories.NewPasswordResetTokenRepository(db)
 	merchantUserRepo := repositories.NewMerchantUserRepository(db)
 	linkedBankAccountRepo := repositories.NewLinkedBankRepository(db)
+	ledgerRepo := repositories.NewLedgerRepository(db)
 
 	notificationService, err :=
 		notifications.NewEmailService(cfg.SMTP)
@@ -105,6 +106,10 @@ func main() {
 		passwordResetRepo,
 	)
 
+	ledgerService := services.NewLedgerService(
+		ledgerRepo,
+	)
+
 	// --------------------------------------------------
 	// Controllers
 	// --------------------------------------------------
@@ -125,6 +130,7 @@ func main() {
 
 	userController := controllers.NewUserController(
 		temporalClient,
+		userService,
 	)
 
 	authRouter := routes.NewAuthRouter(
@@ -133,6 +139,15 @@ func main() {
 
 	userRouter := routes.NewUserRouter(
 		userController,
+	)
+
+	walletController := controllers.NewWalletController(
+		walletService,
+		ledgerService,
+	)
+
+	walletRouter := routes.NewWalletRouter(
+		walletController,
 	)
 
 	activityRegistry := activities.NewRegistry(
@@ -166,6 +181,7 @@ func main() {
 	merchantRouter.MerchantRoutes(api, jwtService.Authenticate())
 	authRouter.AuthRoutes(api)
 	userRouter.UserRoutes(api, jwtService.Authenticate())
+	walletRouter.WalletRoutes(api,jwtService.Authenticate())
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

@@ -10,11 +10,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type WalletRepository struct{
+type WalletRepository struct {
 	db *gorm.DB
 }
 
-func NewWalletRepository(db *gorm.DB) *WalletRepository{
+func NewWalletRepository(db *gorm.DB) *WalletRepository {
 	return &WalletRepository{
 		db: db,
 	}
@@ -26,7 +26,7 @@ func (wr *WalletRepository) WithTx(tx *gorm.DB) *WalletRepository {
 	}
 }
 
-func(wr *WalletRepository) CreateWalletForMerchant(merchantID uuid.UUID) (*models.Wallets, error) {
+func (wr *WalletRepository) CreateWalletForMerchant(merchantID uuid.UUID) (*models.Wallets, error) {
 	wallet := &models.Wallets{
 		ID:               utils.GenerateUUID(),
 		MerchantID:       merchantID,
@@ -39,6 +39,35 @@ func(wr *WalletRepository) CreateWalletForMerchant(merchantID uuid.UUID) (*model
 
 	if err := wr.db.Create(wallet).Error; err != nil {
 		return nil, err
+	}
+
+	return wallet, nil
+}
+
+func (wr *WalletRepository) GetWalletByMerchantId(merchantId uuid.UUID) (*models.Wallets, error) {
+	var wallet *models.Wallets
+	if err := wr.db.Where("merchant_id = ?", merchantId).First(&wallet).Error; err != nil {
+		return nil, err
+	}
+	return wallet, nil
+}
+
+func (wr *WalletRepository) UpdateWalletStatus(merchantId uuid.UUID, status string) (*models.Wallets, error) {
+	err := wr.db.
+		Model(&models.Wallets{}).
+		Where("merchant_id = ?", merchantId).
+		Updates(map[string]interface{}{
+			"status":     status,
+			"updated_at": time.Now(),
+		}).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var wallet *models.Wallets
+	errW := wr.db.Where("merchant_id = ?", merchantId).First(&wallet).Error
+	if errW != nil {
+		return nil, errW
 	}
 
 	return wallet, nil
