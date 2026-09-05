@@ -193,6 +193,7 @@ func (ms *MerchantService) ProvisionMerchant(
 
 	// 2. Create Bank Account
 	txBankService := NewBankService(
+		ms.DB,
 		ms.BankService.BankRepo.WithTx(tx),
 		ms.BankService.MerchantRepo.WithTx(tx),
 		ms.BankService.LinkedBankAccountRepo.WithTx(tx),
