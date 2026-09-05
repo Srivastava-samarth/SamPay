@@ -1,9 +1,12 @@
 package repositories
 
 import (
+	"errors"
 	"time"
 
+	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
+	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -19,6 +22,13 @@ func NewLedgerRepository(
 		db: db,
 	}
 }
+
+func (wr *LedgerRepository) WithTx(tx *gorm.DB) *LedgerRepository {
+	return &LedgerRepository{
+		db: tx,
+	}
+}
+
 
 func (lr *LedgerRepository) GetWalletTransactions(
     accountType *string,
@@ -139,4 +149,62 @@ func (lr *LedgerRepository) GetWalletTransactionById(
     }
 
     return &transaction, nil
+}
+
+func (lr *LedgerRepository) CreateLedgerEntry(requestEntry *models.LedgerEntry) (*models.LedgerEntry, error){
+    ledgerEntry := &models.LedgerEntry{
+        ID: utils.GenerateUUID(),
+        LedgerTransactionID: requestEntry.LedgerTransactionID,
+        AccountType: requestEntry.AccountType,
+        EntryType: requestEntry.EntryType,
+        AccountID: requestEntry.AccountID,
+        Amount: requestEntry.Amount,
+        Currency: requestEntry.Currency,
+        CreatedAt: time.Now(),
+    }
+    if err := lr.db.Create(ledgerEntry).Error; err != nil {
+		return nil, err
+	}
+
+	return ledgerEntry, nil
+}
+
+func (lr *LedgerRepository) CreateLedgerTransaction(requestTransaction *models.LedgerTransaction) (*models.LedgerTransaction, error){
+    ledgerTransaction := &models.LedgerTransaction{
+        ID: utils.GenerateUUID(),
+        TransactionRef: utils.GenerateLedgerReference(),
+        Type: requestTransaction.Type,
+        ReferenceID: requestTransaction.ReferenceID,
+        Status: requestTransaction.Status,
+        SettlementStatus: requestTransaction.SettlementStatus,
+        CreatedAt: time.Now(),
+        UpdatedAt: time.Now(),
+    }
+
+   if err := lr.db.Create(ledgerTransaction).Error; err != nil{
+    return nil, err
+   } 
+
+   return ledgerTransaction, nil
+}
+
+func (lr *LedgerRepository) ExistingLedgerTransactionByReferenceID(
+	referenceID uuid.UUID,
+) (bool, error) {
+
+	var ledgerTransaction models.LedgerTransaction
+
+	err := lr.db.
+		Where("reference_id = ?", referenceID).
+		First(&ledgerTransaction).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
