@@ -41,6 +41,7 @@ func main() {
 	merchantUserRepo := repositories.NewMerchantUserRepository(db)
 	linkedBankAccountRepo := repositories.NewLinkedBankRepository(db)
 	ledgerRepo := repositories.NewLedgerRepository(db)
+	vaultRepo := repositories.NewVaultRepository(db)
 
 	notificationService, err :=
 		notifications.NewEmailService(cfg.SMTP)
@@ -111,6 +112,10 @@ func main() {
 		ledgerRepo,
 	)
 
+	vaultService := services.NewVaultService(
+		vaultRepo,
+	)
+
 	// --------------------------------------------------
 	// Controllers
 	// --------------------------------------------------
@@ -151,6 +156,14 @@ func main() {
 		walletController,
 	)
 
+	vaultController := controllers.NewVaultController(
+		vaultService,
+	)
+
+	vaultRouter := routes.NewVaultRouter(
+		vaultController,
+	)
+
 	activityRegistry := activities.NewRegistry(
 		db,
 		notificationService,
@@ -183,6 +196,7 @@ func main() {
 	authRouter.AuthRoutes(api)
 	userRouter.UserRoutes(api, jwtService.Authenticate())
 	walletRouter.WalletRoutes(api,jwtService.Authenticate())
+	vaultRouter.VaultRoutes(api, jwtService.Authenticate())
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
