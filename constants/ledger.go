@@ -8,11 +8,6 @@ const (
 )
 
 const (
-	LedgerStatusPosted = "posted"
-	LedgerStatusFailed = "failed"
-)
-
-const (
 	LedgerSettlementPending = "pending"
 	LedgerSettlementSettled = "settled"
 	LedgerSettlementFailed  = "failed"
