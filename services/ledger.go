@@ -157,15 +157,20 @@ func (ls *LedgerService) CreateLedgerTransaction(
 }
 
 func (ls *LedgerService) PostTransaction(
+	tx *gorm.DB,
 	request *dto.PostLedgerTransactionRequest,
 	entries []*models.LedgerEntry,
 ) error {
+
+	if tx == nil {
+		return errors.New("transaction cannot be nil")
+	}
 
 	if request == nil {
 		return errors.New("transaction request cannot be nil")
 	}
 
-	if request.ReferenceID == uuid.Nil {
+	if request.ReferenceID == "" {
 		return errors.New("reference ID is required")
 	}
 
@@ -188,7 +193,9 @@ func (ls *LedgerService) PostTransaction(
 		}
 	}
 
-	exists, err := ls.ledgerRepo.
+	txLedgerRepo := ls.ledgerRepo.WithTx(tx)
+
+	exists, err := txLedgerRepo.
 		ExistingLedgerTransactionByReferenceID(request.ReferenceID)
 
 	if err != nil {
@@ -208,40 +215,21 @@ func (ls *LedgerService) PostTransaction(
 		SettlementStatus: request.SettlementStatus,
 	}
 
-	tx := ls.db.Begin()
-	if tx.Error != nil {
-		return tx.Error
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			panic(r)
-		}
-	}()
-
-	txLedgerRepo := ls.ledgerRepo.WithTx(tx)
-
 	ledgerTransaction, err := txLedgerRepo.CreateLedgerTransaction(
 		ledgerTransactionPayload,
 	)
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
 
 	for _, entry := range entries {
+
 		entry.LedgerTransactionID = ledgerTransaction.ID
 
 		_, err = txLedgerRepo.CreateLedgerEntry(entry)
 		if err != nil {
-			tx.Rollback()
 			return err
 		}
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		return err
 	}
 
 	return nil

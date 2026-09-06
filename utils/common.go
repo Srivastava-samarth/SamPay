@@ -26,6 +26,11 @@ func GenerateLedgerReference() string {
 	return "ldg_" + hex.EncodeToString(id[:])[:12]
 }
 
+func GenerateAutoTopUpReference() string {
+	id := uuid.New()
+	return "auto_topup_" + hex.EncodeToString(id[:])[:12]
+}
+
 func GenerateBankAccountNumber() string {
     n := rand.Int63n(9000000000000) + 1000000000000
     accountNumber := strconv.FormatInt(n, 10)

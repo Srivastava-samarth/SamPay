@@ -28,6 +28,7 @@ type MerchantService struct {
 	UserService              *UserService
 	WalletService            *WalletService
 	NotificationService      *notifications.EmailService
+	LedgerService            *LedgerService
 }
 
 func NewMerchantService(
@@ -40,6 +41,7 @@ func NewMerchantService(
 	userSrvc *UserService,
 	walletSrvc *WalletService,
 	notificationService *notifications.EmailService,
+	ledgerSrvc *LedgerService,
 ) *MerchantService {
 	return &MerchantService{
 		DB:                       db,
@@ -51,6 +53,7 @@ func NewMerchantService(
 		UserService:              userSrvc,
 		WalletService:            walletSrvc,
 		NotificationService:      notificationService,
+		LedgerService:            ledgerSrvc,
 	}
 }
 
@@ -115,21 +118,21 @@ func (ms *MerchantService) ProcessMerchantOnboarding(
 
 	if request.MerchantType == constants.MerchantTypeIndividual {
 		individualComplianceRequest := &dto.IndividualComplianceCheckRequest{
-			FirstName: request.Individual.FirstName,
-			LastName: request.Individual.LastName,
-			Email: request.Email,
+			FirstName:   request.Individual.FirstName,
+			LastName:    request.Individual.LastName,
+			Email:       request.Email,
 			DateOfBirth: request.Individual.DateOfBirth,
-			Country: request.Individual.Country,
+			Country:     request.Individual.Country,
 		}
 		complianceResponse, errC =
 			ms.ComplianceService.PerformIndividualComplianceCheck(individualComplianceRequest, merchantID)
 	} else {
 		companyComplianceRequest := &dto.CompanyComplianceCheckRequest{
-			LegalName: request.Company.LegalName,
-			Email: request.Email,
-			RegistrationNumber: request.Company.RegistrationNumber,
+			LegalName:            request.Company.LegalName,
+			Email:                request.Email,
+			RegistrationNumber:   request.Company.RegistrationNumber,
 			IncorporationCountry: request.Company.IncorporationCountry,
-			TaxID: request.Company.TaxID,
+			TaxID:                request.Company.TaxID,
 		}
 		complianceResponse, errC =
 			ms.ComplianceService.PerformCorporateComplianceCheck(companyComplianceRequest, merchantID)
@@ -183,7 +186,11 @@ func (ms *MerchantService) ProvisionMerchant(
 
 	// 1. Create Wallet
 	txWalletService := NewWalletService(
+		ms.DB,
 		ms.WalletService.WalletRepo.WithTx(tx),
+		ms.BankService.BankRepo.WithTx(tx),
+		ms.LinkedBankAccountService.LinkedBankAccountRepo.WithTx(tx),
+		ms.LedgerService,
 	)
 	_, err := txWalletService.CreateWalletForMerchant(merchantID)
 	if err != nil {
@@ -193,6 +200,7 @@ func (ms *MerchantService) ProvisionMerchant(
 
 	// 2. Create Bank Account
 	txBankService := NewBankService(
+		ms.DB,
 		ms.BankService.BankRepo.WithTx(tx),
 		ms.BankService.MerchantRepo.WithTx(tx),
 		ms.BankService.LinkedBankAccountRepo.WithTx(tx),
@@ -318,18 +326,18 @@ func (ms *MerchantService) UpdateMerchantCompliance(merchantID uuid.UUID, compli
 func (ms *MerchantService) UpdateIndividualMerchant(
 	request *dto.UpdateMerchantRequest,
 	merchant *models.Merchant,
-) (*models.Merchant, error){
+) (*models.Merchant, error) {
 
 	complianceRequest := &dto.IndividualComplianceCheckRequest{
-		FirstName: request.IndividualUpdate.FirstName,
-		LastName: request.IndividualUpdate.LastName,
-		Email: merchant.Email,
+		FirstName:   request.IndividualUpdate.FirstName,
+		LastName:    request.IndividualUpdate.LastName,
+		Email:       merchant.Email,
 		DateOfBirth: request.IndividualUpdate.DateOfBirth,
-		Country: request.IndividualUpdate.Country,
+		Country:     request.IndividualUpdate.Country,
 	}
 
 	complianceResponse, errC := ms.ComplianceService.PerformIndividualComplianceCheck(complianceRequest, merchant.ID)
-	if errC != nil{
+	if errC != nil {
 		return nil, errC
 	}
 
@@ -342,27 +350,27 @@ func (ms *MerchantService) UpdateIndividualMerchant(
 	}
 
 	user, errU := ms.UserService.UserRepo.GetUserByEmail(merchant.Email)
-	if errU != nil{
+	if errU != nil {
 		return nil, errU
 	}
 
 	updateUserPayload := &dto.UpdateUserRequest{
 		FirstName: request.IndividualUpdate.FirstName,
-		LastName: request.IndividualUpdate.LastName,
+		LastName:  request.IndividualUpdate.LastName,
 	}
 
 	_, errUU := ms.UserService.UpdateUser(updateUserPayload, user.ID)
-	if errUU != nil{
+	if errUU != nil {
 		return nil, errUU
 	}
 
 	updateMerchantRequest := &models.Merchant{
 		MerchantName: request.MerchantName,
-		PhoneNumber: request.PhoneNumber,
+		PhoneNumber:  request.PhoneNumber,
 	}
 
 	updatedMerchant, errUM := ms.MerchantRepo.UpdateMerchant(updateMerchantRequest, merchant.ID)
-	if errUM != nil{
+	if errUM != nil {
 		return nil, errUM
 	}
 
@@ -372,17 +380,17 @@ func (ms *MerchantService) UpdateIndividualMerchant(
 func (ms *MerchantService) UpdateCompanyMerchant(
 	request *dto.UpdateMerchantRequest,
 	merchant *models.Merchant,
-) (*models.Merchant, error){
+) (*models.Merchant, error) {
 	companyComplianceRequest := &dto.CompanyComplianceCheckRequest{
-		LegalName: request.CompanyUpdate.LegalName,
-		Email: merchant.Email,
-		RegistrationNumber: request.CompanyUpdate.RegistrationNumber,
+		LegalName:            request.CompanyUpdate.LegalName,
+		Email:                merchant.Email,
+		RegistrationNumber:   request.CompanyUpdate.RegistrationNumber,
 		IncorporationCountry: request.CompanyUpdate.IncorporationCountry,
-		TaxID: request.CompanyUpdate.TaxID,
+		TaxID:                request.CompanyUpdate.TaxID,
 	}
 
 	complianceResponse, errC := ms.ComplianceService.PerformCorporateComplianceCheck(companyComplianceRequest, merchant.ID)
-	if errC != nil{
+	if errC != nil {
 		return nil, errC
 	}
 
@@ -395,27 +403,27 @@ func (ms *MerchantService) UpdateCompanyMerchant(
 	}
 
 	user, errU := ms.UserService.UserRepo.GetUserByEmail(merchant.Email)
-	if errU != nil{
+	if errU != nil {
 		return nil, errU
 	}
 
 	updateUserPayload := &dto.UpdateUserRequest{
 		FirstName: request.CompanyUpdate.OwnerFirstName,
-		LastName: request.CompanyUpdate.OwnerLastName,
+		LastName:  request.CompanyUpdate.OwnerLastName,
 	}
 
 	_, errUU := ms.UserService.UpdateUser(updateUserPayload, user.ID)
-	if errUU != nil{
+	if errUU != nil {
 		return nil, errUU
 	}
 
 	updateMerchantRequest := &models.Merchant{
 		MerchantName: request.MerchantName,
-		PhoneNumber: request.PhoneNumber,
+		PhoneNumber:  request.PhoneNumber,
 	}
 
 	updatedMerchant, errUM := ms.MerchantRepo.UpdateMerchant(updateMerchantRequest, merchant.ID)
-	if errUM != nil{
+	if errUM != nil {
 		return nil, errUM
 	}
 
