@@ -189,7 +189,7 @@ func (lr *LedgerRepository) CreateLedgerTransaction(requestTransaction *models.L
 }
 
 func (lr *LedgerRepository) ExistingLedgerTransactionByReferenceID(
-	referenceID uuid.UUID,
+	referenceID string,
 ) (bool, error) {
 
 	var ledgerTransaction models.LedgerTransaction

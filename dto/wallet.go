@@ -19,3 +19,8 @@ type WalletTransactionResponse struct {
 	SettlementStatus string          `json:"settlement_status"`
 	CreatedAt        time.Time       `json:"created_at"`
 }
+
+type UpdateWallletBalanceRequest struct{
+	AvailableBalance decimal.Decimal `json:"available_balance"`
+    ReservedBalance  decimal.Decimal `json:"reserved_balance"`
+}
