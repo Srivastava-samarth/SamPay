@@ -56,8 +56,17 @@ func main() {
 	}
 	defer temporalClient.Close()
 
+	ledgerService := services.NewLedgerService(
+		ledgerRepo,
+		db,
+	)
+
 	walletService := services.NewWalletService(
+		db,
 		walletRepo,
+		bankRepo,
+		linkedBankAccountRepo,
+		ledgerService,
 	)
 
 	bankService := services.NewBankService(
@@ -94,6 +103,7 @@ func main() {
 		userService,
 		walletService,
 		notificationService,
+		ledgerService,
 	)
 
 	jwtService := middlewares.NewJwt(&cfg.JWT)
@@ -106,10 +116,6 @@ func main() {
 		jwtService,
 		notificationService,
 		passwordResetRepo,
-	)
-
-	ledgerService := services.NewLedgerService(
-		ledgerRepo,
 	)
 
 	vaultService := services.NewVaultService(

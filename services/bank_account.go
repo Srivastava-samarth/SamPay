@@ -124,7 +124,7 @@ func (bs *BankService) CreateBankAccountAndLink(bankAccountRequest *dto.CreateBa
 }
 
 func (bs *BankService) UpdateBankAccountAndlink(updateBankAccountRequest *dto.UpdateBankAccountRequest) (*models.BankAccount, *models.LinkedBankAccount, error){
-	updatedBankAccount, errUBA := bs.BankRepo.UpdateBankAccount(updateBankAccountRequest)
+	updatedBankAccount, errUBA := bs.BankRepo.UpdateBankAccount(updateBankAccountRequest.ID,updateBankAccountRequest)
 	if errUBA != nil{
 		return nil, nil, errUBA
 	}

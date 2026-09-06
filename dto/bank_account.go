@@ -23,7 +23,8 @@ type CreateBankAccountResponse struct {
 
 type UpdateBankAccountRequest struct {
 	ID          uuid.UUID       `json:"id" gorm:"not null"`
+	AccountName string          `json:"account_name"`
 	AccountType string          `json:"account_type"`
-	Balance     decimal.Decimal `json:"balance"`
 	Status      string          `json:"status"`
+	Balance     decimal.Decimal `json:"balance"`
 }

@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"time"
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
@@ -60,40 +61,54 @@ func (br *BankRepository) GetBankAccountByID(ID uuid.UUID) (*models.BankAccount,
 	return &bankAccount, nil
 }
 
-func (br *BankRepository) UpdateBankAccount(request *dto.UpdateBankAccountRequest) (*models.BankAccount, error) {
+func (br *BankRepository) UpdateBankAccount(bankAccountID uuid.UUID, request *dto.UpdateBankAccountRequest) (*models.BankAccount, error) {
+	var oldBankAccountEntry *models.BankAccount
+	if err := br.db.Where("id = ? AND status = ?", bankAccountID, "active").First(&oldBankAccountEntry).Error; err != nil {
+		return nil, err
+	}
+
 	updates := map[string]interface{}{
 		"updated_at": time.Now(),
 	}
 
-	if request.AccountType != "" {
-		updates["account_type"] = request.AccountType
-	}
-
-	if request.Balance.GreaterThan(decimal.Zero) {
+	if request.Balance.GreaterThan(decimal.Zero) &&
+		oldBankAccountEntry.Balance != request.Balance {
 		updates["balance"] = request.Balance
 	}
 
-	if request.Status != "" {
+	if request.AccountName != "" &&
+		oldBankAccountEntry.AccountName != request.AccountName {
+		updates["account_name"] = request.AccountName
+	}
+
+	if request.AccountType != "" &&
+		oldBankAccountEntry.AccountType != request.AccountType {
+		updates["account_type"] = request.AccountType
+	}
+
+	if request.Status != "" &&
+		oldBankAccountEntry.Status != request.Status {
 		updates["status"] = request.Status
+	}
+
+	if len(updates) == 1 {
+		return nil, errors.New("No updates to be done")
 	}
 
 	err := br.db.
 		Model(&models.BankAccount{}).
-		Where("id = ?", request.ID).
+		Where("id = ? AND status = ?", bankAccountID, "active").
 		Updates(updates).Error
 
 	if err != nil {
 		return nil, err
 	}
 
-	var updatedBankAccount models.BankAccount
-	err = br.db.
-		Where("id = ?", request.ID).
-		First(&updatedBankAccount).Error
-
-	if err != nil {
+	var updatedBankAccount *models.BankAccount
+	if err := br.db.Where("id = ? AND status = ?", bankAccountID, "active").First(&updatedBankAccount).Error; err != nil {
 		return nil, err
 	}
 
-	return &updatedBankAccount, nil
+	return updatedBankAccount, nil
 }
+

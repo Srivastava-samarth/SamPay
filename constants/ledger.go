@@ -1,10 +1,11 @@
 package constants
 
 const (
-	LedgerTransactionTypePayment     = "payment"
-	LedgerTransactionTypePayout      = "payout"
-	LedgerTransactionTypeRefund      = "refund"
-	LedgerTransactionTypeSettlement  = "settlement"
+	LedgerTransactionTypePayment    = "payment"
+	LedgerTransactionTypePayout     = "payout"
+	LedgerTransactionTypeRefund     = "refund"
+	LedgerTransactionTypeSettlement = "settlement"
+	LedgerTransactionTypeTopup      = "topup"
 )
 
 const (
