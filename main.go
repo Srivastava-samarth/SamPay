@@ -61,6 +61,7 @@ func main() {
 	)
 
 	bankService := services.NewBankService(
+		db,
 		bankRepo,
 		merchantRepo,
 		linkedBankAccountRepo,

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
+	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -57,4 +58,38 @@ func(lbr *LinkedBankAccountRepository) GetAllBankAccountLinkedByMerchantID(merch
 	}
 
 	return linkedBankAccounts, nil
+}
+
+func (br *LinkedBankAccountRepository) UpdateLinkedBankAccount(bankAccountID uuid.UUID, request *dto.UpdateLinkedBankAccountRequest) (*models.LinkedBankAccount, error) {
+	updates := map[string]interface{}{
+		"updated_at": time.Now(),
+	}
+
+	if request.Type != "" {
+		updates["type"] = request.Type
+	}
+
+	if request.Status != "" {
+		updates["status"] = request.Status
+	}
+
+	err := br.db.
+		Model(&models.LinkedBankAccount{}).
+		Where("bank_account_id = ?", bankAccountID).
+		Updates(updates).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	var updatedLinkedBankAccount models.LinkedBankAccount
+	err = br.db.
+		Where("bank_account_id = ?", bankAccountID).
+		First(&updatedLinkedBankAccount).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &updatedLinkedBankAccount, nil
 }

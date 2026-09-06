@@ -16,3 +16,8 @@ type CreateLinkedBankAccountResponse struct {
 	Type                string    `json:"type" gorm:"not null"`
 	Status              string    `json:"status" gorm:"not null"`
 }
+
+type UpdateLinkedBankAccountRequest struct {
+	Type                string    `json:"type"`
+	Status              string    `json:"status"`
+}
