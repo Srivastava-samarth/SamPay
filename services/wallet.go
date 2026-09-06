@@ -200,7 +200,7 @@ func (ws *WalletService) AutoTopupAmount(
 		},
 	}
 
-	err = ws.LedgerService.PostTransaction(
+	_, err = ws.LedgerService.PostTransaction(
 		tx,
 		ledgerRequest,
 		ledgerEntries,

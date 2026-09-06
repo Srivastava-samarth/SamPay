@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"encoding/json"
+	"errors"
 	"time"
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
@@ -50,7 +51,10 @@ func (mp *MerchantRepository) CreateMerchant(request models.Merchant) (*models.M
 
 func (mp *MerchantRepository) GetMerchantByID(merchantID uuid.UUID) (*models.Merchant, error) {
 	var merchant models.Merchant
-	err := mp.db.Where("id = ?", merchantID).First(&merchant).Error
+	err := mp.db.Where("id = ? AND status = ?", merchantID, "active").First(&merchant).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}

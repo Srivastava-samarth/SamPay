@@ -1,6 +1,15 @@
 package repositories
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"github.com/Srivastava-samarth/sampay/constants"
+	models "github.com/Srivastava-samarth/sampay/database/models"
+	"github.com/Srivastava-samarth/sampay/dto"
+	"github.com/Srivastava-samarth/sampay/utils"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
 
 type PaymentRepository struct {
 	DB *gorm.DB
@@ -14,3 +23,68 @@ func NewPaymentRepository(
 	}
 }
 
+func (pr *PaymentRepository) WithTx(tx *gorm.DB) *PaymentRepository {
+	return &PaymentRepository{
+		DB: tx,
+	}
+}
+
+func (pr *PaymentRepository) CreatePayment(merchantID uuid.UUID, request *dto.CreatePaymentRequest, status *string) (*models.Payment, error){
+	settlementStatus := constants.LedgerSettlementPending;
+	createPaymentPayload := &models.Payment{
+		ID: utils.GenerateUUID(),
+		PaymentReference: utils.GeneratePaymentReference(),
+		SenderMerchantID: merchantID,
+		ReceiverMerchantID: request.ReceiverMerchantID,
+		Amount: request.Amount,
+		Currency: &request.Currency,
+		Description: &request.Description,
+		CustomerReference: utils.GenerateCustomerReference(),
+		Status: status,
+		SettlementStatus: &settlementStatus,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	err := pr.DB.Create(&createPaymentPayload).Error
+	if err != nil{
+		return nil, err
+	}
+
+	return createPaymentPayload, nil
+}
+
+func (pr *PaymentRepository) UpdatePaymentStatus(PaymentReference string, status *string) (*models.Payment, error){
+	var payment *models.Payment
+	err := pr.DB.Where("payment_reference = ?", PaymentReference).First(&payment).Error
+	if err != nil{
+		return nil, err
+	}
+
+	updates := map[string]interface{}{
+		"updated_at": time.Now(),
+	}
+
+	if status == payment.Status{
+		return payment, nil
+	}
+
+	updates["status"] = status
+ 
+	errU := pr.DB.
+		Model(&models.Payment{}).
+		Where("id = ?", payment.ID).
+		Updates(updates).Error
+
+	if errU != nil{
+		return nil, errU
+	}
+
+	var updatedPayment *models.Payment
+	errF := pr.DB.Where("id = ?", payment.ID).First(&updatedPayment).Error
+	if errF != nil{
+		return nil, errF
+	}
+	return updatedPayment, nil
+
+}

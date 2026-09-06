@@ -42,6 +42,8 @@ func main() {
 	linkedBankAccountRepo := repositories.NewLinkedBankRepository(db)
 	ledgerRepo := repositories.NewLedgerRepository(db)
 	vaultRepo := repositories.NewVaultRepository(db)
+	paymentRepo := repositories.NewPaymentRepository(db)
+	idempotencyRepo := repositories.NewIdempotencyRepository(db)
 
 	notificationService, err :=
 		notifications.NewEmailService(cfg.SMTP)
@@ -122,6 +124,16 @@ func main() {
 		vaultRepo,
 	)
 
+	paymentService := services.NewPaymentService(
+		paymentRepo,
+		merchantRepo,
+		walletService,
+	)
+
+	idempotencyService := services.NewIdempotencyService(
+		idempotencyRepo,
+	)
+
 	// --------------------------------------------------
 	// Controllers
 	// --------------------------------------------------
@@ -170,6 +182,20 @@ func main() {
 		vaultController,
 	)
 
+	paymentController := controllers.NewPaymentController(
+		db,
+		paymentService,
+		idempotencyService,
+		walletService,
+		vaultService,
+		ledgerService,
+		&temporalClient,
+	)
+
+	paymentRouter := routes.NewPaymentRouter(
+		paymentController,
+	)
+
 	activityRegistry := activities.NewRegistry(
 		db,
 		notificationService,
@@ -177,8 +203,12 @@ func main() {
 		complianceService,
 		authService,
 		userService,
+		ledgerService,
+		paymentService,
+		vaultService,
 		merchantUserService,
 		*merchantRepo,
+
 	)
 
 	workers := temporal.StartWorkers(
@@ -203,6 +233,7 @@ func main() {
 	userRouter.UserRoutes(api, jwtService.Authenticate())
 	walletRouter.WalletRoutes(api,jwtService.Authenticate())
 	vaultRouter.VaultRoutes(api, jwtService.Authenticate())
+	paymentRouter.PaymentRoutes(api, jwtService.Authenticate())
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

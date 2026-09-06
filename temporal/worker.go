@@ -11,6 +11,7 @@ import (
 const MerchantOnboardingTaskQueue = "MERCHANT_ONBOARDING"
 const ForgotPasswordTaskQueue = "FORGOT_PASSWORD"
 const UserOnboardingTaskQueue = "USER_ONBOARDING"
+const PaymentFlowTaskQueue = "PAYMENT_FLOW"
 
 type WorkerConfig struct {
     TaskQueue string
@@ -50,6 +51,17 @@ func StartWorkers(
                 w.RegisterActivity(activityRegistry.GetMerchantById)
                 w.RegisterActivity(activityRegistry.CreateMerchantUser)
                 w.RegisterActivity(activityRegistry.CreateUser)
+            },
+        },
+         {
+            TaskQueue: PaymentFlowTaskQueue,
+            Register: func(w worker.Worker) {
+                w.RegisterWorkflow(workflows.PaymentFlow)
+                w.RegisterActivity(activityRegistry.CreatePayment)
+                w.RegisterActivity(activityRegistry.CalculateFees)
+                w.RegisterActivity(activityRegistry.ExecutePayment)
+                w.RegisterActivity(activityRegistry.UpdatePaymentStatus)
+                w.RegisterActivity(activityRegistry.ValidatePaymentRequest)
             },
         },
     }

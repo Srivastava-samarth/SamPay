@@ -13,16 +13,16 @@ import (
 
 type LedgerService struct {
 	ledgerRepo *repositories.LedgerRepository
-    db         *gorm.DB
+	db         *gorm.DB
 }
 
 func NewLedgerService(
 	ledgerRepo *repositories.LedgerRepository,
-    db         *gorm.DB,
+	db *gorm.DB,
 ) *LedgerService {
 	return &LedgerService{
 		ledgerRepo: ledgerRepo,
-        db: db,
+		db:         db,
 	}
 }
 
@@ -115,12 +115,19 @@ func (ls *LedgerService) GeTransaction(
 }
 
 func (ls *LedgerService) CreateLedgerEntries(
+	tx *gorm.DB,
 	entries []*models.LedgerEntry,
 ) (int, error) {
 
 	if len(entries) == 0 {
 		return 0, errors.New("no entries were provided")
 	}
+
+	if tx == nil {
+		return 0, errors.New("transaction cannot be nil")
+	}
+
+	txLedgerRepo := ls.ledgerRepo.WithTx(tx)
 
 	for _, entry := range entries {
 		if entry == nil {
@@ -133,7 +140,7 @@ func (ls *LedgerService) CreateLedgerEntries(
 	}
 
 	for _, entry := range entries {
-		if _, err := ls.ledgerRepo.CreateLedgerEntry(entry); err != nil {
+		if _, err := txLedgerRepo.CreateLedgerEntry(entry); err != nil {
 			return 0, err
 		}
 	}
@@ -160,36 +167,36 @@ func (ls *LedgerService) PostTransaction(
 	tx *gorm.DB,
 	request *dto.PostLedgerTransactionRequest,
 	entries []*models.LedgerEntry,
-) error {
+) (*models.LedgerTransaction, error) {
 
 	if tx == nil {
-		return errors.New("transaction cannot be nil")
+		return nil, errors.New("transaction cannot be nil")
 	}
 
 	if request == nil {
-		return errors.New("transaction request cannot be nil")
+		return nil, errors.New("transaction request cannot be nil")
 	}
 
 	if request.ReferenceID == "" {
-		return errors.New("reference ID is required")
+		return nil, errors.New("reference ID is required")
 	}
 
 	if request.Type != constants.LedgerEntryTypeDebit &&
 		request.Type != constants.LedgerEntryTypeCredit {
-		return errors.New("type must be either debit or credit")
+		return nil, errors.New("type must be either debit or credit")
 	}
 
 	if request.Currency != "INR" {
-		return errors.New("currency must be INR")
+		return nil, errors.New("currency must be INR")
 	}
 
 	if len(entries) == 0 {
-		return errors.New("no ledger entries were provided")
+		return nil, errors.New("no ledger entries were provided")
 	}
 
 	for _, entry := range entries {
 		if entry == nil {
-			return errors.New("ledger entry cannot be nil")
+			return nil, errors.New("ledger entry cannot be nil")
 		}
 	}
 
@@ -199,11 +206,11 @@ func (ls *LedgerService) PostTransaction(
 		ExistingLedgerTransactionByReferenceID(request.ReferenceID)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if exists {
-		return errors.New(
+		return nil, errors.New(
 			"ledger transaction with this reference already exists",
 		)
 	}
@@ -219,7 +226,7 @@ func (ls *LedgerService) PostTransaction(
 		ledgerTransactionPayload,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, entry := range entries {
@@ -228,9 +235,9 @@ func (ls *LedgerService) PostTransaction(
 
 		_, err = txLedgerRepo.CreateLedgerEntry(entry)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return nil
+	return ledgerTransaction, nil
 }
