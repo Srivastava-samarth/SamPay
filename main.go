@@ -201,6 +201,7 @@ func main() {
 		notificationService,
 		merchantService,
 		complianceService,
+		walletService,
 		authService,
 		userService,
 		ledgerService,

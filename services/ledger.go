@@ -3,7 +3,6 @@ package services
 import (
 	"errors"
 
-	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
@@ -179,11 +178,6 @@ func (ls *LedgerService) PostTransaction(
 
 	if request.ReferenceID == "" {
 		return nil, errors.New("reference ID is required")
-	}
-
-	if request.Type != constants.LedgerEntryTypeDebit &&
-		request.Type != constants.LedgerEntryTypeCredit {
-		return nil, errors.New("type must be either debit or credit")
 	}
 
 	if request.Currency != "INR" {

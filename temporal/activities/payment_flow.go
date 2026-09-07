@@ -59,7 +59,7 @@ func (a *Registry) ExecutePayment(
 	request *PaymentWorkflowRequest,
 ) (*models.Payment, error) {
 
-	 var payment *models.Payment
+	 var finalPaymentAfterUpdate *models.Payment
 	err := a.DB.Transaction(
 		func(tx *gorm.DB) error {
 
@@ -217,8 +217,8 @@ func (a *Registry) ExecutePayment(
 				tx,
 				&dto.PostLedgerTransactionRequest{
 					ReferenceID:      *payment.PaymentReference,
-					Type:             constants.LedgerEntryTypeDebit,
-					Status:           constants.TransactionStatusProcessing,
+					Type:             constants.LedgerTransactionTypePayment,
+					Status:           constants.TransactionStatusCompleted,
 					SettlementStatus: constants.LedgerSettlementPending,
 					Currency:         "INR",
 				},
@@ -425,7 +425,7 @@ func (a *Registry) ExecutePayment(
 
 			// Return the updated payment.
 			// Returning nil error commits the transaction.
-			payment = updatedPayment
+			finalPaymentAfterUpdate = updatedPayment
 			return nil
 		},
 	)
@@ -434,5 +434,5 @@ func (a *Registry) ExecutePayment(
 		return nil, err
 	}
 
-	return payment, nil
+	return finalPaymentAfterUpdate, nil
 }

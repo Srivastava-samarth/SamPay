@@ -89,11 +89,24 @@ func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
 		}
 
 		if existingIdempotencyKey != nil {
-			dto.Respond(
-				c,
-				http.StatusOK,
+
+			var response dto.Response
+
+			err := json.Unmarshal(
 				existingIdempotencyKey.ResponseBody,
+				&response,
 			)
+			if err != nil {
+				dto.Fail(
+					c,
+					http.StatusInternalServerError,
+					"FAILED_UNMARSHALLING",
+					err.Error(),
+				)
+				return
+			}
+
+			c.JSON(http.StatusOK, response)
 			return
 		}
 
