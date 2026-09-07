@@ -44,6 +44,7 @@ func main() {
 	vaultRepo := repositories.NewVaultRepository(db)
 	paymentRepo := repositories.NewPaymentRepository(db)
 	idempotencyRepo := repositories.NewIdempotencyRepository(db)
+	payoutRepo := repositories.NewPayoutRepository(db)
 
 	notificationService, err :=
 		notifications.NewEmailService(cfg.SMTP)
@@ -130,6 +131,13 @@ func main() {
 		walletService,
 	)
 
+	payoutService := services.NewPayoutService(
+		payoutRepo,
+		walletRepo,
+		bankRepo,
+		linkedBankAccountRepo,
+	)
+
 	idempotencyService := services.NewIdempotencyService(
 		idempotencyRepo,
 	)
@@ -196,6 +204,18 @@ func main() {
 		paymentController,
 	)
 
+	PayoutController := controllers.NewPayoutController(
+		payoutService,
+		idempotencyService,
+		paymentController,
+		paymentService,
+		temporalClient,
+	)
+
+	payoutRouter := routes.NewPayoutRouter(
+		PayoutController,
+	)
+
 	activityRegistry := activities.NewRegistry(
 		db,
 		notificationService,
@@ -207,9 +227,9 @@ func main() {
 		ledgerService,
 		paymentService,
 		vaultService,
+		payoutService,
 		merchantUserService,
 		*merchantRepo,
-
 	)
 
 	workers := temporal.StartWorkers(
@@ -235,6 +255,7 @@ func main() {
 	walletRouter.WalletRoutes(api,jwtService.Authenticate())
 	vaultRouter.VaultRoutes(api, jwtService.Authenticate())
 	paymentRouter.PaymentRoutes(api, jwtService.Authenticate())
+	payoutRouter.PayoutRoutes(api, jwtService.Authenticate())
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

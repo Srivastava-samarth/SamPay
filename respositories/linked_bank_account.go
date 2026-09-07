@@ -110,3 +110,19 @@ func (lbr *LinkedBankAccountRepository) GetPrimaryBankAccountLinkedByMerchantID(
 	return linkedBankAccount, nil
 
 }
+
+func (lbr *LinkedBankAccountRepository) GetBankAccountLinkedByID(ID uuid.UUID) (*models.LinkedBankAccount, error) {
+	var linkedBankAccount *models.LinkedBankAccount
+
+	err := lbr.db.Where(
+		"id = ? AND status = ?",
+		ID,
+		"active",
+	).Find(&linkedBankAccount).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return linkedBankAccount, nil
+
+}
