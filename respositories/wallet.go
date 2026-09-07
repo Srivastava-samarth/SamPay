@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"time"
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
@@ -47,7 +48,11 @@ func (wr *WalletRepository) CreateWalletForMerchant(merchantID uuid.UUID) (*mode
 
 func (wr *WalletRepository) GetWalletByMerchantId(merchantId uuid.UUID) (*models.Wallets, error) {
 	var wallet *models.Wallets
-	if err := wr.db.Where("merchant_id = ?", merchantId).First(&wallet).Error; err != nil {
+	err := wr.db.Where("merchant_id = ? AND status = ?", merchantId, "active").First(&wallet).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
 		return nil, err
 	}
 	return wallet, nil

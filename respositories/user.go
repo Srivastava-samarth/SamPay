@@ -82,7 +82,7 @@ func (ur *UserRepository) UpdateUser(request *models.User) (*models.User, error)
 		updates["last_name"] = request.LastName
 	}
 
-	if request.MustChangePassword {
+	if request.MustChangePassword == true || request.MustChangePassword == false {
 		updates["must_change_password"] = request.MustChangePassword
 	}
 

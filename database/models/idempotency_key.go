@@ -9,11 +9,7 @@ type IdempotencyKey struct {
 	ID             uuid.UUID `json:"id" gorm:"primaryKey"`
 	MerchantID     uuid.UUID `json:"merchant_id" gorm:"not null"`
 	IdempotencyKey string    `json:"idempotency_key" gorm:"not null"`
-	RequestHash    string    `json:"request_hash" gorm:"not null"`
-	ResponseStatus int       `json:"response_status" gorm:"not null"`
 	ResponseBody   []byte    `json:"response_body" gorm:"not null"`
-	Status         string    `json:"status" gorm:"not null"`
-	ExpiresAt      time.Time `json:"expires_at" gorm:"not null"`
 	CreatedAt      time.Time `json:"created_at" gorm:"autoCreateTime;not null"`
 	UpdatedAt      time.Time `json:"updated_at" gorm:"autoUpdateTime;not null"`
 }

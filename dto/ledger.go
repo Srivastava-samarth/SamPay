@@ -27,7 +27,6 @@ type PostLedgerTransactionRequest struct {
 	SettlementStatus string          `gorm:"column:settlement_status"`
 	Amount           decimal.Decimal `gorm:"column:amount"`
 	Currency         string          `gorm:"column:currency"`
-	EntryType        string          `gorm:"column:entry_type"`
 }
 
 type PostLedgerEntryRequest struct {

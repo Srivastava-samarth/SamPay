@@ -31,6 +31,18 @@ func GenerateAutoTopUpReference() string {
 	return "auto_topup_" + hex.EncodeToString(id[:])[:12]
 }
 
+func GeneratePaymentReference() *string {
+	id := uuid.New()
+	ref :=  "pmt_" + hex.EncodeToString(id[:])[:12]
+	return &ref
+}
+
+func GenerateCustomerReference() *string {
+	id := uuid.New()
+	ref :=  "cust_" + hex.EncodeToString(id[:])[:12]
+	return &ref
+}
+
 func GenerateBankAccountNumber() string {
     n := rand.Int63n(9000000000000) + 1000000000000
     accountNumber := strconv.FormatInt(n, 10)
