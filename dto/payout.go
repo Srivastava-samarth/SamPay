@@ -7,7 +7,7 @@ import (
 
 type CreateWalletToBankRequest struct {
 	SenderWalletID                 uuid.UUID       `json:"sender_wallet_id"`
-	DestinationLinkedBankAccountID uuid.UUID       `json:"destination_linked_bank_account_id"`
+	DestinationBankAccountID uuid.UUID       `json:"destination_bank_account_id"`
 	ExternalReference              *string         `json:"external_reference"`
 	Amount                         decimal.Decimal `json:"amount"`
 	Currency                       string          `json:"currency"`
@@ -16,7 +16,7 @@ type CreateWalletToBankRequest struct {
 
 type CreateBankToBankRequest struct {
 	SourceBankAccountID            uuid.UUID       `json:"source_bank_account_id"`
-	DestinationLinkedBankAccountID uuid.UUID       `json:"destination_linked_bank_account_id"`
+	DestinationBankAccountID uuid.UUID       `json:"destination_bank_account_id"`
 	ExternalReference              *string         `json:"external_reference"`
 	Amount                         decimal.Decimal `json:"amount"`
 	Currency                       string          `json:"currency"`

@@ -32,8 +32,9 @@ func (pr *PayoutRepository) CreatePayoutWalletToBank(merchantID uuid.UUID, reque
 	createPayoutPayload := &models.Payout{
 		ID: utils.GenerateUUID(),
 		MerchantID: merchantID,
-		SourceWalletID: request.SenderWalletID,
-		DestinationLinkedBankAccountID: request.DestinationLinkedBankAccountID,
+		SourceWalletID: &request.SenderWalletID,
+		SourceBankAccountID: nil,
+		DestinationBankAccountID: request.DestinationBankAccountID,
 		PayoutReference: *utils.GeneratePayoutReference(),
 		Amount: request.Amount,
 		Currency: request.Currency,
@@ -56,8 +57,9 @@ func (pr *PayoutRepository) CreatePayoutBankToBank(merchantID uuid.UUID, request
 	createPayoutPayload := &models.Payout{
 		ID: utils.GenerateUUID(),
 		MerchantID: merchantID,
-		SourceBankAccountID: request.SourceBankAccountID,
-		DestinationLinkedBankAccountID: request.DestinationLinkedBankAccountID,
+		SourceWalletID: nil,
+		SourceBankAccountID: &request.SourceBankAccountID,
+		DestinationBankAccountID: request.DestinationBankAccountID,
 		PayoutReference: *utils.GeneratePayoutReference(),
 		Amount: request.Amount,
 		Currency: request.Currency,

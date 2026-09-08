@@ -74,7 +74,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 ) (*models.Payout, error) {
 
 	var finalPayoutAfterUpdate *models.Payout
-	err := a.DB.Transaction(
+		err := a.DB.Transaction(
 		func(tx *gorm.DB) error {
 
 			merchantID := request.MerchantID
@@ -212,7 +212,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			}
 
 			// ---------------------------------------------------------
-			// 8. Ledger: Wallet A -> Payment Vault
+			// 8. Ledger: Wallet A -> Payout Vault
 			// ---------------------------------------------------------
 
 			ledgerTransaction, err := a.LedgerService.PostTransaction(
@@ -221,7 +221,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 					ReferenceID:      payout.PayoutReference,
 					Type:             constants.LedgerTransactionTypePayout,
 					Status:           constants.TransactionStatusCompleted,
-					SettlementStatus: constants.LedgerSettlementPending,
+					SettlementStatus: constants.LedgerSettlementSettled,
 					Currency:         "INR",
 				},
 				[]*models.LedgerEntry{
@@ -253,7 +253,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// ---------------------------------------------------------
 
 			receiverBankAccount, err := a.PayoutService.BankAccountRepo.GetBankAccountByID(
-				payoutRequest.DestinationLinkedBankAccountID,
+				payoutRequest.DestinationBankAccountID,
 			)
 			if err != nil {
 				return fmt.Errorf(
@@ -299,7 +299,6 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// ---------------------------------------------------------
 			// 11. Ledger: Payment Vault -> Receiver Wallet
 			// ---------------------------------------------------------
-
 			_, err = a.LedgerService.CreateLedgerEntries(
 				tx,
 				[]*models.LedgerEntry{
@@ -508,7 +507,7 @@ func (a *Registry) ExecutePayoutBankToBank(
 				)
 			}
 
-			receiverBankAccount, errRBA := bankAccountRepo.GetBankAccountByID(request.Request.DestinationLinkedBankAccountID)
+			receiverBankAccount, errRBA := bankAccountRepo.GetBankAccountByID(request.Request.DestinationBankAccountID)
 			if errRBA != nil{
 				return fmt.Errorf(
 					"getting receiver bank account: %w",

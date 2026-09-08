@@ -52,11 +52,11 @@ func (ps *PayoutService) ValidatePayoutRequestWalletToBank(request *dto.CreateWa
 		return errSW
 	}
 
-	if(request.SenderWalletID == uuid.Nil || senderWallet.ID == request.SenderWalletID){
+	if(request.SenderWalletID == uuid.Nil || senderWallet.ID != request.SenderWalletID){
 		return errors.New("sender_wallet_id issue")
 	}
 
-	destinationBankAccount, errDBA := ps.BankAccountRepo.GetBankAccountByID(request.DestinationLinkedBankAccountID)
+	destinationBankAccount, errDBA := ps.BankAccountRepo.GetBankAccountByID(request.DestinationBankAccountID)
 	if errDBA != nil{
 		return errDBA
 	}
@@ -99,7 +99,7 @@ func (ps *PayoutService) ValidatePayoutRequestBankToBank(request *dto.CreateBank
 		return errors.New("merchant id doesn't match")
 	}
 
-	destinationBankAccount, errDBA := ps.BankAccountRepo.GetBankAccountByID(request.DestinationLinkedBankAccountID)
+	destinationBankAccount, errDBA := ps.BankAccountRepo.GetBankAccountByID(request.DestinationBankAccountID)
 	if errDBA != nil{
 		return errDBA
 	}

@@ -115,7 +115,7 @@ func (lbr *LinkedBankAccountRepository) GetBankAccountLinkedByID(ID uuid.UUID) (
 	var linkedBankAccount *models.LinkedBankAccount
 
 	err := lbr.db.Where(
-		"id = ? AND status = ?",
+		"bank_account_id = ? AND status = ?",
 		ID,
 		"active",
 	).Find(&linkedBankAccount).Error

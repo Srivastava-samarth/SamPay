@@ -67,17 +67,33 @@ func StartWorkers(
 				w.RegisterActivity(activityRegistry.ValidatePaymentRequest)
 			},
 		},
-        {
+		{
 			TaskQueue: PayoutFlowTaskQueue,
 			Register: func(w worker.Worker) {
-				w.RegisterWorkflow(workflows.PaymentFlow)
+				w.RegisterWorkflow(workflows.PayoutFlow)
 				w.RegisterActivity(activityRegistry.CreatePayoutWalletToBank)
-                w.RegisterActivity(activityRegistry.CreatePayoutBankToBank)
+				w.RegisterActivity(activityRegistry.CreatePayoutBankToBank)
 				w.RegisterActivity(activityRegistry.ExecutePayoutWalletToBank)
-                w.RegisterActivity(activityRegistry.ExecutePayoutBankToBank)
+				w.RegisterActivity(activityRegistry.ExecutePayoutBankToBank)
 				w.RegisterActivity(activityRegistry.UpdatePayoutStatus)
+				w.RegisterActivity(activityRegistry.CalculateFees)
 				w.RegisterActivity(activityRegistry.ValidatePayoutWalletToBankRequest)
-                w.RegisterActivity(activityRegistry.ValidatePayoutBankToBankRequest)
+				w.RegisterActivity(activityRegistry.ValidatePayoutBankToBankRequest)
+			},
+		},
+		{
+			TaskQueue: PayoutFlowTaskQueue,
+			Register: func(w worker.Worker) {
+				w.RegisterWorkflow(workflows.PayoutFlowBankToBank)
+				w.RegisterActivity(activityRegistry.CreatePayoutWalletToBank)
+				w.RegisterActivity(activityRegistry.CreatePayoutBankToBank)
+				w.RegisterActivity(activityRegistry.ExecutePayoutWalletToBank)
+				w.RegisterActivity(activityRegistry.ExecutePayoutBankToBank)
+				w.RegisterActivity(activityRegistry.UpdatePayoutStatus)
+
+				w.RegisterActivity(activityRegistry.CalculateFees)
+				w.RegisterActivity(activityRegistry.ValidatePayoutWalletToBankRequest)
+				w.RegisterActivity(activityRegistry.ValidatePayoutBankToBankRequest)
 			},
 		},
 	}

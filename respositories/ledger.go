@@ -208,3 +208,53 @@ func (lr *LedgerRepository) ExistingLedgerTransactionByReferenceID(
 
 	return true, nil
 }
+
+func (lr *LedgerRepository) UpdateLedgerStatus(ID uuid.UUID, status string, settlementStatus string) (*models.LedgerTransaction, error){
+    updates := map[string]interface{}{
+		"updated_at": time.Now(),
+	}
+
+    if status != ""{
+        updates["status"] = status
+    }
+
+    if settlementStatus != ""{
+        updates["settlement_status"] = settlementStatus
+    }
+
+    ledgerTransaction, errLT := lr.GetLedgerTransactionByID(ID)
+    if errLT != nil{
+        return nil, errLT
+    }
+
+    if ledgerTransaction.Status == status && ledgerTransaction.SettlementStatus == settlementStatus{
+        return  nil, errors.New("no status change")
+    }
+
+    err := lr.db.
+		Model(&models.LedgerTransaction{}).
+		Where("id = ?", ID).
+		Updates(updates).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+    var updatedLedgerTransaction *models.LedgerTransaction
+    errU := lr.db.Where("id = ?", ID).First(&updatedLedgerTransaction).Error
+    if errU != nil{
+        return nil, errU
+    }
+
+    return updatedLedgerTransaction, nil
+}
+
+func (lr *LedgerRepository) GetLedgerTransactionByID(ID uuid.UUID) (*models.LedgerTransaction, error){
+    var ledgerTransaction *models.LedgerTransaction
+    err := lr.db.Where("id = ?", ID).First(&ledgerTransaction).Error
+    if err != nil{
+        return nil, err
+    }
+
+    return ledgerTransaction, nil
+}
