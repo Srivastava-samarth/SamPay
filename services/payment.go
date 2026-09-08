@@ -123,5 +123,5 @@ func (ps *PaymentService) CheckBalance(merchantID uuid.UUID, amount decimal.Deci
 	if wallet == nil{
 		return false, errors.New("wallet does not exist")
 	}
-	return true, nil
+	return wallet.AvailableBalance.GreaterThanOrEqual(amount), nil
 }

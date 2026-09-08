@@ -12,7 +12,7 @@ type Payout struct {
 	MerchantID               uuid.UUID       `json:"merchant_id" gorm:"not null"`
 	SourceWalletID           *uuid.UUID      `json:"source_wallet_id"`
 	SourceBankAccountID      *uuid.UUID      `json:"source_bank_account_id"`
-	DestinationLinkedBankAccountID uuid.UUID       `json:"destination_linked_bank_account_id" gorm:"not null"`
+	DestinationBankAccountID uuid.UUID       `json:"destination_bank_account_id" gorm:"not null"`
 	PayoutReference          string          `json:"payout_reference" gorm:"unique;not null"`
 	ExternalReference        *string         `json:"external_reference"`
 	Amount                   decimal.Decimal `json:"amount" gorm:"not null"`

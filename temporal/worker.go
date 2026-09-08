@@ -8,76 +8,108 @@ import (
 	"github.com/Srivastava-samarth/sampay/temporal/workflows"
 )
 
-const MerchantOnboardingTaskQueue = "MERCHANT_ONBOARDING"
-const ForgotPasswordTaskQueue = "FORGOT_PASSWORD"
-const UserOnboardingTaskQueue = "USER_ONBOARDING"
-const PaymentFlowTaskQueue = "PAYMENT_FLOW"
+const (
+	MerchantOnboardingTaskQueue = "MERCHANT_ONBOARDING"
+	ForgotPasswordTaskQueue     = "FORGOT_PASSWORD"
+	UserOnboardingTaskQueue     = "USER_ONBOARDING"
+	PaymentFlowTaskQueue        = "PAYMENT_FLOW"
+	PayoutFlowTaskQueue         = "PAYOUT_FLOW"
+)
 
 type WorkerConfig struct {
-    TaskQueue string
-    Register  func(worker.Worker)
+	TaskQueue string
+	Register  func(worker.Worker)
 }
 
 func StartWorkers(
-    temporalClient client.Client,
-    activityRegistry *activities.Registry,
+	temporalClient client.Client,
+	activityRegistry *activities.Registry,
 ) []worker.Worker {
 
-    configs := []WorkerConfig{
-        {
-            TaskQueue: MerchantOnboardingTaskQueue,
-            Register: func(w worker.Worker) {
-                w.RegisterWorkflow(workflows.MerchantONboardingWorkflow)
+	configs := []WorkerConfig{
+		{
+			TaskQueue: MerchantOnboardingTaskQueue,
+			Register: func(w worker.Worker) {
+				w.RegisterWorkflow(workflows.MerchantONboardingWorkflow)
 
-                w.RegisterActivity(activityRegistry.PerformComplianceCheck)
-                w.RegisterActivity(activityRegistry.ProvisionMerchant)
-                w.RegisterActivity(activityRegistry.SendWelcomeEmail)
-                w.RegisterActivity(activityRegistry.UpdateMerchantCompliance)
-            },
-        },
-        {
-            TaskQueue: ForgotPasswordTaskQueue,
-            Register: func(w worker.Worker) {
-                w.RegisterWorkflow(workflows.ForgotPasswordWorkflow)
+				w.RegisterActivity(activityRegistry.PerformComplianceCheck)
+				w.RegisterActivity(activityRegistry.ProvisionMerchant)
+				w.RegisterActivity(activityRegistry.SendWelcomeEmail)
+				w.RegisterActivity(activityRegistry.UpdateMerchantCompliance)
+			},
+		},
+		{
+			TaskQueue: ForgotPasswordTaskQueue,
+			Register: func(w worker.Worker) {
+				w.RegisterWorkflow(workflows.ForgotPasswordWorkflow)
 
-                w.RegisterActivity(activityRegistry.ForgotPassword)
-            },
-        },
-        {
-            TaskQueue: UserOnboardingTaskQueue,
-            Register: func(w worker.Worker) {
-                w.RegisterWorkflow(workflows.UserOnboardingFlow)
-                w.RegisterActivity(activityRegistry.SendUserWelcomeEmail)
-                w.RegisterActivity(activityRegistry.GetMerchantById)
-                w.RegisterActivity(activityRegistry.CreateMerchantUser)
-                w.RegisterActivity(activityRegistry.CreateUser)
-            },
-        },
-         {
-            TaskQueue: PaymentFlowTaskQueue,
-            Register: func(w worker.Worker) {
-                w.RegisterWorkflow(workflows.PaymentFlow)
-                w.RegisterActivity(activityRegistry.CreatePayment)
-                w.RegisterActivity(activityRegistry.CalculateFees)
-                w.RegisterActivity(activityRegistry.ExecutePayment)
-                w.RegisterActivity(activityRegistry.UpdatePaymentStatus)
-                w.RegisterActivity(activityRegistry.ValidatePaymentRequest)
-            },
-        },
-    }
+				w.RegisterActivity(activityRegistry.ForgotPassword)
+			},
+		},
+		{
+			TaskQueue: UserOnboardingTaskQueue,
+			Register: func(w worker.Worker) {
+				w.RegisterWorkflow(workflows.UserOnboardingFlow)
+				w.RegisterActivity(activityRegistry.SendUserWelcomeEmail)
+				w.RegisterActivity(activityRegistry.GetMerchantById)
+				w.RegisterActivity(activityRegistry.CreateMerchantUser)
+				w.RegisterActivity(activityRegistry.CreateUser)
+			},
+		},
+		{
+			TaskQueue: PaymentFlowTaskQueue,
+			Register: func(w worker.Worker) {
+				w.RegisterWorkflow(workflows.PaymentFlow)
+				w.RegisterActivity(activityRegistry.CreatePayment)
+				w.RegisterActivity(activityRegistry.CalculateFees)
+				w.RegisterActivity(activityRegistry.ExecutePayment)
+				w.RegisterActivity(activityRegistry.UpdatePaymentStatus)
+				w.RegisterActivity(activityRegistry.ValidatePaymentRequest)
+			},
+		},
+		{
+			TaskQueue: PayoutFlowTaskQueue,
+			Register: func(w worker.Worker) {
+				w.RegisterWorkflow(workflows.PayoutFlow)
+				w.RegisterActivity(activityRegistry.CreatePayoutWalletToBank)
+				w.RegisterActivity(activityRegistry.CreatePayoutBankToBank)
+				w.RegisterActivity(activityRegistry.ExecutePayoutWalletToBank)
+				w.RegisterActivity(activityRegistry.ExecutePayoutBankToBank)
+				w.RegisterActivity(activityRegistry.UpdatePayoutStatus)
+				w.RegisterActivity(activityRegistry.CalculateFees)
+				w.RegisterActivity(activityRegistry.ValidatePayoutWalletToBankRequest)
+				w.RegisterActivity(activityRegistry.ValidatePayoutBankToBankRequest)
+			},
+		},
+		{
+			TaskQueue: PayoutFlowTaskQueue,
+			Register: func(w worker.Worker) {
+				w.RegisterWorkflow(workflows.PayoutFlowBankToBank)
+				w.RegisterActivity(activityRegistry.CreatePayoutWalletToBank)
+				w.RegisterActivity(activityRegistry.CreatePayoutBankToBank)
+				w.RegisterActivity(activityRegistry.ExecutePayoutWalletToBank)
+				w.RegisterActivity(activityRegistry.ExecutePayoutBankToBank)
+				w.RegisterActivity(activityRegistry.UpdatePayoutStatus)
 
-    workers := make([]worker.Worker, 0, len(configs))
+				w.RegisterActivity(activityRegistry.CalculateFees)
+				w.RegisterActivity(activityRegistry.ValidatePayoutWalletToBankRequest)
+				w.RegisterActivity(activityRegistry.ValidatePayoutBankToBankRequest)
+			},
+		},
+	}
 
-    for _, cfg := range configs {
-        w := worker.New(
-            temporalClient,
-            cfg.TaskQueue,
-            worker.Options{},
-        )
+	workers := make([]worker.Worker, 0, len(configs))
 
-        cfg.Register(w)
-        workers = append(workers, w)
-    }
+	for _, cfg := range configs {
+		w := worker.New(
+			temporalClient,
+			cfg.TaskQueue,
+			worker.Options{},
+		)
 
-    return workers
+		cfg.Register(w)
+		workers = append(workers, w)
+	}
+
+	return workers
 }

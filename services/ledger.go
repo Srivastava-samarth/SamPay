@@ -11,7 +11,7 @@ import (
 )
 
 type LedgerService struct {
-	ledgerRepo *repositories.LedgerRepository
+	LedgerRepo *repositories.LedgerRepository
 	db         *gorm.DB
 }
 
@@ -20,7 +20,7 @@ func NewLedgerService(
 	db *gorm.DB,
 ) *LedgerService {
 	return &LedgerService{
-		ledgerRepo: ledgerRepo,
+		LedgerRepo: ledgerRepo,
 		db:         db,
 	}
 }
@@ -50,7 +50,7 @@ func (ls *LedgerService) GetTransactions(
 		return nil, nil, errors.New("invalid pagination direction")
 	}
 
-	transactions, err := ls.ledgerRepo.GetWalletTransactions(
+	transactions, err := ls.LedgerRepo.GetWalletTransactions(
 		accountType,
 		accountID,
 		cursor,
@@ -105,7 +105,7 @@ func (ls *LedgerService) GeTransaction(
 		return nil, errors.New("TransactionId missing")
 	}
 
-	transaction, errT := ls.ledgerRepo.GetWalletTransactionById(walletId, transactionId)
+	transaction, errT := ls.LedgerRepo.GetWalletTransactionById(walletId, transactionId)
 	if errT != nil {
 		return nil, errT
 	}
@@ -126,7 +126,7 @@ func (ls *LedgerService) CreateLedgerEntries(
 		return 0, errors.New("transaction cannot be nil")
 	}
 
-	txLedgerRepo := ls.ledgerRepo.WithTx(tx)
+	txLedgerRepo := ls.LedgerRepo.WithTx(tx)
 
 	for _, entry := range entries {
 		if entry == nil {
@@ -154,7 +154,7 @@ func (ls *LedgerService) CreateLedgerTransaction(
 		return nil, errors.New("Transaction not found")
 	}
 
-	ledgerTransaction, errLT := ls.ledgerRepo.CreateLedgerTransaction(transaction)
+	ledgerTransaction, errLT := ls.LedgerRepo.CreateLedgerTransaction(transaction)
 	if errLT != nil {
 		return nil, errLT
 	}
@@ -194,7 +194,7 @@ func (ls *LedgerService) PostTransaction(
 		}
 	}
 
-	txLedgerRepo := ls.ledgerRepo.WithTx(tx)
+	txLedgerRepo := ls.LedgerRepo.WithTx(tx)
 
 	exists, err := txLedgerRepo.
 		ExistingLedgerTransactionByReferenceID(request.ReferenceID)

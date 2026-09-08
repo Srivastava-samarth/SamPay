@@ -119,7 +119,7 @@ func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
 				},
 			}
 
-			pc.saveIdempotencyResponse(
+			pc.SaveIdempotencyResponse(
 				parsedMerchantID,
 				idempotencyKey,
 				response,
@@ -156,7 +156,7 @@ func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
 				},
 			}
 
-			pc.saveIdempotencyResponse(
+			pc.SaveIdempotencyResponse(
 				parsedMerchantID,
 				idempotencyKey,
 				response,
@@ -187,7 +187,7 @@ func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
 				},
 			}
 
-			pc.saveIdempotencyResponse(
+			pc.SaveIdempotencyResponse(
 				parsedMerchantID,
 				idempotencyKey,
 				response,
@@ -207,7 +207,7 @@ func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
 			Data:    payment,
 		}
 
-		pc.saveIdempotencyResponse(
+		pc.SaveIdempotencyResponse(
 			parsedMerchantID,
 			idempotencyKey,
 			response,
@@ -221,7 +221,7 @@ func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
 	}
 }
 
-func (pc *PaymentController) saveIdempotencyResponse(
+func (pc *PaymentController) SaveIdempotencyResponse(
 	merchantID uuid.UUID,
 	idempotencyKey string,
 	response dto.Response,
