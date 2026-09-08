@@ -86,6 +86,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			walletRepo := a.WalletService.WalletRepo.WithTx(tx)
 			vaultRepo := a.VaultService.VaultRepo.WithTx(tx)
 			payoutRepo := a.PayoutService.PayoutRepo.WithTx(tx)
+			bankAccountRepo := a.PayoutService.BankAccountRepo.WithTx(tx)
 
 			// ---------------------------------------------------------
 			// 1. Mark payment as PROCESSING
@@ -252,7 +253,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// 9. Get Receiver Wallet
 			// ---------------------------------------------------------
 
-			receiverBankAccount, err := a.PayoutService.BankAccountRepo.GetBankAccountByID(
+			receiverBankAccount, err := bankAccountRepo.GetBankAccountByID(
 				payoutRequest.DestinationBankAccountID,
 			)
 			if err != nil {
@@ -266,7 +267,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// 10. Payout Vault -> Receiver bank account
 			// ---------------------------------------------------------
 
-			_, err = a.PayoutService.BankAccountRepo.UpdateBankAccount(
+			_, err = bankAccountRepo.UpdateBankAccount(
 				receiverBankAccount.ID,
 				&dto.UpdateBankAccountRequest{
 					Balance: receiverBankAccount.Balance.Add(

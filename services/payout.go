@@ -9,6 +9,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+const MinimumBankBalance = 1000
+
 type PayoutService struct {
 	PayoutRepo            *repositories.PayoutRepository
 	WalletRepo            *repositories.WalletRepository
@@ -114,14 +116,24 @@ func (ps *PayoutService) ValidatePayoutRequestBankToBank(request *dto.CreateBank
 	return nil
 }
 
-func (ps *PayoutService) CheckBankBalance(ID uuid.UUID, amount decimal.Decimal) (bool,error){
-	bankAccount, errBA := ps.BankAccountRepo.GetBankAccountByID(ID)
-	if errBA != nil{
-		return false, errBA
-	}
+func (ps *PayoutService) CheckBankBalance(
+    ID uuid.UUID,
+    amount decimal.Decimal,
+) (bool, error) {
 
-	if bankAccount == nil{
-		return false, errors.New("wallet does not exist")
-	}
-	return true, nil
+    bankAccount, errBA := ps.BankAccountRepo.GetBankAccountByID(ID)
+
+    if errBA != nil {
+        return false, errBA
+    }
+
+    if bankAccount == nil {
+        return false, errors.New("bank account does not exist")
+    }
+
+    minimumBalance := decimal.NewFromInt(MinimumBankBalance)
+
+    return bankAccount.Balance.GreaterThanOrEqual(
+        amount.Add(minimumBalance),
+    ), nil
 }
