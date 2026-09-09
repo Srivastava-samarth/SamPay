@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/Srivastava-samarth/sampay/constants"
+	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/google/uuid"
@@ -88,4 +89,15 @@ func (rs *RefundService) ValidateCreateRefundRequest(
     }
 
     return nil
+}
+
+func (rs *RefundService) GetRefundByReference(
+    refundRef string,
+    )(*models.Refund, error){
+    refund, errR := rs.RefundRepo.GetRefundByReference(refundRef)
+    if errR != nil{
+        return nil, errR
+    }
+
+    return refund, nil
 }

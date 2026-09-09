@@ -208,3 +208,20 @@ func (rc *RefundController) CreateRefund() gin.HandlerFunc {
 		)
 	}
 }
+
+func (rc *RefundController) GetRefundByReference() gin.HandlerFunc{
+	return func(c *gin.Context) {
+		refundRef := c.Param("refund_reference")
+		if refundRef == ""{
+			dto.Fail(
+				c,
+				http.StatusNotFound,
+				"REFUND_REF_NOT_FOUND",
+				"refund ref is wrong or not passed",
+			)
+			return
+		}
+
+		
+	}
+}

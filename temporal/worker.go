@@ -97,6 +97,19 @@ func StartWorkers(
 				w.RegisterActivity(activityRegistry.ValidatePayoutBankToBankRequest)
 			},
 		},
+		{
+			TaskQueue: RefundFlowTaskQueue,
+			Register: func(w worker.Worker) {
+				w.RegisterWorkflow(workflows.RefundFlow)
+				w.RegisterActivity(activityRegistry.ValidateRefundRequest)
+				w.RegisterActivity(activityRegistry.UpdateRefundStatus)
+				w.RegisterActivity(activityRegistry.GetRefundByPaymentID)
+				w.RegisterActivity(activityRegistry.GetPaymentByID)
+				w.RegisterActivity(activityRegistry.CreateRefund)
+				w.RegisterActivity(activityRegistry.RefundFromMerchantWallet)
+				w.RegisterActivity(activityRegistry.RefundFromPaymentVault)
+			},
+		},
 	}
 
 	workers := make([]worker.Worker, 0, len(configs))

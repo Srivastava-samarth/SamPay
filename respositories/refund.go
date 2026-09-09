@@ -70,6 +70,23 @@ func (rr *RefundRepository) GetRefundsByPaymentID(
     return refunds, nil
 }
 
+func (rr *RefundRepository) GetRefundByReference(
+	refundRef string,
+) (*models.Refund, error) {
+	var refund *models.Refund
+
+    err := rr.DB.
+        Where("refund_reference = ?", refundRef).
+        Order("created_at DESC").
+        Find(&refund).Error
+
+    if err != nil {
+        return nil, err
+    }
+
+    return refund, nil
+}
+
 func (rr *RefundRepository) UpdateRefundStatus(RefundReference string, status string) (*models.Refund, error){
 	var refund *models.Refund
 	err := rr.DB.Where("refund_reference = ?", RefundReference).First(&refund).Error

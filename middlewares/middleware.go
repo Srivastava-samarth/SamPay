@@ -100,7 +100,7 @@ func RequireMerchantAccess() gin.HandlerFunc {
 		}
 
 		requestedMerchantID, err := uuid.Parse(
-			c.Param("merchantID"),
+			c.Param("merchant_id"),
 		)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
