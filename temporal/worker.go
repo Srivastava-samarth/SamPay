@@ -14,6 +14,7 @@ const (
 	UserOnboardingTaskQueue     = "USER_ONBOARDING"
 	PaymentFlowTaskQueue        = "PAYMENT_FLOW"
 	PayoutFlowTaskQueue         = "PAYOUT_FLOW"
+	SettlementFlowTaskQueue     = "SETTLEMENT_FLOW"
 )
 
 type WorkerConfig struct {
@@ -94,6 +95,14 @@ func StartWorkers(
 				w.RegisterActivity(activityRegistry.CalculateFees)
 				w.RegisterActivity(activityRegistry.ValidatePayoutWalletToBankRequest)
 				w.RegisterActivity(activityRegistry.ValidatePayoutBankToBankRequest)
+			},
+		},
+		{
+			TaskQueue: SettlementFlowTaskQueue,
+			Register: func(w worker.Worker) {
+				w.RegisterWorkflow(workflows.SettlementFlow)
+				w.RegisterActivity(activityRegistry.GetUnsettledPayment)
+				w.RegisterActivity(activityRegistry.ExecuteSettlementByMerchant)
 			},
 		},
 	}
