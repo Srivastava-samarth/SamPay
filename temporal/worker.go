@@ -14,6 +14,7 @@ const (
 	UserOnboardingTaskQueue     = "USER_ONBOARDING"
 	PaymentFlowTaskQueue        = "PAYMENT_FLOW"
 	PayoutFlowTaskQueue         = "PAYOUT_FLOW"
+	RefundFlowTaskQueue         = "REFUND_FLOW"
 )
 
 type WorkerConfig struct {

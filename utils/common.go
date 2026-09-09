@@ -43,6 +43,12 @@ func GeneratePayoutReference() *string {
 	return &ref
 }
 
+func GenerateRefundReference() *string {
+	id := uuid.New()
+	ref :=  "rfd_" + hex.EncodeToString(id[:])[:12]
+	return &ref
+}
+
 func GenerateCustomerReference() *string {
 	id := uuid.New()
 	ref :=  "cust_" + hex.EncodeToString(id[:])[:12]
