@@ -45,6 +45,7 @@ func main() {
 	paymentRepo := repositories.NewPaymentRepository(db)
 	idempotencyRepo := repositories.NewIdempotencyRepository(db)
 	payoutRepo := repositories.NewPayoutRepository(db)
+	refundRepo := repositories.NewRefundRepository(db)
 
 	notificationService, err :=
 		notifications.NewEmailService(cfg.SMTP)
@@ -142,6 +143,10 @@ func main() {
 		idempotencyRepo,
 	)
 
+	refundService := services.NewRefundService(
+		*refundRepo,
+	)
+
 	// --------------------------------------------------
 	// Controllers
 	// --------------------------------------------------
@@ -216,6 +221,17 @@ func main() {
 		PayoutController,
 	)
 
+	refundController := controllers.NewRefundController(
+		refundService,
+		idempotencyService,
+		paymentController,
+		temporalClient,
+	)
+
+	refundRouter := routes.NewRefundRouter(
+		refundController,
+	)
+
 	activityRegistry := activities.NewRegistry(
 		db,
 		notificationService,
@@ -228,6 +244,7 @@ func main() {
 		paymentService,
 		vaultService,
 		payoutService,
+		refundService,
 		merchantUserService,
 		*merchantRepo,
 	)
@@ -256,6 +273,7 @@ func main() {
 	vaultRouter.VaultRoutes(api, jwtService.Authenticate())
 	paymentRouter.PaymentRoutes(api, jwtService.Authenticate())
 	payoutRouter.PayoutRoutes(api, jwtService.Authenticate())
+	refundRouter.RefundRoutes(api, jwtService.Authenticate())
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

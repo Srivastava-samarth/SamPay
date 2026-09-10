@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"time"
 
 	"github.com/Srivastava-samarth/sampay/constants"
@@ -17,9 +18,9 @@ type PaymentRepository struct {
 
 func NewPaymentRepository(
 	db *gorm.DB,
-) *PaymentRepository{
+) *PaymentRepository {
 	return &PaymentRepository{
-		DB:db,
+		DB: db,
 	}
 }
 
@@ -29,35 +30,35 @@ func (pr *PaymentRepository) WithTx(tx *gorm.DB) *PaymentRepository {
 	}
 }
 
-func (pr *PaymentRepository) CreatePayment(merchantID uuid.UUID, request *dto.CreatePaymentRequest, status *string) (*models.Payment, error){
-	settlementStatus := constants.LedgerSettlementPending;
+func (pr *PaymentRepository) CreatePayment(merchantID uuid.UUID, request *dto.CreatePaymentRequest, status *string) (*models.Payment, error) {
+	settlementStatus := constants.LedgerSettlementPending
 	createPaymentPayload := &models.Payment{
-		ID: utils.GenerateUUID(),
-		PaymentReference: utils.GeneratePaymentReference(),
-		SenderMerchantID: merchantID,
+		ID:                 utils.GenerateUUID(),
+		PaymentReference:   utils.GeneratePaymentReference(),
+		SenderMerchantID:   merchantID,
 		ReceiverMerchantID: request.ReceiverMerchantID,
-		Amount: request.Amount,
-		Currency: &request.Currency,
-		Description: &request.Description,
-		CustomerReference: utils.GenerateCustomerReference(),
-		Status: status,
-		SettlementStatus: &settlementStatus,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		Amount:             request.Amount,
+		Currency:           &request.Currency,
+		Description:        &request.Description,
+		CustomerReference:  utils.GenerateCustomerReference(),
+		Status:             status,
+		SettlementStatus:   &settlementStatus,
+		CreatedAt:          time.Now(),
+		UpdatedAt:          time.Now(),
 	}
 
 	err := pr.DB.Create(&createPaymentPayload).Error
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
 	return createPaymentPayload, nil
 }
 
-func (pr *PaymentRepository) UpdatePaymentStatus(PaymentReference string, status *string) (*models.Payment, error){
+func (pr *PaymentRepository) UpdatePaymentStatus(PaymentReference string, status *string) (*models.Payment, error) {
 	var payment *models.Payment
 	err := pr.DB.Where("payment_reference = ?", PaymentReference).First(&payment).Error
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -65,26 +66,39 @@ func (pr *PaymentRepository) UpdatePaymentStatus(PaymentReference string, status
 		"updated_at": time.Now(),
 	}
 
-	if status == payment.Status{
+	if status == payment.Status {
 		return payment, nil
 	}
 
 	updates["status"] = status
- 
+
 	errU := pr.DB.
 		Model(&models.Payment{}).
 		Where("id = ?", payment.ID).
 		Updates(updates).Error
 
-	if errU != nil{
+	if errU != nil {
 		return nil, errU
 	}
 
 	var updatedPayment *models.Payment
 	errF := pr.DB.Where("id = ?", payment.ID).First(&updatedPayment).Error
-	if errF != nil{
+	if errF != nil {
 		return nil, errF
 	}
 	return updatedPayment, nil
 
+}
+
+func (pr *PaymentRepository) GetPaymentByID(ID uuid.UUID) (*models.Payment, error) {
+	var payment *models.Payment
+	err := pr.DB.Where("id = ?", ID).First(&payment).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return payment, nil
 }

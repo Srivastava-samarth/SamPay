@@ -126,7 +126,8 @@ func (a *Registry) ExecutePayment(
 			updatedWallet := senderWallet
 
 			if !isBalanceSufficient {
-				updatedWallet, err = a.WalletService.AutoTopupAmount(
+				updatedWallet, err = a.WalletService.TopUpWalletFromPrimaryBank(
+					tx,
 					senderWallet,
 					totalAmount,
 				)
