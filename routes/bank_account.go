@@ -28,20 +28,20 @@ func (br *BankRouter) BankAccountRoutes(
 	bankAccount.POST(
 		"/:merchant_id/bank_account",
 		middlewares.RequireRole("owner", "finance", "super_admin"),
-		middlewares.RequireMerchantAccess(),
+		middlewares.RequireMerchantAccess("super_admin"),
 		br.bankCtlr.CreateBankAccount(),
 	)
 	bankAccount.GET(
 		"/:merchant_id/bank_account/:bank_account_id",
 		middlewares.RequireRole("owner", "finance", "super_admin"),
-		middlewares.RequireMerchantAccess(),
-		br.bankCtlr.GetAccount(),
+		middlewares.RequireMerchantAccess("super_admin"),
+		br.bankCtlr.GetBankAccount(),
 	)
 
 	bankAccount.GET(
 		"/:merchant_id/bank_accounts",
 		middlewares.RequireRole("owner", "finance", "super_admin"),
-		middlewares.RequireMerchantAccess(),
+		middlewares.RequireMerchantAccess("super_admin"),
 		br.bankCtlr.GetBankAccounts(),
 	)
 	bankAccount.PATCH(

@@ -239,6 +239,14 @@ func main() {
 		refundController,
 	)
 
+	bankCtlr := controllers.NewBankController(
+		bankService,
+	)
+
+	bankRouter := routes.NewBankRouter(
+		bankCtlr,
+	)
+
 	activityRegistry := activities.NewRegistry(
 		db,
 		notificationService,
@@ -277,6 +285,7 @@ func main() {
 	merchantRouter.MerchantRoutes(api, jwtService.Authenticate())
 	authRouter.AuthRoutes(api)
 	userRouter.UserRoutes(api, jwtService.Authenticate())
+	bankRouter.BankAccountRoutes(api, jwtService.Authenticate())
 	walletRouter.WalletRoutes(api,jwtService.Authenticate())
 	vaultRouter.VaultRoutes(api, jwtService.Authenticate())
 	paymentRouter.PaymentRoutes(api, jwtService.Authenticate())

@@ -42,8 +42,8 @@ func (bs *BankService) CreateBankAccount(bankAccountRequest *dto.CreateBankAccou
 		return nil, err
 	}
 
-	if len(linkedBankAccounts) == 3 {
-		return nil, errors.New("Already have 3 bank accounts with this merchnat id")
+	if len(linkedBankAccounts) == 2 {
+		return nil, errors.New("Already have 2 bank accounts with this merchnat id")
 	}
 	var accountType = constants.BankAccountTypePrimary
 	for _, linkedBankAccount := range linkedBankAccounts {
@@ -91,6 +91,15 @@ func (bs *BankService) CreateBankAccountAndLink(bankAccountRequest *dto.CreateBa
 
 	txBankRepo := bs.BankRepo.WithTx(tx)
 	txLinkedBankAccount := bs.LinkedBankAccountRepo.WithTx(tx)
+
+	linkedBankAccounts, err := txLinkedBankAccount.GetAllBankAccountLinkedByMerchantID(bankAccountRequest.MerchantID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if len(linkedBankAccounts) == 2 {
+		return nil, nil, errors.New("Already have 2 bank accounts with this merchnat id")
+	}
 
 	bankAccountRequestPayload := &models.BankAccount{
 		AccountName: bankAccountRequest.AccountName,

@@ -28,20 +28,20 @@ func (wr *WalletRouter) WalletRoutes(
 	wallet.GET(
 		"/:merchant_id/wallet",
 		middlewares.RequireRole("owner", "finance", "super_admin"),
-		middlewares.RequireMerchantAccess(),
+		middlewares.RequireMerchantAccess("super_admin"),
 		wr.walletCntlr.GetWallet(),
 	)
 
 	wallet.GET(
 		"/:merchant_id/wallet/transactions",
 		middlewares.RequireRole("owner", "finance", "super_admin"),
-		middlewares.RequireMerchantAccess(),
+		middlewares.RequireMerchantAccess("super_admin"),
 		wr.walletCntlr.GetWalletTransactions(),
 	)
 	wallet.GET(
 		"/:merchant_id/wallet/transaction/:transaction_id",
 		middlewares.RequireRole("owner", "finance", "super_admin"),
-		middlewares.RequireMerchantAccess(),
+		middlewares.RequireMerchantAccess("super_admin"),
 		wr.walletCntlr.GetWalletTransaction(),
 	)
 	wallet.PATCH(
