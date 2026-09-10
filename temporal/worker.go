@@ -14,6 +14,7 @@ const (
 	UserOnboardingTaskQueue     = "USER_ONBOARDING"
 	PaymentFlowTaskQueue        = "PAYMENT_FLOW"
 	PayoutFlowTaskQueue         = "PAYOUT_FLOW"
+	SettlementFlowTaskQueue     = "SETTLEMENT_FLOW"
 	RefundFlowTaskQueue         = "REFUND_FLOW"
 )
 
@@ -97,6 +98,15 @@ func StartWorkers(
 				w.RegisterActivity(activityRegistry.ValidatePayoutBankToBankRequest)
 			},
 		},
+		{
+			TaskQueue: SettlementFlowTaskQueue,
+			Register: func(w worker.Worker) {
+				w.RegisterWorkflow(workflows.SettlementFlow)
+				w.RegisterActivity(activityRegistry.GetUnsettledPayment)
+				w.RegisterActivity(activityRegistry.ExecuteSettlementByMerchant)
+			},
+		},
+
 		{
 			TaskQueue: RefundFlowTaskQueue,
 			Register: func(w worker.Worker) {

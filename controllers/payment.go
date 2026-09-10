@@ -2,8 +2,10 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
@@ -239,5 +241,39 @@ func (pc *PaymentController) SaveIdempotencyResponse(
 	)
 	if err != nil {
 		logger.Print("Error saving idempotency response: ", err)
+	}
+}
+
+func (pc *PaymentController) TriggerSettlement() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		workflowOptions := client.StartWorkflowOptions{
+			ID: fmt.Sprintf(
+				"settlement-%s",
+				time.Now().UTC().Format("20060102-150405"),
+			),
+			TaskQueue: temporal.SettlementFlowTaskQueue,
+		}
+
+		_, errW := pc.TemporalClient.ExecuteWorkflow(
+			c.Request.Context(),
+			workflowOptions,
+			workflows.SettlementFlow,
+		)
+
+		if errW != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"SETTLEMENT_FAILED",
+				errW.Error(),
+			)
+			return
+		}
+
+		dto.Respond(
+			c,
+			http.StatusOK,
+			workflowOptions.ID,
+		)
 	}
 }
