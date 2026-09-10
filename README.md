@@ -483,6 +483,276 @@ Example response:
 | **Redis**      | Planned caching / rate limiting |
 | **NATS**       | Planned service communication   |
 
+# 🚀 Local Setup
+
+Follow these steps to run SamPay locally.
+
+## Prerequisites
+
+Make sure the following are installed:
+
+* [Go](https://go.dev/)
+* [PostgreSQL](https://www.postgresql.org/)
+* [Temporal CLI](https://docs.temporal.io/cli)
+* Git
+
+Optional tools:
+
+* Postman / Bruno / Insomnia for API testing
+* Docker
+
+---
+
+## 1. Clone the Repository
+
+```bash
+git clone <your-repository-url>
+cd SamPay
+```
+
+---
+
+## 2. Install Go Dependencies
+
+```bash
+go mod download
+```
+
+Or:
+
+```bash
+go mod tidy
+```
+
+---
+
+## 3. Configure PostgreSQL
+
+Create a PostgreSQL database for SamPay.
+
+Example:
+
+```sql
+CREATE DATABASE sampay;
+```
+
+If your local PostgreSQL instance uses a non-default port, update the application configuration accordingly.
+
+For example:
+
+```text
+Host:     localhost
+Port:     5432
+Database: sampay
+User:     postgres
+```
+
+
+## 5. Run Database Migrations
+
+Run the project's migration command.
+
+For example:
+
+```bash
+go run ./cmd/migrate
+```
+
+If migrations are executed automatically when the application starts, this step may not be required.
+
+---
+
+## 6. Start Temporal
+
+Start the local Temporal development server:
+
+```bash
+temporal server start-dev
+```
+
+The local Temporal server will normally be available at:
+
+```text
+Temporal Server: localhost:7233
+Temporal UI:     http://localhost:8233
+```
+
+Open the Temporal UI to inspect workflows, activities, retries, and scheduled executions.
+
+---
+
+## 7. Start the SamPay Server
+
+From the project root:
+
+```bash
+go run main.go
+```
+
+The API should then be available at:
+
+```text
+http://localhost:8080
+```
+
+---
+
+## 8. Start the Temporal Worker
+
+If the worker runs as a separate process, start it using the project's worker entry point.
+
+For example:
+
+```bash
+go run ./cmd/worker
+```
+
+The worker must use the same Temporal:
+
+* Namespace
+* Task Queue
+* Workflow registrations
+* Activity registrations
+
+as the workflows being executed.
+
+---
+
+## 9. Test the API
+
+You can use Postman, Bruno, curl, or any API client.
+
+Example:
+
+```bash
+curl http://localhost:8080/health
+```
+
+Example payment request:
+
+```bash
+curl -X POST http://localhost:8080/payments \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: payment_123" \
+  -d '{
+    "merchant_id": "merchant-uuid",
+    "amount": "1000",
+    "currency": "INR"
+  }'
+```
+
+---
+
+## 🔄 Local Development Flow
+
+A typical local setup looks like:
+
+```text
+                    ┌──────────────────┐
+                    │     Client       │
+                    │ Postman / curl   │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │   SamPay API     │
+                    │    :8080         │
+                    └────────┬─────────┘
+                             │
+             ┌───────────────┼────────────────┐
+             │               │                │
+             ▼               ▼                ▼
+        PostgreSQL        Temporal         Services
+          :5432             :7233
+                             │
+                             ▼
+                         Worker
+```
+
+For scheduled workflows:
+
+```text
+Temporal Schedule
+       │
+       ▼
+   ReconFlow
+       │
+       ├── Get Time Range
+       ├── Get Transactions
+       ├── Get Ledger Entries
+       ├── Reconcile
+       ├── Generate Report
+       ├── Generate Email
+       └── Send Email
+```
+
+---
+
+## 🧪 Running Tests
+
+Run all Go tests:
+
+```bash
+go test ./...
+```
+
+Run tests with the race detector:
+
+```bash
+go test -race ./...
+```
+
+Run tests with verbose output:
+
+```bash
+go test -v ./...
+```
+
+> Concurrency and race-detector testing will become more important as SamPay moves into the scalability phase.
+
+---
+
+## 🐳 Docker
+
+Docker-based local development is planned as the project evolves.
+
+The eventual local environment is expected to include services such as:
+
+```text
+┌─────────────────────────────────────┐
+│             Docker                  │
+│                                     │
+│  ┌───────────┐  ┌───────────────┐  │
+│  │ PostgreSQL│  │    Temporal   │  │
+│  └───────────┘  └───────────────┘  │
+│                                     │
+│  ┌───────────┐  ┌───────────────┐  │
+│  │   Redis   │  │  Bank Service │  │
+│  └───────────┘  └───────────────┘  │
+└─────────────────────────────────────┘
+```
+
+This will be introduced as part of the distributed-system phase rather than being required for the initial implementation.
+
+---
+
+## ⚠️ Local Development Notes
+
+SamPay is currently a **learning and experimentation project**.
+
+The local environment is intended for:
+
+* API development
+* Financial-flow testing
+* Temporal workflow experimentation
+* Database testing
+* Reconciliation testing
+* Load testing
+* Distributed-system experiments
+
+It is **not intended for processing real financial transactions**.
+
+
 ---
 
 # 🧪 Engineering Roadmap
