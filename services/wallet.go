@@ -63,7 +63,8 @@ func (ws *WalletService) UpdateWalletStatus(merchantId uuid.UUID, status string)
 	return updatedWallet, nil
 }
 
-func (ws *WalletService) AutoTopupAmount(
+func (ws *WalletService) TopUpWalletFromPrimaryBank(
+	tx *gorm.DB,
 	wallet *models.Wallets,
 	amount decimal.Decimal,
 ) (*models.Wallets, error) {
@@ -76,10 +77,13 @@ func (ws *WalletService) AutoTopupAmount(
 		return nil, errors.New("wallet not found")
 	}
 
-	// 1. Get primary linked bank account
-	linkedBankAccount, err := ws.LinkedBankRepo.
-		GetPrimaryBankAccountLinkedByMerchantID(wallet.MerchantID)
+	// Use transaction-aware repositories.
+	linkedBankRepo := ws.LinkedBankRepo.WithTx(tx)
+	bankRepo := ws.BankRepo.WithTx(tx)
+	walletRepo := ws.WalletRepo.WithTx(tx)
 
+	linkedBankAccount, err := linkedBankRepo.
+		GetPrimaryBankAccountLinkedByMerchantID(wallet.MerchantID)
 	if err != nil {
 		return nil, err
 	}
@@ -88,10 +92,8 @@ func (ws *WalletService) AutoTopupAmount(
 		return nil, errors.New("no primary linked bank account found")
 	}
 
-	// 2. Get bank account
-	bankAccount, err := ws.BankRepo.
+	bankAccount, err := bankRepo.
 		GetBankAccountByID(linkedBankAccount.BankAccountID)
-
 	if err != nil {
 		return nil, err
 	}
@@ -100,87 +102,43 @@ func (ws *WalletService) AutoTopupAmount(
 		return nil, errors.New("bank account not found")
 	}
 
-	// 3. Validate minimum bank balance
-	availableBalance := bankAccount.Balance
+	// Merchant's bank account must retain at least ₹1000.
+	minimumBalance := decimal.NewFromInt(1000)
 
-	canDoTopup := availableBalance.
-		Sub(amount).
-		GreaterThan(decimal.NewFromInt(1000))
+	remainingBankBalance := bankAccount.Balance.Sub(amount)
 
-	if !canDoTopup {
+	if remainingBankBalance.LessThan(minimumBalance) {
 		return nil, errors.New(
-			"can't proceed with the topup as minimum balance constraints",
+			"can't proceed with the topup as minimum balance constraint",
 		)
 	}
 
-	// 4. Calculate new balances
-	updatedWalletBalance := wallet.AvailableBalance.Add(amount)
-	updatedBankBalance := bankAccount.Balance.Sub(amount)
-
-	// 5. Start transaction
-	tx := ws.db.Begin()
-
-	if tx.Error != nil {
-		return nil, tx.Error
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			panic(r)
-		}
-	}()
-
-	// ------------------------------------
-	// 6. Debit bank account
-	// ------------------------------------
-
-	updateBankAccountPayload := &dto.UpdateBankAccountRequest{
-		Balance: updatedBankBalance,
-	}
-
-	updatedBankAccount, err := ws.BankRepo.
-		WithTx(tx).
-		UpdateBankAccount(
-			linkedBankAccount.BankAccountID,
-			updateBankAccountPayload,
-		)
-
+	updatedBankAccount, err := bankRepo.UpdateBankAccount(
+		linkedBankAccount.BankAccountID,
+		&dto.UpdateBankAccountRequest{
+			Balance: remainingBankBalance,
+		},
+	)
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 
-	// ------------------------------------
-	// 7. Credit wallet
-	// ------------------------------------
-
-	updateWalletPayload := &dto.UpdateWallletBalanceRequest{
-		AvailableBalance: updatedWalletBalance,
-	}
-
-	updatedWallet, err := ws.WalletRepo.
-		WithTx(tx).
-		UpdateWalletBalance(
-			wallet.MerchantID,
-			updateWalletPayload,
-		)
-
+	updatedWallet, err := walletRepo.UpdateWalletBalance(
+		wallet.MerchantID,
+		&dto.UpdateWallletBalanceRequest{
+			AvailableBalance: wallet.AvailableBalance.Add(amount),
+		},
+	)
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
-
-	// ------------------------------------
-	// 8. Create ledger transaction
-	// ------------------------------------
 
 	ledgerRequest := &dto.PostLedgerTransactionRequest{
 		ReferenceID:      utils.GenerateAutoTopUpReference(),
 		Type:             constants.LedgerTransactionTypeTopup,
 		Currency:         "INR",
-		Status:           "completed",
-		SettlementStatus: "done",
+		Status:           constants.TransactionStatusCompleted,
+		SettlementStatus: constants.LedgerSettlementSettled,
 	}
 
 	ledgerEntries := []*models.LedgerEntry{
@@ -205,17 +163,7 @@ func (ws *WalletService) AutoTopupAmount(
 		ledgerRequest,
 		ledgerEntries,
 	)
-
 	if err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-
-	// ------------------------------------
-	// 9. Commit
-	// ------------------------------------
-
-	if err := tx.Commit().Error; err != nil {
 		return nil, err
 	}
 

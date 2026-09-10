@@ -2,58 +2,44 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
-	models "github.com/Srivastava-samarth/sampay/database/models"
+	models"github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/Srivastava-samarth/sampay/services"
 	"github.com/Srivastava-samarth/sampay/temporal"
 	"github.com/Srivastava-samarth/sampay/temporal/workflows"
-	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go.temporal.io/sdk/client"
-	"gorm.io/gorm"
 )
 
-var logger = utils.NewLogger()
-
-type PaymentController struct {
-	db              *gorm.DB
-	paymentSrvc     *services.PaymentService
-	idempotencySrvc *services.IdempotencyService
-	walletSrvc      *services.WalletService
-	vaultSrvc       *services.VaultService
-	ledgerSrvc      *services.LedgerService
-	TemporalClient  client.Client
+type RefundController struct {
+	RefundSrvc      *services.RefundService
+	IdempotencySrvc *services.IdempotencyService
+	PaymentCtrl     *PaymentController
+		TemporalClient  client.Client
 }
 
-func NewPaymentController(
-	db *gorm.DB,
-	paymentSrvc *services.PaymentService,
+func NewRefundController(
+	refundSrvc *services.RefundService,
 	idempotencySrvc *services.IdempotencyService,
-	walletSrvc *services.WalletService,
-	vaultSrvc *services.VaultService,
-	ledgerSrvc *services.LedgerService,
-	temporalClient *client.Client,
-) *PaymentController {
-	return &PaymentController{
-		db:              db,
-		paymentSrvc:     paymentSrvc,
-		idempotencySrvc: idempotencySrvc,
-		walletSrvc:      walletSrvc,
-		vaultSrvc:       vaultSrvc,
-		ledgerSrvc:      ledgerSrvc,
-		TemporalClient:  *temporalClient,
+	paymentCtrl *PaymentController,
+		temporalClient  client.Client,
+
+) *RefundController {
+	return &RefundController{
+		RefundSrvc:      refundSrvc,
+		IdempotencySrvc: idempotencySrvc,
+		PaymentCtrl:     paymentCtrl,
+		TemporalClient: temporalClient,
 	}
 }
 
-func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
+func (rc *RefundController) CreateRefund() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var request *dto.CreatePaymentRequest
+		var request *dto.CreateRefundRequest
 		merchantID := c.Param("merchant_id")
 		parsedMerchantID, errP := uuid.Parse(merchantID)
 		if errP != nil {
@@ -79,7 +65,7 @@ func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
 			return
 		}
 
-		existingIdempotencyKey, errEI := pc.idempotencySrvc.GetIdempotencyByKeyAndMerchantId(parsedMerchantID, idempotencyKey)
+		existingIdempotencyKey, errEI := rc.IdempotencySrvc.GetIdempotencyByKeyAndMerchantId(parsedMerchantID, idempotencyKey)
 		if errEI != nil {
 			dto.Fail(
 				c,
@@ -121,7 +107,7 @@ func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
 				},
 			}
 
-			pc.SaveIdempotencyResponse(
+			rc.PaymentCtrl.SaveIdempotencyResponse(
 				parsedMerchantID,
 				idempotencyKey,
 				response,
@@ -137,14 +123,14 @@ func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
 		}
 
 		workflowOptions := client.StartWorkflowOptions{
-			ID:        "payment-flow-" + merchantID,
-			TaskQueue: temporal.PaymentFlowTaskQueue,
+			ID:        "refund-flow-to-wallet" + merchantID,
+			TaskQueue: temporal.RefundFlowTaskQueue,
 		}
 
-		workflowRun, errW := pc.TemporalClient.ExecuteWorkflow(
+		workflowRun, errW := rc.TemporalClient.ExecuteWorkflow(
 			c.Request.Context(),
 			workflowOptions,
-			workflows.PaymentFlow,
+			workflows.PayoutFlow,
 			request,
 			parsedMerchantID,
 		)
@@ -158,7 +144,7 @@ func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
 				},
 			}
 
-			pc.SaveIdempotencyResponse(
+			rc.PaymentCtrl.SaveIdempotencyResponse(
 				parsedMerchantID,
 				idempotencyKey,
 				response,
@@ -173,23 +159,23 @@ func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
 			return
 		}
 
-		var payment *models.Payment
+		var refund *models.Refund
 
 		err := workflowRun.Get(
 			c.Request.Context(),
-			&payment,
+			&refund,
 		)
 
 		if err != nil {
 			response := dto.Response{
 				Success: false,
 				Error: &dto.ErrorInfo{
-					Code:    "PAYMENT_FAILED",
+					Code:    "PAYOUT_FAILED",
 					Message: err.Error(),
 				},
 			}
 
-			pc.SaveIdempotencyResponse(
+			rc.PaymentCtrl.SaveIdempotencyResponse(
 				parsedMerchantID,
 				idempotencyKey,
 				response,
@@ -198,7 +184,7 @@ func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
-				"PAYMENT_FAILED",
+				"PAYOUT_FAILED",
 				err.Error(),
 			)
 			return
@@ -206,10 +192,10 @@ func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
 
 		response := dto.Response{
 			Success: true,
-			Data:    payment,
+			Data:    refund,
 		}
 
-		pc.SaveIdempotencyResponse(
+		rc.PaymentCtrl.SaveIdempotencyResponse(
 			parsedMerchantID,
 			idempotencyKey,
 			response,
@@ -218,62 +204,24 @@ func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
 		dto.Respond(
 			c,
 			http.StatusOK,
-			payment,
+			refund,
 		)
 	}
 }
 
-func (pc *PaymentController) SaveIdempotencyResponse(
-	merchantID uuid.UUID,
-	idempotencyKey string,
-	response dto.Response,
-) {
-	responseBody, err := json.Marshal(response)
-	if err != nil {
-		logger.Print("Error marshaling idempotency response: ", err)
-		return
-	}
-
-	_, err = pc.idempotencySrvc.CreateIdempotencyKey(
-		merchantID,
-		idempotencyKey,
-		responseBody,
-	)
-	if err != nil {
-		logger.Print("Error saving idempotency response: ", err)
-	}
-}
-
-func (pc *PaymentController) TriggerSettlement() gin.HandlerFunc {
+func (rc *RefundController) GetRefundByReference() gin.HandlerFunc{
 	return func(c *gin.Context) {
-		workflowOptions := client.StartWorkflowOptions{
-			ID: fmt.Sprintf(
-				"settlement-%s",
-				time.Now().UTC().Format("20060102-150405"),
-			),
-			TaskQueue: temporal.SettlementFlowTaskQueue,
-		}
-
-		_, errW := pc.TemporalClient.ExecuteWorkflow(
-			c.Request.Context(),
-			workflowOptions,
-			workflows.SettlementFlow,
-		)
-
-		if errW != nil {
+		refundRef := c.Param("refund_reference")
+		if refundRef == ""{
 			dto.Fail(
 				c,
-				http.StatusInternalServerError,
-				"SETTLEMENT_FAILED",
-				errW.Error(),
+				http.StatusNotFound,
+				"REFUND_REF_NOT_FOUND",
+				"refund ref is wrong or not passed",
 			)
 			return
 		}
 
-		dto.Respond(
-			c,
-			http.StatusOK,
-			workflowOptions.ID,
-		)
+		
 	}
 }

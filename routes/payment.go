@@ -29,4 +29,9 @@ func (pr *PaymentRouter) PaymentRoutes(
 		middlewares.RequireRole("super_admin", "owner", "finance"),
 		pr.paymentCtlr.CreatePayment(),
 	)
+	payment.POST(
+		"/settlement",
+		middlewares.RequireRole("super_admin"),
+		pr.paymentCtlr.TriggerSettlement(),
+	)
 }
