@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 )
+
 type ReconResult struct {
 	ReconDate          time.Time
 	MatchedCount       *int
@@ -25,20 +26,21 @@ type ReconFailure struct {
 }
 
 type ReconReport struct {
-    ReconDate          string
-    StartTimestamp     string
-    EndTimestamp       string
-    TotalTransactions  int
-    MatchedCount       int
-    FailedCount        int
-    TotalDebit         string
-    TotalCredit        string
-    Difference          string
-    Status              string
-    FailedTransactions  []ReconFailure
+	ReconDate          string
+	StartTimestamp     string
+	EndTimestamp       string
+	TotalTransactions  int
+	MatchedCount       int
+	FailedCount        int
+	TotalDebit         string
+	TotalCredit        string
+	Difference         string
+	Status             string
+	FailedTransactions []ReconFailure
 }
 type CreateRefundRequest struct {
 	PaymentID         uuid.UUID       `json:"payment_id"`
+	MerchantID        uuid.UUID       `json:"merchant_id"`
 	ExternalReference *string         `json:"external_reference"`
 	Amount            decimal.Decimal `json:"amount"`
 	Currency          string          `json:"currency"`
