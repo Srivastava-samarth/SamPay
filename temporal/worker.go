@@ -15,6 +15,7 @@ const (
 	PaymentFlowTaskQueue        = "PAYMENT_FLOW"
 	PayoutFlowTaskQueue         = "PAYOUT_FLOW"
 	SettlementFlowTaskQueue     = "SETTLEMENT_FLOW"
+	RefundFlowTaskQueue         = "REFUND_FLOW"
 )
 
 type WorkerConfig struct {
@@ -103,6 +104,20 @@ func StartWorkers(
 				w.RegisterWorkflow(workflows.SettlementFlow)
 				w.RegisterActivity(activityRegistry.GetUnsettledPayment)
 				w.RegisterActivity(activityRegistry.ExecuteSettlementByMerchant)
+			},
+		},
+
+		{
+			TaskQueue: RefundFlowTaskQueue,
+			Register: func(w worker.Worker) {
+				w.RegisterWorkflow(workflows.RefundFlow)
+				w.RegisterActivity(activityRegistry.ValidateRefundRequest)
+				w.RegisterActivity(activityRegistry.UpdateRefundStatus)
+				w.RegisterActivity(activityRegistry.GetRefundByPaymentID)
+				w.RegisterActivity(activityRegistry.GetPaymentByID)
+				w.RegisterActivity(activityRegistry.CreateRefund)
+				w.RegisterActivity(activityRegistry.RefundFromMerchantWallet)
+				w.RegisterActivity(activityRegistry.RefundFromPaymentVault)
 			},
 		},
 	}
