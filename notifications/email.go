@@ -102,7 +102,7 @@ SamPay Team
 		subject,
 		body,
 	)
-}	
+}
 
 func (s *EmailService) SendUserOnboardingEmail(
 	name string,
@@ -127,6 +127,20 @@ You must change your password after at your first login.
 Regards,
 SamPay Team
 `, name, merchantName, role, email, password)
+
+	return s.Send(
+		email,
+		subject,
+		body,
+	)
+}
+
+func (s *EmailService) SendReconEmail(
+	body string,
+) error {
+
+	email := s.Config.From
+	subject := "SamPay Daily Reconciliation Report"
 
 	return s.Send(
 		email,
