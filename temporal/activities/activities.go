@@ -20,6 +20,7 @@ type Registry struct {
 	PaymentService      *services.PaymentService
 	VaultService        *services.VaultService
 	PayoutService       *services.PayoutService
+	ReportService       *services.ReportService
 	MerchantUserService *services.MerchantUserService
 	MerchantRepo        repositories.MerchantRepository
 }
@@ -35,7 +36,8 @@ func NewRegistry(
 	ledgerSrvc *services.LedgerService,
 	paymentSrvc *services.PaymentService,
 	vaultSrvc *services.VaultService,
-	payoutService       *services.PayoutService,
+	payoutService *services.PayoutService,
+	reportService *services.ReportService,
 	merchantUserService *services.MerchantUserService,
 	merchantRepo repositories.MerchantRepository,
 ) *Registry {
@@ -50,7 +52,8 @@ func NewRegistry(
 		LedgerService:       ledgerSrvc,
 		PaymentService:      paymentSrvc,
 		VaultService:        vaultSrvc,
-		PayoutService: payoutService,
+		PayoutService:       payoutService,
+		ReportService:       reportService,
 		MerchantUserService: merchantUserService,
 		MerchantRepo:        merchantRepo,
 	}

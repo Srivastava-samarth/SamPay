@@ -216,6 +216,14 @@ func main() {
 		PayoutController,
 	)
 
+	reportService := services.NewReportService()
+
+	reconController := controllers.NewReconController(
+		temporalClient,
+	)
+
+	reconRouter := routes.NewReconRouter(reconController)
+
 	activityRegistry := activities.NewRegistry(
 		db,
 		notificationService,
@@ -228,6 +236,7 @@ func main() {
 		paymentService,
 		vaultService,
 		payoutService,
+		reportService,
 		merchantUserService,
 		*merchantRepo,
 	)
@@ -256,6 +265,7 @@ func main() {
 	vaultRouter.VaultRoutes(api, jwtService.Authenticate())
 	paymentRouter.PaymentRoutes(api, jwtService.Authenticate())
 	payoutRouter.PayoutRoutes(api, jwtService.Authenticate())
+	reconRouter.ReconRoutes(api, jwtService.Authenticate())
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

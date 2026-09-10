@@ -14,6 +14,7 @@ const (
 	UserOnboardingTaskQueue     = "USER_ONBOARDING"
 	PaymentFlowTaskQueue        = "PAYMENT_FLOW"
 	PayoutFlowTaskQueue         = "PAYOUT_FLOW"
+	ReconFlowTaskQueue          = "RECON_FLOW"
 )
 
 type WorkerConfig struct {
@@ -94,6 +95,19 @@ func StartWorkers(
 				w.RegisterActivity(activityRegistry.CalculateFees)
 				w.RegisterActivity(activityRegistry.ValidatePayoutWalletToBankRequest)
 				w.RegisterActivity(activityRegistry.ValidatePayoutBankToBankRequest)
+			},
+		},
+		{
+			TaskQueue: ReconFlowTaskQueue,
+			Register: func(w worker.Worker) {
+				w.RegisterWorkflow(workflows.ReconFlow)
+				w.RegisterActivity(activityRegistry.GetReconTimeRange)
+				w.RegisterActivity(activityRegistry.GetLedgerTransactionsForRecon)
+				w.RegisterActivity(activityRegistry.GetLedgerEntriesForRecon)
+				w.RegisterActivity(activityRegistry.ReconcileLedgerTransactions)
+				w.RegisterActivity(activityRegistry.GenerateReconReport)
+				w.RegisterActivity(activityRegistry.GenerateReportEmail)
+				w.RegisterActivity(activityRegistry.SendReconEmail)
 			},
 		},
 	}

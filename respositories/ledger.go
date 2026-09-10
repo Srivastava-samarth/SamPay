@@ -258,3 +258,44 @@ func (lr *LedgerRepository) GetLedgerTransactionByID(ID uuid.UUID) (*models.Ledg
 
     return ledgerTransaction, nil
 }
+
+func (lr *LedgerRepository) GetTransactionsByCreatedAtRange(
+	startTimestamp time.Time,
+	endTimestamp time.Time,
+) ([]*models.LedgerTransaction, error) {
+
+	var transactions []*models.LedgerTransaction
+
+	err := lr.db.
+		Where(
+			"created_at >= ? AND created_at < ?",
+			startTimestamp,
+			endTimestamp,
+		).
+		Order("created_at ASC").
+		Find(&transactions).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return transactions, nil
+}
+
+func (lr *LedgerRepository) GetEntriesByTransactionIDs(
+	transactionIDs []uuid.UUID,
+) ([]*models.LedgerEntry, error) {
+
+	var entries []*models.LedgerEntry
+
+	err := lr.db.
+		Where("ledger_transaction_id IN ?", transactionIDs).
+		Order("created_at ASC").
+		Find(&entries).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return entries, nil
+}
