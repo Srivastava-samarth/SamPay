@@ -38,6 +38,7 @@ func (mr *MerchantRouter) MerchantRoutes(
 	)
 	merchant.GET(
 		"",
+		middlewares.RequireRole("super_admin"),
 		mr.MerchantController.GetMerchants(),
 	)
 	merchant.PATCH(

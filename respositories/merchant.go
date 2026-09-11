@@ -132,7 +132,7 @@ func (mp *MerchantRepository) UpdateMerchant(request *models.Merchant, merchantI
 	}
 
 	var merchant *models.Merchant
-	if err := mp.db.Where("id = ?", request.ID).First(&merchant).Error; err != nil {
+	if err := mp.db.Where("id = ?", merchantID).First(&merchant).Error; err != nil {
 		return nil, err
 	}
 

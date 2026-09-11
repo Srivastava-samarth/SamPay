@@ -121,7 +121,7 @@ func RequireMerchantAccess(role string) gin.HandlerFunc {
 			return
 		}
 
-		if tokenMerchantID != requestedMerchantID {
+		if tokenMerchantID != requestedMerchantID && roleAssigned != role {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"message": "access denied",
 			})
