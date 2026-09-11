@@ -235,13 +235,13 @@ func (ms *MerchantService) ProvisionMerchant(
 	}
 
 	txMerchantRepo := ms.MerchantRepo.WithTx(tx)
-	err = txMerchantRepo.UpdateMerchantStatus(
+	_, errM := txMerchantRepo.UpdateMerchantStatus(
 		merchantID,
-		"active",
+		constants.MerchantStatusActive,
 	)
-	if err != nil {
+	if errM != nil {
 		tx.Rollback()
-		return nil, err
+		return nil, errM
 	}
 
 	// 8. Commit everything
@@ -266,7 +266,7 @@ func (ms *MerchantService) UpdateMerchantCompliance(merchantID uuid.UUID, compli
 }
 
 func (ms *MerchantService) UpdateIndividualMerchant(
-	request *dto.UpdateMerchantRequest,
+	request *dto.UpdateMerchantKycRequest,
 	merchant *models.Merchant,
 ) (*models.Merchant, error) {
 
@@ -306,13 +306,8 @@ func (ms *MerchantService) UpdateIndividualMerchant(
 		return nil, errUU
 	}
 
-	updateMerchantRequest := &models.Merchant{
-		MerchantName: request.MerchantName,
-		PhoneNumber:  request.PhoneNumber,
-	}
-
-	updatedMerchant, errUM := ms.MerchantRepo.UpdateMerchant(updateMerchantRequest, merchant.ID)
-	if errUM != nil {
+	updatedMerchant, errUM := ms.MerchantRepo.GetMerchantByID(merchant.ID)
+	if errUM != nil{
 		return nil, errUM
 	}
 
@@ -320,7 +315,7 @@ func (ms *MerchantService) UpdateIndividualMerchant(
 }
 
 func (ms *MerchantService) UpdateCompanyMerchant(
-	request *dto.UpdateMerchantRequest,
+	request *dto.UpdateMerchantKycRequest,
 	merchant *models.Merchant,
 ) (*models.Merchant, error) {
 	companyComplianceRequest := &dto.CompanyComplianceCheckRequest{
@@ -359,13 +354,8 @@ func (ms *MerchantService) UpdateCompanyMerchant(
 		return nil, errUU
 	}
 
-	updateMerchantRequest := &models.Merchant{
-		MerchantName: request.MerchantName,
-		PhoneNumber:  request.PhoneNumber,
-	}
-
-	updatedMerchant, errUM := ms.MerchantRepo.UpdateMerchant(updateMerchantRequest, merchant.ID)
-	if errUM != nil {
+	updatedMerchant, errUM := ms.MerchantRepo.GetMerchantByID(merchant.ID)
+	if errUM != nil{
 		return nil, errUM
 	}
 
@@ -396,3 +386,246 @@ func (ms *MerchantService) ValidateMerchantOnboardingRequest(r *dto.CreateMercha
 
     return nil
 }
+
+func (ms *MerchantService) UpdateMerchant(
+	request *dto.UpdateMerchantRequest,
+	merchantID uuid.UUID,
+) (*models.Merchant, error){
+	updatedMerchant, errUM := ms.MerchantRepo.UpdateMerchant(request, merchantID)
+	if errUM != nil{
+		return nil, errUM
+	}
+
+	return updatedMerchant, nil
+}
+
+func (ms *MerchantService) UpdateMerchantStatus(
+    status *string,
+    merchantID uuid.UUID,
+) (*models.Merchant, error) {
+
+    var newMerchant *models.Merchant
+	if status == nil {
+        return nil, errors.New("merchant status is required")
+    }
+
+    if !ms.IsValidMerchantStatus(*status) {
+        return nil, errors.New("invalid merchant status")
+    }
+
+	if merchantID == uuid.Nil{
+		return nil, errors.New("merchant_id is required")
+	}
+
+    err := ms.DB.Transaction(func(tx *gorm.DB) error {
+		merchantRepo := ms.MerchantRepo.WithTx(tx)
+		merchantUserRepo := ms.MerchantUserService.MerchantUserRepo.WithTx(tx)
+		userRepo := ms.UserService.UserRepo.WithTx(tx)
+
+
+        oldMerchant, err := merchantRepo.GetMerchantByID(merchantID)
+        if err != nil {
+            return err
+        }
+
+        if oldMerchant.Status == *status {
+            newMerchant = oldMerchant
+            return nil
+        }
+
+        merchant, err := merchantRepo.UpdateMerchantStatus(
+            merchantID,
+            *status,
+        )
+        if err != nil {
+            return err
+        }
+
+        newMerchant = merchant
+
+        merchantUsers, err :=
+            merchantUserRepo.GetMerchantUsersByMerchantID(merchantID)
+
+        if err != nil {
+            return err
+        }
+
+        for _, merchantUser := range merchantUsers {
+            _, err := userRepo.UpdateUserStatus(
+                *status,
+                merchantUser.UserID,
+            )
+            if err != nil {
+                return err
+            }
+        }
+
+        return nil
+    })
+
+    if err != nil {
+        return nil, err
+    }
+
+    return newMerchant, nil
+}
+
+
+func(ms *MerchantService) IsValidMerchantStatus(status string) bool {
+    switch status {
+    case constants.MerchantStatusActive,
+        constants.MerchantStatusPending,
+        constants.MerchantStatusSuspended,
+        constants.MerchantStatusInactive:
+        return true
+    default:
+        return false
+    }
+}
+
+func (ms *MerchantService) UpdateMerchantKycInfo(
+	request *dto.UpdateMerchantKycRequest,
+	merchantID uuid.UUID,
+) (*models.Merchant, error) {
+
+	if merchantID == uuid.Nil {
+		return nil, errors.New("merchant_id is required")
+	}
+
+	if request == nil {
+		return nil, errors.New("request can't be empty")
+	}
+
+	merchant, err := ms.MerchantRepo.GetMerchantByID(merchantID)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		complianceResult *dto.ComplianceCheckResponse
+	)
+
+	if merchant.MerchantType == constants.MerchantTypeIndividual {
+
+		if request.IndividualUpdate == nil {
+			return nil, errors.New("individual update is required")
+		}
+
+		complianceIndividualRequest :=
+			&dto.IndividualComplianceCheckRequest{
+				FirstName:    request.IndividualUpdate.FirstName,
+				LastName:     request.IndividualUpdate.LastName,
+				DateOfBirth:  request.IndividualUpdate.DateOfBirth,
+				Email:        merchant.Email,
+				Country:      request.IndividualUpdate.Country,
+			}
+
+		complianceResult, err = ms.ComplianceService.
+			PerformIndividualComplianceCheck(
+				complianceIndividualRequest,
+				merchantID,
+			)
+
+	} else {
+
+		if request.CompanyUpdate == nil {
+			return nil, errors.New("company update is required")
+		}
+
+		complianceCorporateRequest :=
+			&dto.CompanyComplianceCheckRequest{
+				LegalName:             request.CompanyUpdate.LegalName,
+				Email:                 merchant.Email,
+				RegistrationNumber:   request.CompanyUpdate.RegistrationNumber,
+				IncorporationCountry: request.CompanyUpdate.IncorporationCountry,
+				TaxID:                 request.CompanyUpdate.TaxID,
+			}
+
+		complianceResult, err = ms.ComplianceService.
+			PerformCorporateComplianceCheck(
+				complianceCorporateRequest,
+				merchantID,
+			)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	var updatedMerchant *models.Merchant
+
+	err = ms.DB.Transaction(func(tx *gorm.DB) error {
+
+		merchantRepo := ms.MerchantRepo.WithTx(tx)
+		merchantUserRepo := ms.MerchantUserService.
+			MerchantUserRepo.WithTx(tx)
+		userRepo := ms.UserService.
+			UserRepo.WithTx(tx)
+
+		updatedComplianceMerchant, err :=
+			merchantRepo.UpdateMerchantCompliance(
+				merchantID,
+				complianceResult,
+			)
+
+		if err != nil {
+			return err
+		}
+
+		var merchantStatus string
+
+		if complianceResult.ComplianceStatus ==
+			constants.ComplianceStatusApproved {
+
+			merchantStatus = constants.MerchantStatusActive
+
+		} else {
+
+			merchantStatus = constants.MerchantStatusSuspended
+		}
+
+		if updatedComplianceMerchant.Status == merchant.Status {
+			updatedMerchant = updatedComplianceMerchant
+			return nil
+		}
+
+		updatedMerchant, err =
+			merchantRepo.UpdateMerchantStatus(
+				merchantID,
+				merchantStatus,
+			)
+
+		if err != nil {
+			return err
+		}
+
+		merchantUsers, err :=
+			merchantUserRepo.GetMerchantUsersByMerchantID(
+				merchantID,
+			)
+
+		if err != nil {
+			return err
+		}
+
+		for _, merchantUser := range merchantUsers {
+
+			if _, err :=
+				userRepo.UpdateUserStatus(
+					merchantStatus,
+					merchantUser.UserID,
+				); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedMerchant, nil
+}
+

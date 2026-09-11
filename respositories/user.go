@@ -1,8 +1,10 @@
 package repositories
 
 import (
+	"errors"
 	"time"
 
+	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/google/uuid"
@@ -27,7 +29,7 @@ func (wr *UserRepository) WithTx(tx *gorm.DB) *UserRepository {
 
 func(ur *UserRepository) GetBlockedUserByEmail(email string) (bool, error) {
 	var user models.User
-	err := ur.db.Where("email = ?", email).First(&user).Error
+	err := ur.db.Where("email = ? AND status = ?", email, constants.MerchantStatusSuspended).First(&user).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return false, nil
@@ -122,4 +124,36 @@ func (ur *UserRepository) GetUsers() ([]*models.User, error) {
 		return nil, err
 	}
 	return users, nil
+}
+
+func (ur *UserRepository) UpdateUserStatus(status string, userID uuid.UUID) (*models.User, error){
+	if status == ""{
+		return nil, errors.New("status is missing")
+	}
+
+	if userID == uuid.Nil{
+		return nil, errors.New("merchantId is missing")
+	}
+
+	updates := map[string]interface{}{
+		"status":status,
+		"updated_at": time.Now(),
+	}
+
+	err := ur.db.
+		Model(&models.User{}).
+		Where("id = ?", userID).
+		Updates(updates).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	var user *models.User
+	errU := ur.db.Where("id = ?", userID).First(&user).Error
+	if errU != nil{
+		return nil, errU
+	}
+
+	return user, nil
 }
