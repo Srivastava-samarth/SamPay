@@ -44,11 +44,10 @@ type CreateMerchantOnboardingResponse struct {
 }
 
 type CreateMerchantOnboardingRequest struct {
-	MerchantType string `json:"merchant_type" validate:"required,oneof=individual company"`
-
-	MerchantName string `json:"merchant_name" validate:"required"`
-	Email        string `json:"email" validate:"required,email"`
-	PhoneNumber  string `json:"phone_number" validate:"required"`
+	MerchantType string `json:"merchant_type" binding:"required,oneof=individual company"`
+	MerchantName string `json:"merchant_name" binding:"required"`
+	Email        string `json:"email" binding:"required,email"`
+	PhoneNumber  string `json:"phone_number" binding:"required"`
 
 	Individual *IndividualMerchantOnboardingRequest `json:"individual,omitempty"`
 	Company    *CompanyMerchantOnboardingRequest    `json:"company,omitempty"`
@@ -57,10 +56,10 @@ type CreateMerchantOnboardingRequest struct {
 type UpdateIndividualMerchantRequest struct {
 	FirstName   string `json:"first_name"`
 	LastName    string `json:"last_name"`
-	DateOfBirth string  `json:"date_of_birth" validate:"required"`
-	Country     string  `json:"country" validate:"required"`
-	TaxID       string  `json:"tax_id" validate:"required"`
-	Address     string  `json:"address" validate:"required"`
+	DateOfBirth string `json:"date_of_birth" validate:"required"`
+	Country     string `json:"country" validate:"required"`
+	TaxID       string `json:"tax_id" validate:"required"`
+	Address     string `json:"address" validate:"required"`
 }
 
 type UpdateCompanyMerchantRequest struct {
@@ -80,4 +79,9 @@ type UpdateMerchantRequest struct {
 	PhoneNumber      string                           `json:"phone_number,omitempty"`
 	IndividualUpdate *UpdateIndividualMerchantRequest `json:"individual_update,omitempty"`
 	CompanyUpdate    *UpdateCompanyMerchantRequest    `json:"company_update,omitempty"`
+}
+
+type UpdateKYCRequest struct {
+	Individual *IndividualMerchantOnboardingRequest `json:"individual,omitempty"`
+	Company    *CompanyMerchantOnboardingRequest    `json:"company,omitempty"`
 }
