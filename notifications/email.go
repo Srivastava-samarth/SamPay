@@ -6,6 +6,7 @@ import (
 
 	"github.com/Srivastava-samarth/sampay/config"
 	"github.com/Srivastava-samarth/sampay/dto"
+	"github.com/google/uuid"
 )
 
 type EmailService struct {
@@ -148,3 +149,37 @@ func (s *EmailService) SendReconEmail(
 		body,
 	)
 }
+
+
+func (s *EmailService) SendKYCReattemptEmail(
+	email string,
+	merchantID uuid.UUID,
+	merchantType string,
+) error {
+	subject := "SamPay KYC Verification - Action Required"
+
+	body := fmt.Sprintf(`
+Hello,
+
+We were unable to complete the compliance verification for your SamPay merchant account.
+
+You can submit your KYC information again to continue the onboarding process.
+
+Merchant ID: %s
+Merchant Type: %s
+
+Please use the Merchant ID above when submitting your KYC information again.
+
+If you believe this was done in error or need assistance, please contact our support team.
+
+Regards,
+SamPay Team
+`, merchantID.String(), merchantType)
+
+	return s.Send(
+		email,
+		subject,
+		body,
+	)
+}
+

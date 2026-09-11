@@ -68,6 +68,19 @@ func (a *Registry) SendWelcomeEmail(
 	)
 }
 
+func (a *Registry) SendKYCReattemptEmail(
+	ctx context.Context,
+	request dto.CreateMerchantOnboardingRequest,
+	merchantID uuid.UUID,
+) error {
+
+	return a.NotificationService.SendKYCReattemptEmail(
+		request.Email,
+		merchantID,
+		request.MerchantType,
+	)
+}
+
 func (a *Registry) UpdateMerchantCompliance(
 	ctx context.Context,
 	merchantID uuid.UUID,

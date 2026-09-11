@@ -46,4 +46,9 @@ func (mr *MerchantRouter) MerchantRoutes(
 		middlewares.RequireMerchantAccess("super_admin"),
 		mr.MerchantController.UpdateMerchant(),
 	)
+	merchant.PUT(
+		"/:merchant_id/update-kyc",
+		middlewares.RequireRole("super_admin"),
+		mr.MerchantController.UpdateKYC(),
+	)
 }

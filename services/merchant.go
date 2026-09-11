@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"time"
 
 	"github.com/Srivastava-samarth/sampay/constants"
@@ -105,65 +106,6 @@ func (ms *MerchantService) CreateInitialMerchant(merchantRequest dto.CreateMerch
 	}
 
 	return response, nil
-}
-
-func (ms *MerchantService) ProcessMerchantOnboarding(
-	request dto.CreateMerchantOnboardingRequest,
-	merchantID uuid.UUID,
-) {
-	var (
-		complianceResponse *dto.ComplianceCheckResponse
-		errC               error
-	)
-
-	if request.MerchantType == constants.MerchantTypeIndividual {
-		individualComplianceRequest := &dto.IndividualComplianceCheckRequest{
-			FirstName:   request.Individual.FirstName,
-			LastName:    request.Individual.LastName,
-			Email:       request.Email,
-			DateOfBirth: request.Individual.DateOfBirth,
-			Country:     request.Individual.Country,
-		}
-		complianceResponse, errC =
-			ms.ComplianceService.PerformIndividualComplianceCheck(individualComplianceRequest, merchantID)
-	} else {
-		companyComplianceRequest := &dto.CompanyComplianceCheckRequest{
-			LegalName:            request.Company.LegalName,
-			Email:                request.Email,
-			RegistrationNumber:   request.Company.RegistrationNumber,
-			IncorporationCountry: request.Company.IncorporationCountry,
-			TaxID:                request.Company.TaxID,
-		}
-		complianceResponse, errC =
-			ms.ComplianceService.PerformCorporateComplianceCheck(companyComplianceRequest, merchantID)
-	}
-
-	if errC != nil {
-		return
-	}
-
-	updatedMerchant, err := ms.UpdateMerchantCompliance(
-		merchantID,
-		complianceResponse,
-	)
-	if err != nil {
-		return
-	}
-
-	if updatedMerchant.ComplianceStatus ==
-		constants.ComplianceStatusRejected {
-		return
-	}
-
-	provisionedUser, err := ms.ProvisionMerchant(request, merchantID)
-	if err != nil {
-		return
-	}
-
-	errN := ms.NotificationService.SendMerchantWelcomeEmail(provisionedUser.User, provisionedUser.TemporaryPassword)
-	if errN != nil {
-		return
-	}
 }
 
 func (ms *MerchantService) ProvisionMerchant(
@@ -428,4 +370,29 @@ func (ms *MerchantService) UpdateCompanyMerchant(
 	}
 
 	return updatedMerchant, nil
+}
+
+func (ms *MerchantService) ValidateMerchantOnboardingRequest(r *dto.CreateMerchantOnboardingRequest) error {
+    switch r.MerchantType {
+    case "individual":
+        if r.Individual == nil {
+            return errors.New("individual details are required")
+        }
+
+        if r.Company != nil {
+            return errors.New("company details are not allowed for individual merchant")
+
+        }
+
+    case "company":
+        if r.Company == nil {
+            return errors.New("company details are required")
+        }
+
+        if r.Individual != nil {
+            return errors.New("individual details are not allowed for company merchant")
+        }
+    }
+
+    return nil
 }
