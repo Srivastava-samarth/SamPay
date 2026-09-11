@@ -27,7 +27,7 @@ func (br *BankRouter) BankAccountRoutes(
 
 	bankAccount.POST(
 		"/:merchant_id/bank_account",
-		middlewares.RequireRole("owner", "finance", "super_admin"),
+		middlewares.RequireRole("owner", "super_admin"),
 		middlewares.RequireMerchantAccess("super_admin"),
 		br.bankCtlr.CreateBankAccount(),
 	)

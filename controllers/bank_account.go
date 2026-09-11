@@ -10,14 +10,14 @@ import (
 )
 
 type BankController struct {
-	bankSrvc *services.BankService
+	BankSrvc *services.BankService
 }
 
 func NewBankController(
 	bankSrvc *services.BankService,
 ) *BankController {
 	return &BankController{
-		bankSrvc: bankSrvc,
+		BankSrvc: bankSrvc,
 	}
 }
 
@@ -34,7 +34,7 @@ func (bc *BankController) CreateBankAccount() gin.HandlerFunc {
 			return
 		}
 
-		bankAccount, linkedBankAccount, err := bc.bankSrvc.CreateBankAccountAndLink(request)
+		bankAccount, linkedBankAccount, err := bc.BankSrvc.CreateBankAccountAndLink(request)
 		if err != nil {
 			dto.Fail(
 				c,
@@ -79,7 +79,7 @@ func (bc *BankController) UpdateBankAccount() gin.HandlerFunc{
 			return 
 		}
 
-		updatedBankAccount, updateLinkedBankAccount, err := bc.bankSrvc.UpdateBankAccountAndlink(request)
+		updatedBankAccount, updateLinkedBankAccount, err := bc.BankSrvc.UpdateBankAccountAndlink(request)
 		if err != nil{
 			dto.Fail(
 				c, 
@@ -124,7 +124,7 @@ func (bc *BankController) GetBankAccounts() gin.HandlerFunc{
 			return
 		}
 
-		bankAccounts, errBA := bc.bankSrvc.GetBankAccountsByMerchantID(parsedMerchantID)
+		bankAccounts, errBA := bc.BankSrvc.GetBankAccountsByMerchantID(parsedMerchantID)
 		if errBA != nil{
 			dto.Fail(
 				c,
@@ -157,7 +157,7 @@ func (bc *BankController) GetBankAccount() gin.HandlerFunc{
 			return
 		}
 
-		bankAccount, errBA := bc.bankSrvc.GetBankAccount(parsedBankAccountID)
+		bankAccount, errBA := bc.BankSrvc.GetBankAccount(parsedBankAccountID)
 		if errBA != nil{
 			dto.Fail(
 				c,
