@@ -314,8 +314,8 @@ func (mc *MerchantController) UpdateMerchantInfo() gin.HandlerFunc {
 
 func (mc *MerchantController) UpdateMerchantStatus() gin.HandlerFunc{
 	return func(c *gin.Context) {
-		var status string
-		if err := c.ShouldBindJSON(&status);err != nil {
+		var request *dto.UpdateMerchantStatusRequest
+		if err := c.ShouldBindJSON(&request);err != nil {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
@@ -347,7 +347,7 @@ func (mc *MerchantController) UpdateMerchantStatus() gin.HandlerFunc{
 			return
 		}
 
-		updatedMerchant, errUM := mc.MerchantService.UpdateMerchantStatus(&status, pasredMerchantId)
+		updatedMerchant, errUM := mc.MerchantService.UpdateMerchantStatus(&request.Status, pasredMerchantId)
 		if errUM != nil{
 			dto.Fail(
 				c,

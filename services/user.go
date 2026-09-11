@@ -1,6 +1,8 @@
 package services
 
 import (
+	"errors"
+
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
@@ -10,13 +12,16 @@ import (
 
 type UserService struct {
 	UserRepo *repositories.UserRepository
+	MerchantUserRepo *repositories.MerchantUserRepository
 }
 
 func NewUserService(
-	UserRepo *repositories.UserRepository,
+	userRepo *repositories.UserRepository,
+	merchantUserRepo *repositories.MerchantUserRepository,
 ) *UserService {
 	return &UserService{
-		UserRepo: UserRepo,
+		UserRepo: userRepo,
+		MerchantUserRepo: merchantUserRepo,
 	}
 }
 
@@ -41,7 +46,6 @@ func (us *UserService) CreateUser(userRequest *dto.CreateUserRequest) (*CreatedU
 		FirstName:    userRequest.FirstName,
 		LastName:     userRequest.LastName,
 		PasswordHash: passwordHash,
-		Status:       "active",
 	}
 
 	user, err := us.UserRepo.CreateUser(createUserRequestPayload)
@@ -97,10 +101,6 @@ func (us *UserService) UpdateUser(
 		updatedUserPayload.LastName = request.LastName
 	}
 
-	if request.Status != "" {
-		updatedUserPayload.Status = request.Status
-	}
-
 	if request.PasswordHash != "" {
 		updatedUserPayload.PasswordHash = request.PasswordHash
 	}
@@ -110,4 +110,53 @@ func (us *UserService) UpdateUser(
 	}
 
 	return us.UserRepo.UpdateUser(updatedUserPayload)
+}
+
+func (us *UserService) UpdateUserStatus(status string, userID uuid.UUID) (*models.User, error){
+	if userID == uuid.Nil{
+		return nil, errors.New("user_id is required")
+	}
+
+	if status == ""{
+		return nil, errors.New("status is required")
+	}
+
+	if !utils.IsValidMerchantStatus(status) {
+        return nil, errors.New("invalid user status")
+    }
+
+	user, errU := us.UserRepo.GetUserByID(userID)
+	if errU != nil{
+		return nil, errU
+	}
+
+	if user.Status == status{
+		return user, nil
+	}
+
+	updatedUser, errUU := us.UserRepo.UpdateUserStatus(status, userID)
+	if errUU != nil{
+		return nil, errUU
+	}
+
+	return updatedUser, nil
+}
+
+func (us *UserService) GetUsersByMerchant(merchantID uuid.UUID) ([]*models.User, error){
+	merchantUsers, errMU := us.MerchantUserRepo.GetMerchantUsersByMerchantID(merchantID)
+	if errMU != nil{
+		return nil, errMU
+	}
+
+	var users []*models.User
+	for _, merchantUser := range merchantUsers{
+		user, errU := us.UserRepo.GetUserByID(merchantUser.UserID)
+		if errU != nil{
+			return nil, errU
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
 }

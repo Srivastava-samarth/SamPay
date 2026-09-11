@@ -68,29 +68,9 @@ func (uc *UserController) UserOnboarding() gin.HandlerFunc {
 
 func (uc *UserController) GetUserByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, exist := c.Get("user_id")
-		if !exist{
-			dto.Fail(
-				c,
-				http.StatusNotFound,
-				"USER_ID",
-				"User ID not found",
-			)
-			return
-		}
+		userID:= c.Param("user_id")
 
-		userIDStr, ok := userID.(string)
-		if !ok {
-			dto.Fail(
-				c,
-				http.StatusBadRequest,
-				"INVALID_REQUEST",
-				"merchant id can't be parsed into string",
-			)
-			return
-		}
-
-		parsedUserId, errPM := uuid.Parse(userIDStr)
+		parsedUserId, errPM := uuid.Parse(userID)
 		if errPM != nil {
 			dto.Fail(
 				c,
@@ -140,21 +120,10 @@ func (uc *UserController) GetUsers() gin.HandlerFunc {
 	}
 }
 
-func (uc *UserController) UpdateUser() gin.HandlerFunc {
+func (uc *UserController) UpdateUserStatus() gin.HandlerFunc{
 	return func(c *gin.Context) {
-		userID, exist := c.Get("user_id")
-		if !exist {
-			dto.Fail(
-				c,
-				http.StatusNotFound,
-				"USER_ID_NOT_FOUND",
-				"userId not found",
-			)
-			return
-		}
-
-		var updateUserPayload *dto.UpdateUserRequest
-		if err := c.ShouldBindJSON(&updateUserPayload); err != nil {
+		var request *dto.UpdateMerchantStatusRequest
+		if err := c.ShouldBindJSON(&request);err != nil {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
@@ -164,34 +133,26 @@ func (uc *UserController) UpdateUser() gin.HandlerFunc {
 			return
 		}
 
-		userIDStr, ok := userID.(string)
-		if !ok {
+		userID := c.Param("user_id")
+		parsedUserID, errP := uuid.Parse(userID)
+		if errP != nil{
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
-				"INVALID_REQUEST",
-				"merchant id can't be parsed into string",
+				"PARSING_ERROR",
+				errP.Error(),
 			)
-			return
 		}
 
-		parsedUserId, errPM := uuid.Parse(userIDStr)
-		if errPM != nil {
-			dto.Fail(
-				c,
-				http.StatusBadRequest,
-				"INVALID_REQUEST",
-				"error parsing merchant id in uuid",
-			)
-			return
-		}
-		updatedUser, errU := uc.UserService.UpdateUser(updateUserPayload, parsedUserId)
-		if errU != nil {
+
+
+		updatedUser, errUU := uc.UserService.UpdateUserStatus(request.Status, parsedUserID)
+		if errUU != nil{
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
-				"USER_NOT_UPDATED",
-				errU.Error(),
+				"UPDATE_USER_ISSUE",
+				errUU.Error(),
 			)
 			return
 		}
@@ -200,6 +161,39 @@ func (uc *UserController) UpdateUser() gin.HandlerFunc {
 			c,
 			http.StatusOK,
 			updatedUser,
+		)
+	}
+}
+
+func (uc *UserController) GetUsersByMerchant() gin.HandlerFunc{
+	return func(c *gin.Context) {
+		merchantID := c.Param("merchant_id")
+		parsedMerchantID, errP := uuid.Parse(merchantID)
+		if errP != nil{
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"PARSING_ERROR",
+				errP.Error(),
+			)
+			return 
+		}
+
+		users, errU := uc.UserService.GetUsersByMerchant(parsedMerchantID)
+		if errU != nil{
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"GETTING_USERS_ISSUE",
+				errU.Error(),
+			)
+			return
+		}
+
+		dto.Respond(
+			c,
+			http.StatusOK,
+			users,
 		)
 	}
 }
