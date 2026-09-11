@@ -17,6 +17,7 @@ const (
 	ReconFlowTaskQueue          = "RECON_FLOW"
 	SettlementFlowTaskQueue     = "SETTLEMENT_FLOW"
 	RefundFlowTaskQueue         = "REFUND_FLOW"
+	UpdateKycFlow               = "UPDATE_KYC_FLOW"
 )
 
 type WorkerConfig struct {
@@ -38,6 +39,7 @@ func StartWorkers(
 				w.RegisterActivity(activityRegistry.PerformComplianceCheck)
 				w.RegisterActivity(activityRegistry.ProvisionMerchant)
 				w.RegisterActivity(activityRegistry.SendWelcomeEmail)
+				w.RegisterActivity(activityRegistry.SendKYCReattemptEmail)
 				w.RegisterActivity(activityRegistry.UpdateMerchantCompliance)
 			},
 		},
@@ -118,6 +120,18 @@ func StartWorkers(
 				w.RegisterWorkflow(workflows.SettlementFlow)
 				w.RegisterActivity(activityRegistry.GetUnsettledPayment)
 				w.RegisterActivity(activityRegistry.ExecuteSettlementByMerchant)
+			},
+		},
+		{
+			TaskQueue: UpdateKycFlow,
+			Register: func(w worker.Worker) {
+				w.RegisterWorkflow(workflows.MerchantUpdateKycFlow)
+				w.RegisterActivity(activityRegistry.GetMerchantById)
+				w.RegisterActivity(activityRegistry.ProvisionMerchant)
+				w.RegisterActivity(activityRegistry.PerformComplianceCheck)
+				w.RegisterActivity(activityRegistry.SendKYCReattemptEmail)
+				w.RegisterActivity(activityRegistry.SendWelcomeEmail)
+				w.RegisterActivity(activityRegistry.UpdateMerchantCompliance)
 			},
 		},
 

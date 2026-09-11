@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"strings"
 	"time"
 
@@ -26,6 +27,10 @@ func (cs *ComplianceService) PerformIndividualComplianceCheck(
 	merchantID uuid.UUID,
 ) (*dto.ComplianceCheckResponse, error) {
 
+	errV := cs.ValidateIndividualMerchantRequest(request)
+	if errV != nil{
+		return nil, errV
+	}
 	name, country, dob := request.FirstName+" "+request.LastName, request.Country, request.DateOfBirth
 	// Perform compliance checks based on the provided information
 	// For example, you can check if the name is valid, if the country is allowed, and if the date of birth meets certain criteria.
@@ -235,4 +240,22 @@ func (cs *ComplianceService) PerformCorporateComplianceCheck(
 			Reason: "Corporate merchant passed all compliance checks.",
 		},
 	}, nil
+}
+
+func (cs *ComplianceService) ValidateIndividualMerchantRequest(
+    individualRequest *dto.IndividualComplianceCheckRequest,
+) error {
+    if individualRequest == nil {
+        return errors.New("individual merchant request is required")
+    }
+
+    if individualRequest.FirstName == "" ||
+        individualRequest.LastName == "" ||
+        individualRequest.Country == "" ||
+        individualRequest.DateOfBirth == "" ||
+        individualRequest.Email == "" {
+        return errors.New("first name, last name, country, date of birth, and email are required")
+    }
+
+    return nil
 }

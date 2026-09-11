@@ -44,17 +44,27 @@ func (mc *MerchantController) CreateMerchant() gin.HandlerFunc {
 			return
 		}
 
+		if errV := mc.MerchantService.ValidateMerchantOnboardingRequest(&request); errV != nil {
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"INVALID_REQUEST",
+				errV.Error(),
+			)
+			return
+		}
+
 		// Create initial merchant here
-		merchant, err := mc.MerchantService.CreateInitialMerchant(
+		merchant, errM := mc.MerchantService.CreateInitialMerchant(
 			request,
 		)
 
-		if err != nil {
+		if errM != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
 				"MERCHANT_CREATION_FAILED",
-				err.Error(),
+				errM.Error(),
 			)
 			return
 		}
@@ -64,7 +74,7 @@ func (mc *MerchantController) CreateMerchant() gin.HandlerFunc {
 			TaskQueue: temporal.MerchantOnboardingTaskQueue,
 		}
 
-		_, err = mc.TemporalClient.ExecuteWorkflow(
+		_, errW := mc.TemporalClient.ExecuteWorkflow(
 			c.Request.Context(),
 			workflowOptions,
 			workflows.MerchantONboardingWorkflow,
@@ -72,12 +82,12 @@ func (mc *MerchantController) CreateMerchant() gin.HandlerFunc {
 			merchant.ID,
 		)
 
-		if err != nil {
+		if errW != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
 				"WORKFLOW_START_FAILED",
-				err.Error(),
+				errW.Error(),
 			)
 			return
 		}
@@ -240,6 +250,89 @@ func (mc *MerchantController) UpdateMerchant() gin.HandlerFunc {
 			c,
 			http.StatusOK,
 			updatedMerchant,
+		)
+	}
+}
+
+func (mc *MerchantController) UpdateKYC() gin.HandlerFunc{
+	return func(c *gin.Context) {
+		var request *dto.UpdateKYCRequest
+		merchantID := c.Param("merchant_id")
+		if merchantID == "" {
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"MERCHANT_ID_NOT_FOUND",
+				"Merchant ID not passed in params",
+			)
+			return
+		}
+
+		pasredMerchantId, errPM := uuid.Parse(merchantID)
+		if errPM != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"PARSING_ERROR",
+				errPM.Error(),
+			)
+			return
+		}
+
+		if err := c.ShouldBindJSON(&request); err != nil {
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"INVALID_REQUEST",
+				err.Error(),
+			)
+			return
+		}
+
+		workflowOptions := client.StartWorkflowOptions{
+			ID:        "merchant-update-kyc-" + merchantID,
+			TaskQueue: temporal.UpdateKycFlow,
+		}
+
+		workflowRun, errW := mc.TemporalClient.ExecuteWorkflow(
+			c.Request.Context(),
+			workflowOptions,
+			workflows.MerchantUpdateKycFlow,
+			request,
+			pasredMerchantId,
+		)
+
+		if errW != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"WORKFLOW_START_FAILED",
+				errW.Error(),
+			)
+			return
+		}
+
+		var merchant *models.Merchant
+
+		errM := workflowRun.Get(
+			c.Request.Context(),
+			&merchant,
+		)
+
+		if errM != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"FAILED_TO_EXTRACT_MERCHANT",
+				errM.Error(),
+			)
+			return
+		}
+
+		dto.Respond(
+			c,
+			http.StatusAccepted,
+			merchant,
 		)
 	}
 }
