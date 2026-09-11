@@ -80,8 +80,20 @@ func RequireRole(roles ...string) gin.HandlerFunc {
 	}
 }
 
-func RequireMerchantAccess() gin.HandlerFunc {
+func RequireMerchantAccess(role string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+
+		roleAssigned, roleExist := c.Get("role")
+		if !roleExist {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"message": "role not found",
+			})
+			return
+		}
+
+		if roleAssigned == role{
+			c.Next()
+		}
 
 		merchantIDValue, exists := c.Get("merchant_id")
 		if !exists {
@@ -109,7 +121,7 @@ func RequireMerchantAccess() gin.HandlerFunc {
 			return
 		}
 
-		if tokenMerchantID != requestedMerchantID {
+		if tokenMerchantID != requestedMerchantID && roleAssigned != role {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"message": "access denied",
 			})

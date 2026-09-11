@@ -48,9 +48,9 @@ func NewAuthService(
 func (as *AuthService) Authentication(authRequest *dto.AuthRequest) (*dto.AuthResponse, error) {
 	var authResponse *dto.AuthResponse
 
-	user, err := as.UserRepo.GetUserByEmail(authRequest.Email)
-	if err != nil {
-		return nil, err
+	user, errU := as.UserRepo.GetUserByEmail(authRequest.Email)
+	if errU != nil {
+		return nil, errU
 	}
 
 	if user == nil {
@@ -61,9 +61,9 @@ func (as *AuthService) Authentication(authRequest *dto.AuthRequest) (*dto.AuthRe
 		return nil, errors.New("Temporary password can't be used. Please reset the password")
 	}
 
-	merchantUser, err := as.MerchantUserRepo.GetMerchantUserByUserID(user.ID)
-	if err != nil {
-		return nil, err
+	merchantUser, errMU := as.MerchantUserRepo.GetMerchantUserByUserID(user.ID)
+	if errMU != nil {
+		return nil, errMU
 	}
 
 	errCHP := bcrypt.CompareHashAndPassword(
@@ -75,16 +75,24 @@ func (as *AuthService) Authentication(authRequest *dto.AuthRequest) (*dto.AuthRe
 		return nil, errors.New("Invalid Credentials: email or password is incorrect")
 	}
 
-	token, err := as.JwtService.GenarateTokenAndExpiry(merchantUser.UserID, merchantUser.MerchantID, merchantUser.Role)
-	refreshToken, err := as.JwtService.GenerateRefreshToken()
+	token, errT := as.JwtService.GenarateTokenAndExpiry(merchantUser.UserID, merchantUser.MerchantID, merchantUser.Role)
+	if errT != nil{
+		return nil, errT
+	}
+
+	refreshToken, errRT := as.JwtService.GenerateRefreshToken()
+	if errRT != nil{
+		return nil, errRT
+	}
+
 	hashedRefreshToken := utils.HashToken(refreshToken)
-	refreshTokenExpirySeconds, err := strconv.ParseInt(
+	refreshTokenExpirySeconds, errRTE := strconv.ParseInt(
 		as.JwtService.Config.RefreshExpiry,
 		10,
 		64,
 	)
-	if err != nil {
-		return nil, err
+	if errRTE != nil {
+		return nil, errRTE
 	}
 
 	refreshTokenExpiry := time.Now().Add(
@@ -96,14 +104,14 @@ func (as *AuthService) Authentication(authRequest *dto.AuthRequest) (*dto.AuthRe
 		RefreshTokenHash: hashedRefreshToken,
 		ExpiresAt:        refreshTokenExpiry,
 	}
-	_, err = as.UserSessionRepo.CreateUserSession(userSessionRequestPayload)
-	if err != nil {
-		return nil, err
+	_, errUS := as.UserSessionRepo.CreateUserSession(userSessionRequestPayload)
+	if errUS != nil {
+		return nil, errUS
 	}
 
 	authResponse = &dto.AuthResponse{
 		AccessToken:  token,
-		RefreshToken: refreshToken,
+		RefreshToken: hashedRefreshToken,
 		ExpiresIn:    int(refreshTokenExpirySeconds),
 	}
 
@@ -128,13 +136,13 @@ func (as *AuthService) ForgotPasswod(forgotPasswordRequest *dto.ForgotPasswordRe
 
 	hashedResetToken := utils.HashToken(resetToken)
 
-	resetTokenExpirySeconds, err := strconv.ParseInt(
+	resetTokenExpirySeconds, errRTE := strconv.ParseInt(
 		as.JwtService.Config.AccessExpiry,
 		10,
 		64,
 	)
-	if err != nil {
-		return err
+	if errRTE != nil {
+		return errRTE
 	}
 
 	resetTokenExpiry := time.Now().Add(
@@ -174,11 +182,11 @@ func (as *AuthService) ResetPassword(
 		return errors.New("email does not match reset token")
 	}
 
-	passwordReset, err := as.PasswordResetRepo.FindByToken(
+	passwordReset, errP := as.PasswordResetRepo.FindByToken(
 		resetPasswordRequest.ResetToken,
 	)
-	if err != nil {
-		return err
+	if errP != nil {
+		return errP
 	}
 
 	if passwordReset.UserID != userID {
@@ -198,11 +206,11 @@ func (as *AuthService) ResetPassword(
 		return errors.New("passwords do not match")
 	}
 
-	hashedPassword, err := utils.HashPassword(
+	hashedPassword, errHP := utils.HashPassword(
 		resetPasswordRequest.NewPassword,
 	)
-	if err != nil {
-		return err
+	if errHP != nil {
+		return errHP
 	}
 
 	tx := as.DB.Begin()

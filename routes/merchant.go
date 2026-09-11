@@ -33,22 +33,33 @@ func (mr *MerchantRouter) MerchantRoutes(
 	merchant.GET(
 		"/:merchant_id",
 		middlewares.RequireRole("owner", "finance", "super_admin"),
-		middlewares.RequireMerchantAccess(),
+		middlewares.RequireMerchantAccess("super_admin"),
 		mr.MerchantController.GetMerchantByID(),
 	)
 	merchant.GET(
 		"",
+		middlewares.RequireRole("super_admin"),
 		mr.MerchantController.GetMerchants(),
 	)
 	merchant.PATCH(
 		"/:merchant_id",
 		middlewares.RequireRole("owner", "super_admin"),
-		middlewares.RequireMerchantAccess(),
-		mr.MerchantController.UpdateMerchant(),
+		middlewares.RequireMerchantAccess("super_admin"),
+		mr.MerchantController.UpdateMerchantInfo(),
 	)
-	merchant.PUT(
+	merchant.PATCH(
 		"/:merchant_id/update-kyc",
 		middlewares.RequireRole("super_admin"),
-		mr.MerchantController.UpdateKYC(),
+		mr.MerchantController.UpdateMerchantKyc(),
+	)
+	merchant.PUT(
+		"/:merchant_id/re-attempt-kyc",
+		middlewares.RequireRole("super_admin"),
+		mr.MerchantController.ReattemptOnboardingKyc(),
+	)
+	merchant.PATCH(
+		"/:merchant_id/status",
+		middlewares.RequireRole("super_admin"),
+		mr.MerchantController.UpdateMerchantStatus(),
 	)
 }

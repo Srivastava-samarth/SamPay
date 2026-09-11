@@ -163,98 +163,7 @@ func (mc *MerchantController) GetMerchants() gin.HandlerFunc {
 	}
 }
 
-func (mc *MerchantController) UpdateMerchant() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		merchantID, exist := c.Get("merchant_id")
-		if !exist {
-			dto.Fail(
-				c,
-				http.StatusNotFound,
-				"MERCHANT_ID_NOT_FOUND",
-				"merchantId not found",
-			)
-			return
-		}
-
-		var updateMerchantPayload *dto.UpdateMerchantRequest
-		if err := c.ShouldBindJSON(&updateMerchantPayload); err != nil {
-			dto.Fail(
-				c,
-				http.StatusBadRequest,
-				"INVALID_REQUEST",
-				err.Error(),
-			)
-			return
-		}
-
-		merchantIDStr, ok := merchantID.(string)
-		if !ok {
-			dto.Fail(
-				c,
-				http.StatusBadRequest,
-				"INVALID_REQUEST",
-				"merchant id can't be parsed into string",
-			)
-			return
-		}
-
-		parsedMerchantId, errPM := uuid.Parse(merchantIDStr)
-		if errPM != nil {
-			dto.Fail(
-				c,
-				http.StatusBadRequest,
-				"INVALID_REQUEST",
-				"error parsing merchant id in uuid",
-			)
-			return
-		}
-		merchant, errM := mc.MerchantService.GetMerchantByID(parsedMerchantId)
-		if errM != nil {
-			dto.Fail(
-				c,
-				http.StatusInternalServerError,
-				"MERCHANT_NOT_FOUND",
-				errM.Error(),
-			)
-			return
-		}
-
-		var (
-			updatedMerchant *models.Merchant
-			errUM           error
-		)
-		if merchant.MerchantType == "individual" {
-			updatedMerchant, errUM = mc.MerchantService.UpdateIndividualMerchant(updateMerchantPayload, merchant)
-			if errUM != nil {
-				dto.Fail(
-					c,
-					http.StatusInternalServerError,
-					"MERCHANT_UPDATION_FAILED",
-					errUM.Error(),
-				)
-				return
-			}
-		} else {
-			updatedMerchant, errUM = mc.MerchantService.UpdateCompanyMerchant(updateMerchantPayload, merchant)
-			if errUM != nil {
-				dto.Fail(
-					c,
-					http.StatusInternalServerError,
-					"MERCHANT_UPDATION_FAILED",
-					errUM.Error(),
-				)
-				return
-			}
-		}
-		dto.Respond(
-			c,
-			http.StatusOK,
-			updatedMerchant,
-		)
-	}
-}
-
-func (mc *MerchantController) UpdateKYC() gin.HandlerFunc{
+func (mc *MerchantController) ReattemptOnboardingKyc() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.UpdateKYCRequest
 		merchantID := c.Param("merchant_id")
@@ -333,6 +242,181 @@ func (mc *MerchantController) UpdateKYC() gin.HandlerFunc{
 			c,
 			http.StatusAccepted,
 			merchant,
+		)
+	}
+}
+
+func (mc *MerchantController) UpdateMerchantInfo() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var updateMerchantPayload *dto.UpdateMerchantRequest
+
+		if err := c.ShouldBindJSON(&updateMerchantPayload); err != nil {
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"INVALID_REQUEST",
+				err.Error(),
+			)
+			return
+		}
+
+		merchantID := c.Param("merchant_id")
+		if merchantID == "" {
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"MERCHANT_ID_NOT_FOUND",
+				"Merchant ID not passed in params",
+			)
+			return
+		}
+
+		pasredMerchantId, errPM := uuid.Parse(merchantID)
+		if errPM != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"PARSING_ERROR",
+				errPM.Error(),
+			)
+			return
+		}
+
+		_, errM := mc.MerchantService.GetMerchantByID(pasredMerchantId)
+		if errM != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"MERCHANT_NOT_FOUND",
+				errM.Error(),
+			)
+			return
+		}
+
+		updatedMerchant, errUM := mc.MerchantService.UpdateMerchant(updateMerchantPayload, pasredMerchantId)
+		if errUM != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"MERCHANT_UPDATION_FAILED",
+				errUM.Error(),
+			)
+			return
+		}
+
+		dto.Respond(
+			c,
+			http.StatusOK,
+			updatedMerchant,
+		)
+	}
+}
+
+func (mc *MerchantController) UpdateMerchantStatus() gin.HandlerFunc{
+	return func(c *gin.Context) {
+		var status string
+		if err := c.ShouldBindJSON(&status);err != nil {
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"INVALID_REQUEST",
+				err.Error(),
+			)
+			return
+		}
+		
+		merchantID := c.Param("merchant_id")
+		if merchantID == "" {
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"MERCHANT_ID_NOT_FOUND",
+				"Merchant ID not passed in params",
+			)
+			return
+		}
+
+		pasredMerchantId, errPM := uuid.Parse(merchantID)
+		if errPM != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"PARSING_ERROR",
+				errPM.Error(),
+			)
+			return
+		}
+
+		updatedMerchant, errUM := mc.MerchantService.UpdateMerchantStatus(&status, pasredMerchantId)
+		if errUM != nil{
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"UPDATION_MERCHANT_FAILED",
+				errUM.Error(),
+			)
+			return
+		}
+
+		dto.Respond(
+			c,
+			http.StatusOK,
+			updatedMerchant,
+		)
+	}
+}
+
+func (mc *MerchantController) UpdateMerchantKyc() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var updateMerchantPayload *dto.UpdateMerchantKycRequest
+
+		if err := c.ShouldBindJSON(&updateMerchantPayload); err != nil {
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"INVALID_REQUEST",
+				err.Error(),
+			)
+			return
+		}
+
+		merchantID := c.Param("merchant_id")
+		if merchantID == "" {
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"MERCHANT_ID_NOT_FOUND",
+				"Merchant ID not passed in params",
+			)
+			return
+		}
+
+		pasredMerchantId, errPM := uuid.Parse(merchantID)
+		if errPM != nil {
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"PARSING_ERROR",
+				errPM.Error(),
+			)
+			return
+		}
+
+		updatedMerchant, errUM := mc.MerchantService.UpdateMerchantKycInfo(updateMerchantPayload, pasredMerchantId)
+		if errUM != nil{
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"UPDATION_MERCHANT_FAILED",
+				errUM.Error(),
+			)
+			return 
+		}
+
+		dto.Respond(
+			c,
+			http.StatusOK,
+			updatedMerchant,
 		)
 	}
 }

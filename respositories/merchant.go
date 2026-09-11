@@ -101,38 +101,62 @@ func (mp *MerchantRepository) UpdateMerchantCompliance(
 	return &merchant, nil
 }
 
-func (mp *MerchantRepository) UpdateMerchantStatus(merchantID uuid.UUID, status string) error {
-	var merchant models.Merchant
-
-	err := mp.db.Where("id = ?", merchantID).First(&merchant).Error
-	if err != nil {
-		return err
+func (mp *MerchantRepository) UpdateMerchantStatus(merchantID uuid.UUID, status string) (*models.Merchant, error) {
+	if status == ""{
+		return nil, errors.New("status is missing")
 	}
 
-	merchant.Status = status
-	if err := mp.db.Save(&merchant).Error; err != nil {
-		return err
+	if merchantID == uuid.Nil{
+		return nil, errors.New("merchantId is missing")
 	}
 
-	return nil
-}
+	updates := map[string]interface{}{
+		"status":status,
+		"updated_at": time.Now(),
+	}
 
-func (mp *MerchantRepository) UpdateMerchant(request *models.Merchant, merchantID uuid.UUID) (*models.Merchant, error) {
 	err := mp.db.
 		Model(&models.Merchant{}).
 		Where("id = ?", merchantID).
-		Updates(map[string]interface{}{
-			"merchant_name": request.MerchantName,
-			"phone_number":  request.PhoneNumber,
-			"updated_at":    time.Now(),
-		}).Error
+		Updates(updates).Error
 
 	if err != nil {
 		return nil, err
 	}
 
 	var merchant *models.Merchant
-	if err := mp.db.Where("id = ?", request.ID).First(&merchant).Error; err != nil {
+	errM := mp.db.Where("id = ?", merchantID).First(&merchant).Error
+	if errM != nil{
+		return nil, errM
+	}
+
+	return merchant, nil
+}
+
+func (mp *MerchantRepository) UpdateMerchant(request *dto.UpdateMerchantRequest, merchantID uuid.UUID) (*models.Merchant, error) {
+	updates := map[string]interface{}{
+		"updated_at": time.Now(),
+	}
+
+	if request.MerchantName != ""{
+		updates["merchant_name"] = request.MerchantName
+	}
+
+	if request.PhoneNumber != ""{
+		updates["phone_number"] = request.PhoneNumber
+	}
+	
+	err := mp.db.
+		Model(&models.Merchant{}).
+		Where("id = ?", merchantID).
+		Updates(updates).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	var merchant *models.Merchant
+	if err := mp.db.Where("id = ?", merchantID).First(&merchant).Error; err != nil {
 		return nil, err
 	}
 

@@ -74,9 +74,7 @@ type UpdateCompanyMerchantRequest struct {
 	OwnerTaxID           string `json:"owner_tax_id"`
 }
 
-type UpdateMerchantRequest struct {
-	MerchantName     string                           `json:"merchant_name,omitempty"`
-	PhoneNumber      string                           `json:"phone_number,omitempty"`
+type UpdateMerchantKycRequest struct {
 	IndividualUpdate *UpdateIndividualMerchantRequest `json:"individual_update,omitempty"`
 	CompanyUpdate    *UpdateCompanyMerchantRequest    `json:"company_update,omitempty"`
 }
@@ -84,4 +82,9 @@ type UpdateMerchantRequest struct {
 type UpdateKYCRequest struct {
 	Individual *IndividualMerchantOnboardingRequest `json:"individual,omitempty"`
 	Company    *CompanyMerchantOnboardingRequest    `json:"company,omitempty"`
+}
+
+type UpdateMerchantRequest struct{
+	MerchantName string `json:"merchant_name" binding:"required"`
+	PhoneNumber  string `json:"phone_number" binding:"required"`
 }

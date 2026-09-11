@@ -32,7 +32,7 @@ func (rr *RefundRouter) RefundRoutes(
 	refund.GET(
 		"/:merchant_id/refund/:refund_reference",
 		middlewares.RequireRole("super_admin", "owner", "finance"),
-		middlewares.RequireMerchantAccess(),
+		middlewares.RequireMerchantAccess("super_admin"),
 		rr.refundCtrl.GetRefundByReference(),
 	)
 }

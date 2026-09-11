@@ -69,6 +69,16 @@ func (bc *BankController) UpdateBankAccount() gin.HandlerFunc{
 			return
 		}
 
+		if request.ID == uuid.Nil{
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"id is empty",
+				"ID should be passed",
+			)
+			return 
+		}
+
 		updatedBankAccount, updateLinkedBankAccount, err := bc.bankSrvc.UpdateBankAccountAndlink(request)
 		if err != nil{
 			dto.Fail(
@@ -133,7 +143,7 @@ func (bc *BankController) GetBankAccounts() gin.HandlerFunc{
 	}
 }
 
-func (bc *BankController) GetAccount() gin.HandlerFunc{
+func (bc *BankController) GetBankAccount() gin.HandlerFunc{
 	return func(c *gin.Context) {
 		bankAccountID := c.Param("bank_account_id")
 		parsedBankAccountID, errP := uuid.Parse(bankAccountID)
