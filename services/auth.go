@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/Srivastava-samarth/sampay/middlewares"
@@ -55,6 +56,10 @@ func (as *AuthService) Authentication(authRequest *dto.AuthRequest) (*dto.AuthRe
 
 	if user == nil {
 		return nil, errors.New("User doen not exist !")
+	}
+
+	if user.Status != constants.UserStatusActive{
+		return nil, errors.New("user not valid")
 	}
 
 	if user.MustChangePassword == true {
