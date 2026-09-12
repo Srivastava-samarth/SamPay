@@ -9,6 +9,7 @@ import (
 	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/Srivastava-samarth/sampay/notifications"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
+	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -204,11 +205,7 @@ func (ms *MerchantService) ProvisionMerchant(
 		LastName:  lastName,
 	}
 
-	txUserService := NewUserService(
-		ms.UserService.UserRepo.WithTx(tx),
-	)
-
-	user, err := txUserService.CreateUser(
+	user, err := ms.UserService.CreateUser(
 		userRequest,
 	)
 	if err != nil {
@@ -409,7 +406,7 @@ func (ms *MerchantService) UpdateMerchantStatus(
         return nil, errors.New("merchant status is required")
     }
 
-    if !ms.IsValidMerchantStatus(*status) {
+    if !utils.IsValidMerchantStatus(*status) {
         return nil, errors.New("invalid merchant status")
     }
 
@@ -468,19 +465,6 @@ func (ms *MerchantService) UpdateMerchantStatus(
     }
 
     return newMerchant, nil
-}
-
-
-func(ms *MerchantService) IsValidMerchantStatus(status string) bool {
-    switch status {
-    case constants.MerchantStatusActive,
-        constants.MerchantStatusPending,
-        constants.MerchantStatusSuspended,
-        constants.MerchantStatusInactive:
-        return true
-    default:
-        return false
-    }
 }
 
 func (ms *MerchantService) UpdateMerchantKycInfo(
