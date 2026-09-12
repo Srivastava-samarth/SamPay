@@ -39,4 +39,14 @@ func (vr *VaultRouter) VaultRoutes(
 		middlewares.RequireRole("super_admin"),
 		vr.vaultCtlr.GetVault(),
 	)
+	vault.PATCH(
+		"/balance",
+		middlewares.RequireRole("super_admin"),
+		vr.vaultCtlr.UpdateVaultBalance(),
+	)
+	vault.PATCH(
+		"/:vault_id/status",
+		middlewares.RequireRole("super_admin"),
+		vr.vaultCtlr.UpdateVaultStatus(),
+	)
 }
