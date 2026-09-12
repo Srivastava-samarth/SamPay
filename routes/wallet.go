@@ -44,9 +44,4 @@ func (wr *WalletRouter) WalletRoutes(
 		middlewares.RequireMerchantAccess("super_admin"),
 		wr.walletCntlr.GetWalletTransaction(),
 	)
-	wallet.PATCH(
-		"/:merchant_id/wallet",
-		middlewares.RequireRole("super_admin"),
-		wr.walletCntlr.UpdateWalletStatus(),
-	)
 }

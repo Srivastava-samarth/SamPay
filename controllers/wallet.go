@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 
+	"github.com/Srivastava-samarth/sampay/constants"
 	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/Srivastava-samarth/sampay/services"
 	"github.com/gin-gonic/gin"
@@ -71,7 +72,7 @@ func (wc *WalletController) GetWalletTransactions() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		merchantID := c.Param("merchant_id")
-		accountType := c.Query("type")
+		accountType := constants.LedgerAccountTypeWallet
 
 		if merchantID == "" || accountType == "" {
 			dto.Fail(
@@ -176,7 +177,7 @@ func (wc *WalletController) GetWalletTransactions() gin.HandlerFunc {
 func (wc *WalletController) GetWalletTransaction() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		merchantID := c.Param("merchant_id")
-		transactionId := c.Query("transaction_id")
+		transactionId := c.Param("transaction_id")
 		if merchantID == "" {
 			dto.Fail(
 				c,
@@ -244,60 +245,6 @@ func (wc *WalletController) GetWalletTransaction() gin.HandlerFunc {
 			c,
 			http.StatusOK,
 			transaction,
-		)
-	}
-}
-
-func (wc *WalletController) UpdateWalletStatus() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		merchantID := c.Param("merchant_id")
-		status := c.Query("status")
-		if merchantID == "" {
-			dto.Fail(
-				c,
-				http.StatusNotFound,
-				"MERCHANT_ID_NOT_FOUND",
-				"Merchant ID not passed in params",
-			)
-			return
-		}
-
-		if status == ""{
-			dto.Fail(
-				c,
-				http.StatusNotFound,
-				"STATUS_NOT_FOUND",
-				"status not passed in query param",
-			)
-			return
-		}
-
-		parsedMerchantId, errP := uuid.Parse(merchantID)
-		if errP != nil {
-			dto.Fail(
-				c,
-				http.StatusInternalServerError,
-				"PARSING_ERROR",
-				errP.Error(),
-			)
-			return
-		}
-
-		updatedWallet, errUW := wc.WalletSrvc.UpdateWalletStatus(parsedMerchantId, status)
-		if errUW != nil{
-			dto.Fail(
-				c,
-				http.StatusInternalServerError,
-				"UPDATE_WALLET_ERROR",
-				errUW.Error(),
-			)
-			return
-		}
-
-		dto.Respond(
-			c,
-			http.StatusOK,
-			updatedWallet,
 		)
 	}
 }
