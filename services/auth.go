@@ -319,59 +319,10 @@ func (as *AuthService) RefreshToken(
 		return nil, err
 	}
 
-	_, err = userSessionRepo.UpdateUserSession(
-		&models.UserSession{
-			ID:        userSession.ID,
-			ExpiresAt: time.Now(),
-			RevokedAt: &now,
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
 	accessToken, err := as.JwtService.GenarateTokenAndExpiry(
 		user.ID,
 		merchantUser.MerchantID,
 		merchantUser.Role,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	newRefreshToken, err :=
-		as.JwtService.GenerateRefreshToken()
-
-	if err != nil {
-		return nil, err
-	}
-
-	hashedNewRefreshToken :=
-		utils.HashToken(newRefreshToken)
-
-	refreshTokenExpirySeconds, err :=
-		strconv.ParseInt(
-			as.JwtService.Config.RefreshExpiry,
-			10,
-			64,
-		)
-
-	if err != nil {
-		return nil, err
-	}
-
-	refreshTokenExpiry := now.Add(
-		time.Duration(refreshTokenExpirySeconds) * time.Second,
-	)
-
-	_, err = userSessionRepo.CreateUserSession(
-		&models.UserSession{
-			UserID:           userSession.UserID,
-			RefreshTokenHash: hashedNewRefreshToken,
-			ExpiresAt:        refreshTokenExpiry,
-		},
 	)
 
 	if err != nil {
@@ -386,7 +337,5 @@ func (as *AuthService) RefreshToken(
 
 	return &dto.AuthResponse{
 		AccessToken:  accessToken,
-		RefreshToken: newRefreshToken,
-		ExpiresIn:    int(refreshTokenExpirySeconds),
 	}, nil
 }

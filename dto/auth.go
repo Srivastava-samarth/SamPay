@@ -6,9 +6,9 @@ type AuthRequest struct {
 }
 
 type AuthResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	ExpiresIn    int    `json:"expires_in"`
+	AccessToken  string `json:"access_token,omitempty"`
+	RefreshToken string `json:"refresh_token,omitempty"`
+	ExpiresIn    int    `json:"expires_in,omitempty"`
 }
 
 type ForgotPasswordRequest struct{
