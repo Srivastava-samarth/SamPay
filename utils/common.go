@@ -34,33 +34,33 @@ func GenerateAutoTopUpReference() string {
 
 func GeneratePaymentReference() *string {
 	id := uuid.New()
-	ref :=  "pmt_" + hex.EncodeToString(id[:])[:12]
+	ref := "pmt_" + hex.EncodeToString(id[:])[:12]
 	return &ref
 }
 
 func GeneratePayoutReference() *string {
 	id := uuid.New()
-	ref :=  "pyt_" + hex.EncodeToString(id[:])[:12]
+	ref := "pyt_" + hex.EncodeToString(id[:])[:12]
 	return &ref
 }
 
 func GenerateRefundReference() *string {
 	id := uuid.New()
-	ref :=  "rfd_" + hex.EncodeToString(id[:])[:12]
+	ref := "rfd_" + hex.EncodeToString(id[:])[:12]
 	return &ref
 }
 
 func GenerateCustomerReference() *string {
 	id := uuid.New()
-	ref :=  "cust_" + hex.EncodeToString(id[:])[:12]
+	ref := "cust_" + hex.EncodeToString(id[:])[:12]
 	return &ref
 }
 
 func GenerateBankAccountNumber() string {
-    n := rand.Int63n(9000000000000) + 1000000000000
-    accountNumber := strconv.FormatInt(n, 10)
+	n := rand.Int63n(9000000000000) + 1000000000000
+	accountNumber := strconv.FormatInt(n, 10)
 
-    return accountNumber
+	return accountNumber
 }
 
 func GenerateTemporaryPassword(length int) (string, error) {
@@ -97,8 +97,29 @@ func HashPassword(password string) (string, error) {
 }
 
 func HashToken(token string) string {
-    hash := sha256.Sum256([]byte(token))
-    return hex.EncodeToString(hash[:])
+	hash := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(hash[:])
+}
+
+func IsValidVaultStatus(status string) bool {
+	switch status {
+	case constants.VaultStatusActive,
+		constants.VaultStatusInactive:
+		return true
+	default:
+		return false
+	}
+}
+
+func IsValidVaultType(vaultType string) bool {
+	switch vaultType {
+	case constants.PaymentVault,
+		constants.PayoutVault,
+		constants.CompanyVault:
+		return true
+	default:
+		return false
+	}
 }
 
 func IsValidMerchantStatus(status string) bool {
