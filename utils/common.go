@@ -121,3 +121,15 @@ func IsValidVaultType(vaultType string) bool {
 		return false
 	}
 }
+
+func IsValidMerchantStatus(status string) bool {
+    switch status {
+    case constants.MerchantStatusActive,
+        constants.MerchantStatusPending,
+        constants.MerchantStatusSuspended,
+        constants.MerchantStatusInactive:
+        return true
+    default:
+        return false
+    }
+}

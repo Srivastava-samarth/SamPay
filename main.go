@@ -82,6 +82,7 @@ func main() {
 
 	userService := services.NewUserService(
 		userRepo,
+		merchantUserRepo,
 	)
 
 	merchantUserService := services.NewMerchantUserService(

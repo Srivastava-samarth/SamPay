@@ -22,25 +22,35 @@ func (ur *UserRouter) UserRoutes(
 	router *gin.RouterGroup,
 	authMiddleware gin.HandlerFunc,
 ) {
-	user := router.Group("/user")
+	user := router.Group("/:merchant_id/user")
 	user.Use(authMiddleware)
 	user.POST(
 		"",
 		middlewares.RequireRole("super_admin","owner"),
+		middlewares.RequireMerchantAccess("super_admin"),
 		ur.UserController.UserOnboarding(),
 	)
 	user.GET(
 		"/:user_id",
 		middlewares.RequireRole("super_admin","owner"),
+		middlewares.RequireMerchantAccess("super_admin"),
 		ur.UserController.GetUserByID(),
 	)
 	user.GET(
+		"/merchant",
+		middlewares.RequireRole("super_admin","owner"),
+		middlewares.RequireMerchantAccess("super_admin"),
+		ur.UserController.GetUsersByMerchant(),
+	)
+	user.GET(
 		"",
+		middlewares.RequireMerchantAccess("super_admin"),
 		ur.UserController.GetUsers(),
 	)
 	user.PATCH(
-		"/:user_id",
+		"/:user_id/status",
 		middlewares.RequireRole("super_admin","owner"),
-		ur.UserController.UpdateUser(),
+		middlewares.RequireMerchantAccess("super_admin"),
+		ur.UserController.UpdateUserStatus(),
 	)
 }

@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/Srivastava-samarth/sampay/middlewares"
@@ -55,6 +56,10 @@ func (as *AuthService) Authentication(authRequest *dto.AuthRequest) (*dto.AuthRe
 
 	if user == nil {
 		return nil, errors.New("User doen not exist !")
+	}
+
+	if user.Status != constants.UserStatusActive{
+		return nil, errors.New("user not valid")
 	}
 
 	if user.MustChangePassword == true {
@@ -314,59 +319,10 @@ func (as *AuthService) RefreshToken(
 		return nil, err
 	}
 
-	_, err = userSessionRepo.UpdateUserSession(
-		&models.UserSession{
-			ID:        userSession.ID,
-			ExpiresAt: time.Now(),
-			RevokedAt: &now,
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
 	accessToken, err := as.JwtService.GenarateTokenAndExpiry(
 		user.ID,
 		merchantUser.MerchantID,
 		merchantUser.Role,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	newRefreshToken, err :=
-		as.JwtService.GenerateRefreshToken()
-
-	if err != nil {
-		return nil, err
-	}
-
-	hashedNewRefreshToken :=
-		utils.HashToken(newRefreshToken)
-
-	refreshTokenExpirySeconds, err :=
-		strconv.ParseInt(
-			as.JwtService.Config.RefreshExpiry,
-			10,
-			64,
-		)
-
-	if err != nil {
-		return nil, err
-	}
-
-	refreshTokenExpiry := now.Add(
-		time.Duration(refreshTokenExpirySeconds) * time.Second,
-	)
-
-	_, err = userSessionRepo.CreateUserSession(
-		&models.UserSession{
-			UserID:           userSession.UserID,
-			RefreshTokenHash: hashedNewRefreshToken,
-			ExpiresAt:        refreshTokenExpiry,
-		},
 	)
 
 	if err != nil {
@@ -381,7 +337,5 @@ func (as *AuthService) RefreshToken(
 
 	return &dto.AuthResponse{
 		AccessToken:  accessToken,
-		RefreshToken: newRefreshToken,
-		ExpiresIn:    int(refreshTokenExpirySeconds),
 	}, nil
 }

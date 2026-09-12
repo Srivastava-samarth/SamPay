@@ -88,3 +88,6 @@ type UpdateMerchantRequest struct{
 	MerchantName string `json:"merchant_name" binding:"required"`
 	PhoneNumber  string `json:"phone_number" binding:"required"`
 }
+type UpdateMerchantStatusRequest struct {
+	Status string `json:"status" binding:"required"`
+}
