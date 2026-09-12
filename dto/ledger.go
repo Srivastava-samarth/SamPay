@@ -11,7 +11,7 @@ type LedgerTransactionRow struct {
 	LedgerTransactionID uuid.UUID       `gorm:"column:ledger_transaction_id"`
 	TransactionRef      string          `gorm:"column:transaction_ref"`
 	Type                string          `gorm:"column:type"`
-	ReferenceID         uuid.UUID       `gorm:"column:reference_id"`
+	ReferenceID         string          `gorm:"column:reference_id"`
 	Status              string          `gorm:"column:status"`
 	SettlementStatus    string          `gorm:"column:settlement_status"`
 	Amount              decimal.Decimal `gorm:"column:amount"`
