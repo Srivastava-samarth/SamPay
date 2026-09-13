@@ -52,10 +52,13 @@ func (mur *MerchantUserRepository) GetMerchantUserByUserID(userID uuid.UUID) (*m
 	return merchantUser, nil
 }
 
-func (mur *MerchantUserRepository) GetMerchantUsersByMerchantID(merchantID uuid.UUID) ([]*models.MerchantUser,error){
+func (mur *MerchantUserRepository) GetMerchantUsersByMerchantID(merchantID uuid.UUID) ([]*models.MerchantUser, error) {
 	var merchantUsers []*models.MerchantUser
-	err := mur.db.Where("merchant_id = ?", merchantID).Find(&merchantUsers).Error
-	if err != nil{
+	err := mur.db.
+		Where("merchant_id = ?", merchantID).
+		Find(&merchantUsers).
+		Error
+	if err != nil {
 		return nil, err
 	}
 

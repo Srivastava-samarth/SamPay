@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 
+	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
 	services "github.com/Srivastava-samarth/sampay/services"
@@ -32,7 +33,7 @@ func (mc *MerchantController) CreateMerchant() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
-		var request dto.CreateMerchantOnboardingRequest
+		var request *dto.CreateMerchantOnboardingRequest
 
 		if err := c.ShouldBindJSON(&request); err != nil {
 			dto.Fail(
@@ -44,7 +45,26 @@ func (mc *MerchantController) CreateMerchant() gin.HandlerFunc {
 			return
 		}
 
-		if errV := mc.MerchantService.ValidateMerchantOnboardingRequest(&request); errV != nil {
+		existingMerchant, errEM := mc.MerchantService.GetMerchantByEmail(request.Email)
+		if errEM != nil{
+			dto.Fail(
+				c, 
+				http.StatusInternalServerError,
+				"ERROR_FINDING_EXISTING_MERCHANT",
+				errEM.Error(),
+			)
+		}
+
+		if existingMerchant != nil{
+			dto.Fail(
+				c, http.StatusBadRequest,
+				"MERCHANT_ALREADY_EXIST",
+				"merchant already exist with same email",
+			)
+			return
+		}
+
+		if errV := mc.MerchantService.ValidateMerchantOnboardingRequest(request); errV != nil {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
@@ -282,13 +302,23 @@ func (mc *MerchantController) UpdateMerchantInfo() gin.HandlerFunc {
 			return
 		}
 
-		_, errM := mc.MerchantService.GetMerchantByID(pasredMerchantId)
+		merchant, errM := mc.MerchantService.GetMerchantByID(pasredMerchantId)
 		if errM != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
 				"MERCHANT_NOT_FOUND",
 				errM.Error(),
+			)
+			return
+		}
+
+		if merchant.Status != constants.MerchantStatusActive{
+			dto.Fail(
+				c, 
+				http.StatusConflict,
+				"MERCHANT_NOT_ACTIVE",
+				"merchant is not active",
 			)
 			return
 		}

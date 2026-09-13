@@ -28,7 +28,7 @@ func (cs *ComplianceService) PerformIndividualComplianceCheck(
 ) (*dto.ComplianceCheckResponse, error) {
 
 	errV := cs.ValidateIndividualMerchantRequest(request)
-	if errV != nil{
+	if errV != nil {
 		return nil, errV
 	}
 	name, country, dob := request.FirstName+" "+request.LastName, request.Country, request.DateOfBirth
@@ -58,6 +58,10 @@ func (cs *ComplianceService) PerformIndividualComplianceCheck(
 					Status: "rejected",
 					Reason: "Special Interest Person (SIP)",
 				},
+				ComplianceDetails: dto.ComplianceDetails{
+					IndividualComplianceCheckRequest: request,
+				},
+				Country: request.Country,
 			}, nil
 		}
 	}
@@ -75,6 +79,10 @@ func (cs *ComplianceService) PerformIndividualComplianceCheck(
 					Status: "rejected",
 					Reason: "Merchant flagged due to being from a restricted country.",
 				},
+				ComplianceDetails: dto.ComplianceDetails{
+					IndividualComplianceCheckRequest: request,
+				},
+				Country: request.Country,
 			}, nil
 		}
 	}
@@ -95,6 +103,10 @@ func (cs *ComplianceService) PerformIndividualComplianceCheck(
 				Status: "rejected",
 				Reason: "Merchant flagged due to being a blocked user.",
 			},
+			ComplianceDetails: dto.ComplianceDetails{
+				IndividualComplianceCheckRequest: request,
+			},
+			Country: request.Country,
 		}, nil
 	}
 
@@ -109,6 +121,10 @@ func (cs *ComplianceService) PerformIndividualComplianceCheck(
 			Status: "approved",
 			Reason: "Merchant passed all compliance checks.",
 		},
+		ComplianceDetails: dto.ComplianceDetails{
+			IndividualComplianceCheckRequest: request,
+		},
+		Country: request.Country,
 	}, nil
 }
 
@@ -117,6 +133,10 @@ func (cs *ComplianceService) PerformCorporateComplianceCheck(
 	merchantID uuid.UUID,
 ) (*dto.ComplianceCheckResponse, error) {
 
+	errV := cs.ValidateCorporateMerchantRequest(request)
+	if errV != nil {
+		return nil, errV
+	}
 	company := request
 	now := time.Now()
 
@@ -135,6 +155,10 @@ func (cs *ComplianceService) PerformCorporateComplianceCheck(
 					Status: "rejected",
 					Reason: "Company matched an AML blocked entity.",
 				},
+				ComplianceDetails: dto.ComplianceDetails{
+					CompanyComplianceCheckRequest: request,
+				},
+				Country: request.IncorporationCountry,
 			}, nil
 		}
 	}
@@ -156,6 +180,10 @@ func (cs *ComplianceService) PerformCorporateComplianceCheck(
 					Status: "rejected",
 					Reason: "Company is incorporated in a restricted country.",
 				},
+				ComplianceDetails: dto.ComplianceDetails{
+					CompanyComplianceCheckRequest: request,
+				},
+				Country: request.IncorporationCountry,
 			}, nil
 		}
 	}
@@ -172,6 +200,10 @@ func (cs *ComplianceService) PerformCorporateComplianceCheck(
 				Status: "rejected",
 				Reason: "Company legal name is required.",
 			},
+			ComplianceDetails: dto.ComplianceDetails{
+				CompanyComplianceCheckRequest: request,
+			},
+			Country: request.IncorporationCountry,
 		}, nil
 	}
 
@@ -187,6 +219,10 @@ func (cs *ComplianceService) PerformCorporateComplianceCheck(
 				Status: "rejected",
 				Reason: "Company registration number is required.",
 			},
+			ComplianceDetails: dto.ComplianceDetails{
+				CompanyComplianceCheckRequest: request,
+			},
+			Country: request.IncorporationCountry,
 		}, nil
 	}
 
@@ -202,6 +238,10 @@ func (cs *ComplianceService) PerformCorporateComplianceCheck(
 				Status: "rejected",
 				Reason: "Company tax ID is required.",
 			},
+			ComplianceDetails: dto.ComplianceDetails{
+				CompanyComplianceCheckRequest: request,
+			},
+			Country: request.IncorporationCountry,
 		}, nil
 	}
 
@@ -225,6 +265,10 @@ func (cs *ComplianceService) PerformCorporateComplianceCheck(
 				Status: "rejected",
 				Reason: "Merchant email is associated with a blocked user.",
 			},
+			ComplianceDetails: dto.ComplianceDetails{
+				CompanyComplianceCheckRequest: request,
+			},
+			Country: request.IncorporationCountry,
 		}, nil
 	}
 
@@ -239,23 +283,90 @@ func (cs *ComplianceService) PerformCorporateComplianceCheck(
 			Status: "approved",
 			Reason: "Corporate merchant passed all compliance checks.",
 		},
+		ComplianceDetails: dto.ComplianceDetails{
+			CompanyComplianceCheckRequest: request,
+		},
+		Country: request.IncorporationCountry,
 	}, nil
 }
 
 func (cs *ComplianceService) ValidateIndividualMerchantRequest(
-    individualRequest *dto.IndividualComplianceCheckRequest,
+	individualRequest *dto.IndividualComplianceCheckRequest,
 ) error {
-    if individualRequest == nil {
-        return errors.New("individual merchant request is required")
-    }
+	if individualRequest == nil {
+		return errors.New("individual merchant request is required")
+	}
 
-    if individualRequest.FirstName == "" ||
-        individualRequest.LastName == "" ||
-        individualRequest.Country == "" ||
-        individualRequest.DateOfBirth == "" ||
-        individualRequest.Email == "" {
-        return errors.New("first name, last name, country, date of birth, and email are required")
-    }
+	if individualRequest.FirstName == "" ||
+		individualRequest.LastName == "" ||
+		individualRequest.Country == "" ||
+		individualRequest.DateOfBirth == "" ||
+		individualRequest.Email == "" {
+		return errors.New("first name, last name, country, date of birth, and email are required")
+	}
 
-    return nil
+	if !isValidCountry(individualRequest.Country) {
+		return errors.New("invalid country")
+	}
+
+	if err := validateDateOfBirth(individualRequest.DateOfBirth); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (cs *ComplianceService) ValidateCorporateMerchantRequest(
+	corporateRequest *dto.CompanyComplianceCheckRequest,
+) error {
+	if corporateRequest == nil {
+		return errors.New("corporate merchant request is required")
+	}
+
+	if corporateRequest.LegalName == "" ||
+		corporateRequest.RegistrationNumber == "" ||
+		corporateRequest.TaxID == "" ||
+		corporateRequest.Email == "" ||
+		corporateRequest.IncorporationCountry == "" {
+		return errors.New("legal name, registration number, tax ID, email, and incorporation country are required")
+	}
+
+	if !isValidCountry(corporateRequest.IncorporationCountry) {
+		return errors.New("invalid country")
+	}
+
+	return nil
+}
+
+func validateDateOfBirth(dobString string) error {
+	dob, err := time.Parse("2006-01-02", dobString)
+	if err != nil {
+		return errors.New("date of birth must be in YYYY-MM-DD format")
+	}
+
+	now := time.Now()
+
+	if dob.After(now) {
+		return errors.New("date of birth cannot be in the future")
+	}
+
+	age := now.Year() - dob.Year()
+
+	if now.Month() < dob.Month() ||
+		(now.Month() == dob.Month() && now.Day() < dob.Day()) {
+		age--
+	}
+
+	if age < 18 {
+		return errors.New("merchant must be at least 18 years old")
+	}
+
+	return nil
+}
+
+func isValidCountry(country string) bool {
+	country = strings.TrimSpace(country)
+
+	_, exists := constants.ValidCountries[strings.ToLower(country)]
+
+	return exists
 }

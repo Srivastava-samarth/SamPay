@@ -13,7 +13,7 @@ import (
 
 func MerchantONboardingWorkflow(
 	ctx workflow.Context,
-	request dto.CreateMerchantOnboardingRequest,
+	request *dto.CreateMerchantOnboardingRequest,
 	merchantID uuid.UUID,
 ) error {
 
