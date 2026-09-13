@@ -26,12 +26,25 @@ func (pr *PaymentRouter) PaymentRoutes(
 	payment.Use(authMiddleware)
 	payment.POST(
 		"/:merchant_id/payment",
-		middlewares.RequireRole("super_admin", "owner", "finance"),
+		middlewares.RequireRole("owner", "finance"),
+		middlewares.RequireMerchantAccess(""),
 		pr.paymentCtlr.CreatePayment(),
 	)
 	payment.POST(
 		"/settlement",
 		middlewares.RequireRole("super_admin"),
 		pr.paymentCtlr.TriggerSettlement(),
+	)
+	payment.GET(
+		"/:merchant_id/payment",
+		middlewares.RequireRole("super_admin", "owner", "finance"),
+		middlewares.RequireMerchantAccess("super_admin"),
+		pr.paymentCtlr.GetPaymentsByMerchantID(),
+	)
+	payment.GET(
+		"/:merchant_id/payment/:payment_id",
+		middlewares.RequireRole("super_admin", "owner", "finance"),
+		middlewares.RequireMerchantAccess("super_admin"),
+		pr.paymentCtlr.GetPaymentByID(),
 	)
 }

@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 
+	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/google/uuid"
@@ -124,4 +125,30 @@ func (ps *PaymentService) CheckBalance(merchantID uuid.UUID, amount decimal.Deci
 		return false, errors.New("wallet does not exist")
 	}
 	return wallet.AvailableBalance.GreaterThanOrEqual(amount), nil
+}
+
+func (ps *PaymentService) GetPaymentsByMerchantID(merchantID uuid.UUID) ([]*models.Payment, error){
+    if merchantID == uuid.Nil{
+        return nil, errors.New("merchant_id is required")
+    }
+
+    payments, errP := ps.PaymentRepo.GetPaymentsByMerchantID(merchantID)
+    if errP != nil{
+        return nil, errP
+    }
+
+    return payments, nil
+}
+
+func (ps *PaymentService) GetPaymentByID(paymentID uuid.UUID) (*models.Payment, error){
+    if paymentID == uuid.Nil{
+        return nil, errors.New("payment_id is required")
+    }
+
+    payment, errP := ps.PaymentRepo.GetPaymentByID(paymentID)
+    if errP != nil{
+        return nil, errP
+    }
+
+    return payment, nil
 }

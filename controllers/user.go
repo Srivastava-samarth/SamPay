@@ -168,6 +168,15 @@ func (uc *UserController) UpdateUserStatus() gin.HandlerFunc{
 func (uc *UserController) GetUsersByMerchant() gin.HandlerFunc{
 	return func(c *gin.Context) {
 		merchantID := c.Param("merchant_id")
+		if merchantID == ""{
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"MERCHANT_ID_NOT_FOUND",
+				"Merchant ID not passed in params",
+			)
+		}
+		
 		parsedMerchantID, errP := uuid.Parse(merchantID)
 		if errP != nil{
 			dto.Fail(

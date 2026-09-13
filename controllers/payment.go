@@ -277,3 +277,86 @@ func (pc *PaymentController) TriggerSettlement() gin.HandlerFunc {
 		)
 	}
 }
+
+func (pc *PaymentController) GetPaymentsByMerchantID() gin.HandlerFunc{
+	return func(c *gin.Context) {
+		merchantID := c.Param("merchant_id")
+		if merchantID == ""{
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"MERCHANT_ID_NOT_FOUND",
+				"Merchant ID not passed in params",
+			)
+		}
+
+		parsedMerchantID, errP := uuid.Parse(merchantID)
+		if errP != nil{
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"PARSING_ERROR",
+				errP.Error(),
+			)
+			return
+		}
+
+		payments, errGP := pc.paymentSrvc.GetPaymentsByMerchantID(parsedMerchantID)
+		if errGP != nil{
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"ERROR_FINDING_PAYMENTS",
+				errGP.Error(),
+			)
+		}
+
+		dto.Respond(
+			c,
+			http.StatusOK,
+			payments,
+		)
+	}
+}
+
+func (pc *PaymentController) GetPaymentByID() gin.HandlerFunc{
+	return func(c *gin.Context) {
+		paymentID := c.Param("payment_id")
+		if paymentID == ""{
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"PAYMENT_ID_NOT_FOUND",
+				"Payment ID not passed in params",
+			)
+		}
+
+		parsedPaymentID, errP := uuid.Parse(paymentID)
+		if errP != nil{
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"PARSING_ERROR",
+				errP.Error(),
+			)
+			return
+		}
+
+		payment, errGP := pc.paymentSrvc.GetPaymentByID(parsedPaymentID)
+		if errGP != nil{
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"ERROR_GETTING_PAYMENT",
+				errGP.Error(),
+			)
+			return
+		}
+
+		dto.Respond(
+			c,
+			http.StatusOK,
+			payment,
+		)
+	}
+}

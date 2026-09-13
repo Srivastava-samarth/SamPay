@@ -91,16 +91,16 @@ func (pr *PaymentRepository) UpdatePaymentStatus(PaymentReference string, status
 }
 
 func (pr *PaymentRepository) UpdateSettlementStatusByID(
-    paymentID uuid.UUID,
-    settlementStatus *string,
-) (*models.Payment,error) {
+	paymentID uuid.UUID,
+	settlementStatus *string,
+) (*models.Payment, error) {
 
-    updates := map[string]interface{}{
-        "settlement_status": settlementStatus,
-        "updated_at":        time.Now(),
-    }
+	updates := map[string]interface{}{
+		"settlement_status": settlementStatus,
+		"updated_at":        time.Now(),
+	}
 
-   errU := pr.DB.
+	errU := pr.DB.
 		Model(&models.Payment{}).
 		Where("id = ?", paymentID).
 		Updates(updates).Error
@@ -111,7 +111,7 @@ func (pr *PaymentRepository) UpdateSettlementStatusByID(
 
 	var payment *models.Payment
 	errP := pr.DB.Where("id = ?", paymentID).First(&payment).Error
-	if errP != nil{
+	if errP != nil {
 		return nil, errP
 	}
 
@@ -131,13 +131,23 @@ func (pr *PaymentRepository) GetPaymentByID(ID uuid.UUID) (*models.Payment, erro
 	return payment, nil
 }
 
-func (pr *PaymentRepository) GetPaymentsBySettlementStatus(status string) ([]*models.Payment, error){
+func (pr *PaymentRepository) GetPaymentsBySettlementStatus(status string) ([]*models.Payment, error) {
 	var payments []*models.Payment
-	err := pr.DB.Where("settlement_status = ?", status).Find(&payments).Error
-	if err != nil{
-		if errors.Is(err, gorm.ErrRecordNotFound){
+	err := pr.DB.Where("settlement_status = ? AND status = ?", status, constants.TransactionStatusCompleted).Find(&payments).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
+		return nil, err
+	}
+
+	return payments, nil
+}
+
+func (pr *PaymentRepository) GetPaymentsByMerchantID(merchantID uuid.UUID) ([]*models.Payment, error) {
+	var payments []*models.Payment
+	err := pr.DB.Where("sender_merchant_id = ?", merchantID).Find(&payments).Error
+	if err != nil {
 		return nil, err
 	}
 
