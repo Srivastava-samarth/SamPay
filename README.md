@@ -63,7 +63,7 @@ The initial financial/business flows are implemented. The remaining work focuses
 | Settlement                      |    ✅   |
 | Reconciliation                  |    ✅   |
 | Temporal Workflows              |    ✅   |
-| Refactoring                     |   🚧   |
+| Refactoring                     |   ✅   |
 | Automated Tests                 |   🚧   |
 | Load Testing                    |   🚧   |
 | Redis                           |   🚧   |
