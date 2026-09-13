@@ -34,4 +34,16 @@ func (pr *PayoutRouter) PayoutRoutes(
 		middlewares.RequireRole("super_admin", "owner", "finance"),
 		pr.payoutCtlr.BankToBankAccount(),
 	)
+	payout.GET(
+		"/:merchant_id/payouts",
+		middlewares.RequireRole("super_admin", "owner", "finance"),
+		middlewares.RequireMerchantAccess("super_admin"),
+		pr.payoutCtlr.GetPayoutsByMerchantID(),
+	)
+	payout.GET(
+		"/:merchant_id/payout/:payout_id",
+		middlewares.RequireRole("super_admin", "owner", "finance"),
+		middlewares.RequireMerchantAccess("super_admin"),
+		pr.payoutCtlr.GetPayoutByID(),
+	)
 }
