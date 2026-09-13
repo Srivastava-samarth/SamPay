@@ -91,7 +91,7 @@ func reverseTransactions(
 	}
 }
 
-func (ls *LedgerService) GeTransaction(
+func (ls *LedgerService) GetTransaction(
 	walletId uuid.UUID,
 	transactionId uuid.UUID,
 ) (*dto.LedgerTransactionRow, error) {
@@ -229,6 +229,23 @@ func (ls *LedgerService) PostTransaction(
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	return ledgerTransaction, nil
+}
+
+func (ls *LedgerService) GetLedgerTransactionByReferenceID(referenceID string) (*models.LedgerTransaction, error){
+	if referenceID == ""{
+		return nil, errors.New("reference id is required")
+	}
+
+	ledgerTransaction, errLT := ls.LedgerRepo.GetLedgerTransactionByReferenceID(referenceID)
+	if errLT != nil{
+		return nil, errLT
+	}
+
+	if ledgerTransaction == nil{
+		return nil, errors.New("transaction does not exist")
 	}
 
 	return ledgerTransaction, nil

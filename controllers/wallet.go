@@ -235,7 +235,7 @@ func (wc *WalletController) GetWalletTransaction() gin.HandlerFunc {
 			return
 		}
 
-		transaction, errT := wc.LedgerSrvc.GeTransaction(wallet.ID, parsedTransactionId)
+		transaction, errT := wc.LedgerSrvc.GetTransaction(wallet.ID, parsedTransactionId)
 		if errT != nil {
 			dto.Fail(
 				c,
