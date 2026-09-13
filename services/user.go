@@ -87,29 +87,32 @@ func (us *UserService) GetUsers() ([]*models.User, error) {
 
 func (us *UserService) UpdateUser(
 	request *dto.UpdateUserRequest,
-	userId uuid.UUID,
+	userID uuid.UUID,
 ) (*models.User, error) {
-	updatedUserPayload := &models.User{
-		ID: userId,
+	if request.FirstName == "" {
+		return nil, errors.New("first_name is required")
 	}
 
-	if request.FirstName != "" {
-		updatedUserPayload.FirstName = request.FirstName
+	if request.LastName == "" {
+		return nil, errors.New("last_name is required")
 	}
 
-	if request.LastName != "" {
-		updatedUserPayload.LastName = request.LastName
+	if request.PasswordHash == "" {
+		return nil, errors.New("password_hash is required")
 	}
 
-	if request.PasswordHash != "" {
-		updatedUserPayload.PasswordHash = request.PasswordHash
+	if !request.MustChangePassword {
+		return nil, errors.New("must_change_password is required")
 	}
 
-	if request.MustChangePassword {
-		updatedUserPayload.MustChangePassword = request.MustChangePassword
+	updatedUserPayload := &dto.UpdateUserRequest{
+		FirstName:          request.FirstName,
+		LastName:           request.LastName,
+		PasswordHash:       request.PasswordHash,
+		MustChangePassword: request.MustChangePassword,
 	}
 
-	return us.UserRepo.UpdateUser(updatedUserPayload)
+	return us.UserRepo.UpdateUser(userID, updatedUserPayload)
 }
 
 func (us *UserService) UpdateUserStatus(status string, userID uuid.UUID) (*models.User, error) {

@@ -34,7 +34,6 @@ func (ar *UserSessionRepository) CreateUserSession(oauth *models.UserSession) (*
 		RefreshTokenHash: oauth.RefreshTokenHash,
 		ExpiresAt:        oauth.ExpiresAt,
 		CreatedAt:        time.Now(),
-		RevokedAt:        nil,
 		UpdatedAt:        time.Now(),
 	}
 	if err := ar.db.Create(userSessionRequest).Error; err != nil {
@@ -55,27 +54,5 @@ func (ar *UserSessionRepository) GetUserSessionByRefreshTokenHash(refreshTokenHa
 	if err != nil {
 		return nil, err
 	}
-	return userSession, nil
-}
-
-func (ar *UserSessionRepository) UpdateUserSession(oauth *models.UserSession) (*models.UserSession, error) {
-	err := ar.db.
-		Model(&models.UserSession{}).
-		Where("id = ?", oauth.ID).
-		Updates(map[string]interface{}{
-			"expires_at": oauth.ExpiresAt,
-			"revoked_at": oauth.RevokedAt,
-			"updated_at": time.Now(),
-		}).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	var userSession *models.UserSession
-	if err := ar.db.Where("id = ?", oauth.ID).First(&userSession).Error; err != nil {
-		return nil, err
-	}
-
 	return userSession, nil
 }
