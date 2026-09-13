@@ -306,9 +306,6 @@ func (lr *LedgerRepository) GetLedgerTransactionByReferenceID(
 
 	err := lr.db.Where("reference_id = ?", referenceID).First(&ledgerTransaction).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
 		return nil, err
 	}
 

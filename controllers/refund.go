@@ -224,3 +224,91 @@ func (rc *RefundController) GetRefundByReference() gin.HandlerFunc {
 
 	}
 }
+
+func (rc *RefundController) GetRefundById() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		refundId := c.Param("refund_id")
+		if refundId == "" {
+			dto.Fail(
+				c,
+				http.StatusNotFound,
+				"REFUND_ID_NOT_FOUND",
+				"refund id is wrong or not passed",
+			)
+			return
+		}
+
+		parsedRefundId, errP := uuid.Parse(refundId)
+		if errP != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"REFUND_ID_PARSING_ERROR",
+				errP.Error(),
+			)
+			return
+		}
+
+		refund, errR := rc.RefundSrvc.GetRefundById(parsedRefundId)
+		if errR != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"REFUND_NOT_FOUND",
+				errR.Error(),
+			)
+			return
+		}
+
+		dto.Respond(
+			c,
+			http.StatusOK,
+			refund,
+		)
+	}
+}
+
+func (rc *RefundController) GetRefundByMerchantId() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		merchantId := c.Param("merchant_id")
+		if merchantId == "" {
+			dto.Fail(
+				c,
+				http.StatusNotFound,
+				"MERCHANT_ID_NOT_FOUND",
+				"Merchant ID not passed in params",
+			)
+			return
+		}
+
+		parsedMerchantId, errP := uuid.Parse(merchantId)
+		if errP != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"PARSING_ERROR",
+				errP.Error(),
+			)
+			return
+		}
+
+		refunds, errR := rc.RefundSrvc.GetRefundsByMerchantId(parsedMerchantId)
+		if errR != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"REFUNDS_NOT_FOUND",
+				errR.Error(),
+			)
+			return
+		}
+
+		dto.Respond(
+			c,
+			http.StatusOK,
+			gin.H{
+				"data": refunds,
+			},
+		)
+	}
+}

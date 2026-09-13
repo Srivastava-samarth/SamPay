@@ -101,3 +101,25 @@ func (rs *RefundService) GetRefundByReference(
 
 	return refund, nil
 }
+
+func (rs *RefundService) GetRefundById(
+	refundID uuid.UUID,
+) (*models.Refund, error) {
+	refund, errR := rs.RefundRepo.GetRefundById(refundID)
+	if errR != nil {
+		return nil, errR
+	}
+
+	return refund, nil
+}
+
+func (rs *RefundService) GetRefundsByMerchantId(
+	merchantID uuid.UUID,
+) ([]*models.Refund, error) {
+	refunds, errR := rs.RefundRepo.GetRefundsByMerchantId(merchantID)
+	if errR != nil {
+		return nil, errR
+	}
+
+	return refunds, nil
+}
