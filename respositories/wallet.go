@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/Srivastava-samarth/sampay/utils"
@@ -94,7 +95,7 @@ func (wr *WalletRepository) UpdateWalletBalance(merchantID uuid.UUID, walletRequ
 
 	err := wr.db.
 		Model(&models.Wallets{}).
-		Where("merchant_id = ? AND status = ?", merchantID, "active").
+		Where("merchant_id = ? AND status = ?", merchantID, constants.MerchantStatusActive).
 		Updates(updates).Error
 
 	if err != nil {
