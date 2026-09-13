@@ -382,3 +382,69 @@ func (pc *PayoutController) BankToBankAccount() gin.HandlerFunc {
 		)
 	}
 }
+
+func (pc *PayoutController) GetPayoutsByMerchantID() gin.HandlerFunc{
+	return func(c *gin.Context) {
+		merchantID := c.Param("merchant_id")
+		parsedMerchantID, errP := uuid.Parse(merchantID)
+		if errP != nil{
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"PARSING_ERROR",
+				errP.Error(),
+			)
+			return
+		}
+
+		payouts, errGP := pc.payoutSrvc.GetPayoutsByMerchantID(parsedMerchantID)
+		if errGP != nil{
+			dto.Fail(
+				c, 
+				http.StatusInternalServerError,
+				"ISSUE_GETTING_PAYOUTS",
+				errGP.Error(),
+			)
+			return
+		} 
+
+		dto.Respond(
+			c,
+			http.StatusOK,
+			payouts,
+		)
+	}
+}
+
+func (pc *PayoutController) GetPayoutByID() gin.HandlerFunc{
+	return func(c *gin.Context) {
+		payoutID := c.Param("payout_id")
+		parsedPayoutID, errP := uuid.Parse(payoutID)
+		if errP != nil{
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"PARSING_ERROR",
+				errP.Error(),
+			)
+			return
+		}
+
+		payout, errGP := pc.payoutSrvc.GetPayoutByID(parsedPayoutID)
+		if errGP != nil{
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"ISSUE_GETTING_PAYOUT",
+				errGP.Error(),
+			)
+			return
+		} 
+
+		dto.Respond(
+			c,
+			http.StatusOK,
+			payout,
+		)
+	}
+}

@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"time"
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
@@ -111,4 +112,38 @@ func (pr *PayoutRepository) UpdatePayoutStatus(PayoutReference string, status st
 	}
 	return updatedPayout, nil
 
+}
+
+func (pr *PayoutRepository) GetPayoutsByMerchantID(merchantID uuid.UUID) ([]*models.Payout, error) {
+	var payouts []*models.Payout
+	err := pr.DB.
+		Where("merchant_id = ?", merchantID).
+		Find(&payouts).
+		Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return payouts, nil
+}
+
+func (pr *PayoutRepository) GetPayoutByID(payoutID uuid.UUID) (*models.Payout, error) {
+	var payout *models.Payout
+	err := pr.DB.
+		Where("id = ?", payoutID).
+		First(&payout).
+		Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return payout, nil
 }

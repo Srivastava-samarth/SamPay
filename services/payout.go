@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 
+	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/google/uuid"
@@ -135,4 +136,34 @@ func (ps *PayoutService) CheckBankBalance(
 	return bankAccount.Balance.GreaterThanOrEqual(
 		amount.Add(minimumBalance),
 	), nil
+}
+
+func (ps *PayoutService) GetPayoutsByMerchantID(
+	merchantID uuid.UUID,
+) ([]*models.Payout, error){
+	if merchantID == uuid.Nil{
+		return nil, errors.New("merchant_id is required")
+	}
+
+	payouts, errP := ps.PayoutRepo.GetPayoutsByMerchantID(merchantID)
+	if errP != nil{
+		return nil, errP
+	}
+
+	return payouts, nil
+}
+
+func (ps *PayoutService) GetPayoutByID(
+	payoutID uuid.UUID,
+) (*models.Payout, error){
+	if payoutID == uuid.Nil{
+		return nil,errors.New("payout_id is required")
+	}
+
+	payout, errP := ps.PayoutRepo.GetPayoutByID(payoutID)
+	if errP != nil{
+		return nil, errP
+	}
+
+	return payout, nil
 }
