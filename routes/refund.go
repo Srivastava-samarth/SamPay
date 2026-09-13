@@ -35,4 +35,16 @@ func (rr *RefundRouter) RefundRoutes(
 		middlewares.RequireMerchantAccess("super_admin"),
 		rr.refundCtrl.GetRefundByReference(),
 	)
+	refund.GET(
+		"/:merchant_id/refund",
+		middlewares.RequireRole("super_admin", "owner", "finance"),
+		middlewares.RequireMerchantAccess("super_admin"),
+		rr.refundCtrl.GetRefundByMerchantId(),
+	)
+	refund.GET(
+		"/:merchant_id/refunds/:refund_id",
+		middlewares.RequireRole("super_admin", "owner", "finance"),
+		middlewares.RequireMerchantAccess("super_admin"),
+		rr.refundCtrl.GetRefundById(),
+	)
 }

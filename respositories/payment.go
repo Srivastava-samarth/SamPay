@@ -118,9 +118,9 @@ func (pr *PaymentRepository) UpdateSettlementStatusByID(
 	return payment, nil
 }
 
-func (pr *PaymentRepository) GetPaymentByID(ID uuid.UUID) (*models.Payment, error) {
+func (pr *PaymentRepository) GetPaymentByID(paymentID uuid.UUID) (*models.Payment, error) {
 	var payment *models.Payment
-	err := pr.DB.Where("id = ?", ID).First(&payment).Error
+	err := pr.DB.Where("id = ?", paymentID).First(&payment).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
