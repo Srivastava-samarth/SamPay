@@ -14,14 +14,16 @@ import (
 
 type RefundService struct {
 	RefundRepo  *repositories.RefundRepository
-	PaymentRepo repositories.PaymentRepository
+	PaymentRepo *repositories.PaymentRepository
 }
 
 func NewRefundService(
-	refundRepo repositories.RefundRepository,
+	refundRepo *repositories.RefundRepository,
+	paymentRepo *repositories.PaymentRepository,
 ) *RefundService {
 	return &RefundService{
-		RefundRepo: &refundRepo,
+		RefundRepo:  refundRepo,
+		PaymentRepo: paymentRepo,
 	}
 }
 

@@ -234,17 +234,17 @@ func (ls *LedgerService) PostTransaction(
 	return ledgerTransaction, nil
 }
 
-func (ls *LedgerService) GetLedgerTransactionByReferenceID(referenceID string) (*models.LedgerTransaction, error){
-	if referenceID == ""{
+func (ls *LedgerService) GetLedgerTransactionByReferenceID(referenceID string) (*models.LedgerTransaction, error) {
+	if referenceID == "" {
 		return nil, errors.New("reference id is required")
 	}
 
 	ledgerTransaction, errLT := ls.LedgerRepo.GetLedgerTransactionByReferenceID(referenceID)
-	if errLT != nil{
+	if errLT != nil {
 		return nil, errLT
 	}
 
-	if ledgerTransaction == nil{
+	if ledgerTransaction == nil {
 		return nil, errors.New("transaction does not exist")
 	}
 

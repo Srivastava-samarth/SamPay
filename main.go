@@ -149,7 +149,8 @@ func main() {
 	)
 
 	refundService := services.NewRefundService(
-		*refundRepo,
+		refundRepo,
+		paymentRepo,
 	)
 
 	// --------------------------------------------------

@@ -130,7 +130,7 @@ func (rc *RefundController) CreateRefund() gin.HandlerFunc {
 		workflowRun, errW := rc.TemporalClient.ExecuteWorkflow(
 			c.Request.Context(),
 			workflowOptions,
-			workflows.PayoutFlow,
+			workflows.RefundFlow,
 			request,
 			parsedMerchantID,
 		)

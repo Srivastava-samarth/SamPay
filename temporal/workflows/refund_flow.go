@@ -16,7 +16,7 @@ import (
 func RefundFlow(
 	ctx workflow.Context,
 	request *dto.CreateRefundRequest,
-	merchantID *uuid.UUID,
+	merchantID uuid.UUID,
 ) (*models.Refund, error) {
 
 	activityOptions := workflow.ActivityOptions{
@@ -48,7 +48,7 @@ func RefundFlow(
 
 	err = workflow.ExecuteActivity(
 		ctx,
-		"GetRefundsByPaymentID",
+		"GetRefundByPaymentID",
 		request.PaymentID,
 	).Get(ctx, &refunds)
 

@@ -140,13 +140,13 @@ func (ps *PayoutService) CheckBankBalance(
 
 func (ps *PayoutService) GetPayoutsByMerchantID(
 	merchantID uuid.UUID,
-) ([]*models.Payout, error){
-	if merchantID == uuid.Nil{
+) ([]*models.Payout, error) {
+	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant_id is required")
 	}
 
 	payouts, errP := ps.PayoutRepo.GetPayoutsByMerchantID(merchantID)
-	if errP != nil{
+	if errP != nil {
 		return nil, errP
 	}
 
@@ -155,13 +155,13 @@ func (ps *PayoutService) GetPayoutsByMerchantID(
 
 func (ps *PayoutService) GetPayoutByID(
 	payoutID uuid.UUID,
-) (*models.Payout, error){
-	if payoutID == uuid.Nil{
-		return nil,errors.New("payout_id is required")
+) (*models.Payout, error) {
+	if payoutID == uuid.Nil {
+		return nil, errors.New("payout_id is required")
 	}
 
 	payout, errP := ps.PayoutRepo.GetPayoutByID(payoutID)
-	if errP != nil{
+	if errP != nil {
 		return nil, errP
 	}
 

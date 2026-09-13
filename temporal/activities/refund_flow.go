@@ -84,7 +84,7 @@ func (a *Registry) RefundFromMerchantWallet(
 	}
 	err := a.DB.Transaction(
 		func(tx *gorm.DB) error {
-			refundSenderMerchantID := refund.MerchantID
+			refundSenderMerchantID := payment.ReceiverMerchantID
 			Amount := refund.Amount
 
 			// Transaction-aware repositories
@@ -93,7 +93,7 @@ func (a *Registry) RefundFromMerchantWallet(
 			refundRepo := a.RefundService.RefundRepo.WithTx(tx)
 			ledgerRepo := a.LedgerService.LedgerRepo.WithTx(tx)
 
-			refundReceiverMerchantID := payment.SenderMerchantID
+			refundReceiverMerchantID := refund.MerchantID
 			refundSenderWallet, errRSW := walletRepo.GetWalletByMerchantId(refundSenderMerchantID)
 			if errRSW != nil {
 				return errRSW
