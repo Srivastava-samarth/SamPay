@@ -233,13 +233,12 @@ func (as *AuthService) ResetPassword(
 	userRepo := as.UserRepo.WithTx(tx)
 	passwordResetRepo := as.PasswordResetRepo.WithTx(tx)
 
-	updateUserRequest := &models.User{
-		ID:                 userID,
+	updateUserRequest := &dto.UpdateUserRequest{
 		PasswordHash:       hashedPassword,
 		MustChangePassword: false,
 	}
 
-	_, err = userRepo.UpdateUser(updateUserRequest)
+	_, err = userRepo.UpdateUser(userID, updateUserRequest)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -302,10 +301,6 @@ func (as *AuthService) RefreshToken(
 
 	if now.After(userSession.ExpiresAt) {
 		return nil, errors.New("refresh token expired")
-	}
-
-	if userSession.RevokedAt != nil {
-		return nil, errors.New("refresh token revoked")
 	}
 
 	user, err := userRepo.GetUserByID(userSession.UserID)

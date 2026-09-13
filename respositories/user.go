@@ -5,6 +5,7 @@ import (
 
 	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
+	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -66,7 +67,7 @@ func (ur *UserRepository) GetUserByEmail(email string) (*models.User, error) {
 	return user, nil
 }
 
-func (ur *UserRepository) UpdateUser(request *models.User) (*models.User, error) {
+func (ur *UserRepository) UpdateUser(userID uuid.UUID, request *dto.UpdateUserRequest) (*models.User, error) {
 	updates := map[string]interface{}{
 		"updated_at": time.Now(),
 	}
@@ -83,9 +84,13 @@ func (ur *UserRepository) UpdateUser(request *models.User) (*models.User, error)
 		updates["last_name"] = request.LastName
 	}
 
+	if request.MustChangePassword {
+		updates["must_change_password"] = request.MustChangePassword
+	}
+
 	err := ur.db.
 		Model(&models.User{}).
-		Where("id = ?", request.ID).
+		Where("id = ?", userID).
 		Updates(updates).Error
 
 	if err != nil {
@@ -94,7 +99,7 @@ func (ur *UserRepository) UpdateUser(request *models.User) (*models.User, error)
 
 	var updatedUser models.User
 	err = ur.db.
-		Where("id = ?", request.ID).
+		Where("id = ?", userID).
 		First(&updatedUser).Error
 
 	if err != nil {
