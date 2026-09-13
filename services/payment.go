@@ -11,144 +11,144 @@ import (
 )
 
 type PaymentService struct {
-	PaymentRepo *repositories.PaymentRepository
+	PaymentRepo  *repositories.PaymentRepository
 	MerchantRepo *repositories.MerchantRepository
-	walletSrvc *WalletService
+	walletSrvc   *WalletService
 }
 
 func NewPaymentService(
 	paymentRepo *repositories.PaymentRepository,
 	merchantRepo *repositories.MerchantRepository,
-		walletSrvc *WalletService,
-) *PaymentService{
+	walletSrvc *WalletService,
+) *PaymentService {
 	return &PaymentService{
-		PaymentRepo: paymentRepo,
+		PaymentRepo:  paymentRepo,
 		MerchantRepo: merchantRepo,
-		walletSrvc: walletSrvc,
+		walletSrvc:   walletSrvc,
 	}
 }
 
 func (ps *PaymentService) ValidatePaymentRequest(
-    request *dto.CreatePaymentRequest,
-    senderMerchantID uuid.UUID,
+	request *dto.CreatePaymentRequest,
+	senderMerchantID uuid.UUID,
 ) error {
 
-    if request == nil {
-        return errors.New("payment request is required")
-    }
+	if request == nil {
+		return errors.New("payment request is required")
+	}
 
-    if senderMerchantID == uuid.Nil {
-        return errors.New("sender merchant id is required")
-    }
+	if senderMerchantID == uuid.Nil {
+		return errors.New("sender merchant id is required")
+	}
 
-    if request.ReceiverMerchantID == uuid.Nil {
-        return errors.New("receiver merchant id is required")
-    }
+	if request.ReceiverMerchantID == uuid.Nil {
+		return errors.New("receiver merchant id is required")
+	}
 
-    if senderMerchantID == request.ReceiverMerchantID {
-        return errors.New("sender and receiver can't be same")
-    }
+	if senderMerchantID == request.ReceiverMerchantID {
+		return errors.New("sender and receiver can't be same")
+	}
 
-    if request.Amount.LessThanOrEqual(decimal.Zero) {
-        return errors.New("amount must be greater than 0")
-    }
+	if request.Amount.LessThanOrEqual(decimal.Zero) {
+		return errors.New("amount must be greater than 0")
+	}
 
-    if request.Currency != "INR" {
-        return errors.New("currency should be INR")
-    }
+	if request.Currency != "INR" {
+		return errors.New("currency should be INR")
+	}
 
-    senderMerchant, err := ps.MerchantRepo.GetMerchantByID(senderMerchantID)
-    if err != nil {
-        return err
-    }
+	senderMerchant, err := ps.MerchantRepo.GetMerchantByID(senderMerchantID)
+	if err != nil {
+		return err
+	}
 
-    if senderMerchant == nil {
-        return errors.New("sender does not exist")
-    }
+	if senderMerchant == nil {
+		return errors.New("sender does not exist")
+	}
 
-    senderWallet, err := ps.walletSrvc.GetWalletByMerchantID(senderMerchantID)
-    if err != nil {
-        return err
-    }
+	senderWallet, err := ps.walletSrvc.GetWalletByMerchantID(senderMerchantID)
+	if err != nil {
+		return err
+	}
 
-    if senderWallet == nil {
-        return errors.New("sender wallet not found")
-    }
+	if senderWallet == nil {
+		return errors.New("sender wallet not found")
+	}
 
-    receiverMerchant, err := ps.MerchantRepo.GetMerchantByID(
-        request.ReceiverMerchantID,
-    )
-    if err != nil {
-        return err
-    }
+	receiverMerchant, err := ps.MerchantRepo.GetMerchantByID(
+		request.ReceiverMerchantID,
+	)
+	if err != nil {
+		return err
+	}
 
-    if receiverMerchant == nil {
-        return errors.New("receiver does not exist")
-    }
+	if receiverMerchant == nil {
+		return errors.New("receiver does not exist")
+	}
 
-    receiverWallet, err := ps.walletSrvc.GetWalletByMerchantID(
-        request.ReceiverMerchantID,
-    )
-    if err != nil {
-        return err
-    }
+	receiverWallet, err := ps.walletSrvc.GetWalletByMerchantID(
+		request.ReceiverMerchantID,
+	)
+	if err != nil {
+		return err
+	}
 
-    if receiverWallet == nil {
-        return errors.New("receiver wallet does not exist")
-    }
+	if receiverWallet == nil {
+		return errors.New("receiver wallet does not exist")
+	}
 
-    if senderWallet.ID == receiverWallet.ID {
-        return errors.New("sender and receiver can't be same")
-    }
+	if senderWallet.ID == receiverWallet.ID {
+		return errors.New("sender and receiver can't be same")
+	}
 
-    return nil
+	return nil
 }
 
 func (ps *PaymentService) CalculateFees(amount decimal.Decimal) (decimal.Decimal, error) {
-    if amount.LessThanOrEqual(decimal.Zero) {
-        return decimal.Zero, errors.New("amount must be greater than 0")
-    }
+	if amount.LessThanOrEqual(decimal.Zero) {
+		return decimal.Zero, errors.New("amount must be greater than 0")
+	}
 
-    feeRate := decimal.NewFromInt(1).Div(decimal.NewFromInt(100))
-    fee := amount.Mul(feeRate)
+	feeRate := decimal.NewFromInt(1).Div(decimal.NewFromInt(100))
+	fee := amount.Mul(feeRate)
 
-    return fee, nil
+	return fee, nil
 }
 
-func (ps *PaymentService) CheckBalance(merchantID uuid.UUID, amount decimal.Decimal) (bool,error){
+func (ps *PaymentService) CheckBalance(merchantID uuid.UUID, amount decimal.Decimal) (bool, error) {
 	wallet, errW := ps.walletSrvc.GetWalletByMerchantID(merchantID)
-	if errW != nil{
+	if errW != nil {
 		return false, errW
 	}
 
-	if wallet == nil{
+	if wallet == nil {
 		return false, errors.New("wallet does not exist")
 	}
 	return wallet.AvailableBalance.GreaterThanOrEqual(amount), nil
 }
 
-func (ps *PaymentService) GetPaymentsByMerchantID(merchantID uuid.UUID) ([]*models.Payment, error){
-    if merchantID == uuid.Nil{
-        return nil, errors.New("merchant_id is required")
-    }
+func (ps *PaymentService) GetPaymentsByMerchantID(merchantID uuid.UUID) ([]*models.Payment, error) {
+	if merchantID == uuid.Nil {
+		return nil, errors.New("merchant_id is required")
+	}
 
-    payments, errP := ps.PaymentRepo.GetPaymentsByMerchantID(merchantID)
-    if errP != nil{
-        return nil, errP
-    }
+	payments, errP := ps.PaymentRepo.GetPaymentsByMerchantID(merchantID)
+	if errP != nil {
+		return nil, errP
+	}
 
-    return payments, nil
+	return payments, nil
 }
 
-func (ps *PaymentService) GetPaymentByID(paymentID uuid.UUID) (*models.Payment, error){
-    if paymentID == uuid.Nil{
-        return nil, errors.New("payment_id is required")
-    }
+func (ps *PaymentService) GetPaymentByID(paymentID uuid.UUID) (*models.Payment, error) {
+	if paymentID == uuid.Nil {
+		return nil, errors.New("payment_id is required")
+	}
 
-    payment, errP := ps.PaymentRepo.GetPaymentByID(paymentID)
-    if errP != nil{
-        return nil, errP
-    }
+	payment, errP := ps.PaymentRepo.GetPaymentByID(paymentID)
+	if errP != nil {
+		return nil, errP
+	}
 
-    return payment, nil
+	return payment, nil
 }

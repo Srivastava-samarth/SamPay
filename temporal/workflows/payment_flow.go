@@ -18,7 +18,7 @@ func PaymentFlow(
 	ctx workflow.Context,
 	request *dto.CreatePaymentRequest,
 	merchantID uuid.UUID,
-) (*models.Payment ,error) {
+) (*models.Payment, error) {
 	activityOptions := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Minute,
 		RetryPolicy: &temporal.RetryPolicy{
@@ -69,9 +69,9 @@ func PaymentFlow(
 
 	executePaymentPayload := &activities.PaymentWorkflowRequest{
 		PaymentReference: *payment.PaymentReference,
-		MerchantID: merchantID,
-		Fee: fees,
-		Request: *request,
+		MerchantID:       merchantID,
+		Fee:              fees,
+		Request:          *request,
 	}
 	var updatedPayment *models.Payment
 	errEP := workflow.ExecuteActivity(
@@ -80,7 +80,7 @@ func PaymentFlow(
 		executePaymentPayload,
 	).Get(ctx, &updatedPayment)
 
-	if errEP == nil{
+	if errEP == nil {
 		return updatedPayment, nil
 	}
 

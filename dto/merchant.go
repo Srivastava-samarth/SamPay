@@ -84,7 +84,7 @@ type UpdateKYCRequest struct {
 	Company    *CompanyMerchantOnboardingRequest    `json:"company,omitempty"`
 }
 
-type UpdateMerchantRequest struct{
+type UpdateMerchantRequest struct {
 	MerchantName string `json:"merchant_name" binding:"required"`
 	PhoneNumber  string `json:"phone_number" binding:"required"`
 }

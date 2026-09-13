@@ -59,7 +59,7 @@ func (a *Registry) ExecutePayment(
 	request *PaymentWorkflowRequest,
 ) (*models.Payment, error) {
 
-	 var finalPaymentAfterUpdate *models.Payment
+	var finalPaymentAfterUpdate *models.Payment
 	err := a.DB.Transaction(
 		func(tx *gorm.DB) error {
 
@@ -154,7 +154,7 @@ func (a *Registry) ExecutePayment(
 			updatedSenderWallet, err := walletRepo.UpdateWalletBalance(
 				merchantID,
 				&dto.UpdateWallletBalanceRequest{
-					ReservedBalance: reservedWalletAmount,
+					ReservedBalance:  reservedWalletAmount,
 					AvailableBalance: availableWalletAmount,
 				},
 			)
@@ -229,14 +229,14 @@ func (a *Registry) ExecutePayment(
 						AccountID:   senderWallet.ID,
 						EntryType:   constants.LedgerEntryTypeDebit,
 						Amount:      totalAmount,
-						Currency:   "INR",
+						Currency:    "INR",
 					},
 					{
 						AccountType: constants.LedgerAccountTypeVault,
 						AccountID:   paymentVault.ID,
 						EntryType:   constants.LedgerEntryTypeCredit,
 						Amount:      totalAmount,
-						Currency:   "INR",
+						Currency:    "INR",
 					},
 				},
 			)
@@ -305,18 +305,18 @@ func (a *Registry) ExecutePayment(
 					{
 						LedgerTransactionID: ledgerTransaction.ID,
 						AccountType:         constants.LedgerAccountTypeVault,
-						AccountID:            paymentVault.ID,
-						EntryType:            constants.LedgerEntryTypeDebit,
-						Amount:               paymentRequest.Amount,
-						Currency:             "INR",
+						AccountID:           paymentVault.ID,
+						EntryType:           constants.LedgerEntryTypeDebit,
+						Amount:              paymentRequest.Amount,
+						Currency:            "INR",
 					},
 					{
 						LedgerTransactionID: ledgerTransaction.ID,
 						AccountType:         constants.LedgerAccountTypeWallet,
-						AccountID:            receiverWallet.ID,
-						EntryType:            constants.LedgerEntryTypeCredit,
-						Amount:               paymentRequest.Amount,
-						Currency:             "INR",
+						AccountID:           receiverWallet.ID,
+						EntryType:           constants.LedgerEntryTypeCredit,
+						Amount:              paymentRequest.Amount,
+						Currency:            "INR",
 					},
 				},
 			)
@@ -385,18 +385,18 @@ func (a *Registry) ExecutePayment(
 					{
 						LedgerTransactionID: ledgerTransaction.ID,
 						AccountType:         constants.LedgerAccountTypeVault,
-						AccountID:            paymentVault.ID,
-						EntryType:            constants.LedgerEntryTypeDebit,
-						Amount:               fees,
-						Currency:             "INR",
+						AccountID:           paymentVault.ID,
+						EntryType:           constants.LedgerEntryTypeDebit,
+						Amount:              fees,
+						Currency:            "INR",
 					},
 					{
 						LedgerTransactionID: ledgerTransaction.ID,
 						AccountType:         constants.LedgerAccountTypeVault,
-						AccountID:            updatedCompanyVault.ID,
-						EntryType:            constants.LedgerEntryTypeCredit,
-						Amount:               fees,
-						Currency:             "INR",
+						AccountID:           updatedCompanyVault.ID,
+						EntryType:           constants.LedgerEntryTypeCredit,
+						Amount:              fees,
+						Currency:            "INR",
 					},
 				},
 			)

@@ -79,16 +79,16 @@ func (wr *WalletRepository) UpdateWalletStatus(merchantId uuid.UUID, status stri
 	return wallet, nil
 }
 
-func (wr *WalletRepository) UpdateWalletBalance(merchantID uuid.UUID, walletRequest *dto.UpdateWallletBalanceRequest ) (*models.Wallets, error){
+func (wr *WalletRepository) UpdateWalletBalance(merchantID uuid.UUID, walletRequest *dto.UpdateWallletBalanceRequest) (*models.Wallets, error) {
 	updates := map[string]interface{}{
 		"updated_at": time.Now(),
 	}
 
-	if walletRequest.AvailableBalance.GreaterThan(decimal.Zero){
+	if walletRequest.AvailableBalance.GreaterThan(decimal.Zero) {
 		updates["available_balance"] = walletRequest.AvailableBalance
 	}
 
-	if walletRequest.ReservedBalance.GreaterThan(decimal.Zero){
+	if walletRequest.ReservedBalance.GreaterThan(decimal.Zero) {
 		updates["reserved_balance"] = walletRequest.ReservedBalance
 	}
 
@@ -102,7 +102,7 @@ func (wr *WalletRepository) UpdateWalletBalance(merchantID uuid.UUID, walletRequ
 	}
 
 	var updatedWallet *models.Wallets
-	if err := wr.db.Where("merchant_id = ? AND status = ?", merchantID, "active").First(&updatedWallet).Error; err!= nil{
+	if err := wr.db.Where("merchant_id = ? AND status = ?", merchantID, "active").First(&updatedWallet).Error; err != nil {
 		return nil, err
 	}
 

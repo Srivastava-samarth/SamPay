@@ -15,13 +15,13 @@ type VaultController struct {
 
 func NewVaultController(
 	vaultSrvc *services.VaultService,
-) *VaultController{
+) *VaultController {
 	return &VaultController{
 		vaultSrvc: vaultSrvc,
 	}
 }
 
-func (vc *VaultController) CreateVault() gin.HandlerFunc{
+func (vc *VaultController) CreateVault() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var vaultRequest *dto.CreateVaultRequest
 		if err := c.ShouldBindJSON(&vaultRequest); err != nil {
@@ -35,7 +35,7 @@ func (vc *VaultController) CreateVault() gin.HandlerFunc{
 		}
 
 		vault, errV := vc.vaultSrvc.CreateVault(vaultRequest)
-		if errV != nil{
+		if errV != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
@@ -53,22 +53,22 @@ func (vc *VaultController) CreateVault() gin.HandlerFunc{
 	}
 }
 
-func (vc *VaultController) GetVault() gin.HandlerFunc{
+func (vc *VaultController) GetVault() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		vaultId := c.Param("vault_id")
 		parsedVaultId, errP := uuid.Parse(vaultId)
-		if errP != nil{
+		if errP != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
 				"PARSING_ERROR",
 				errP.Error(),
 			)
-			return 
+			return
 		}
 
 		vault, errV := vc.vaultSrvc.GetVaultByID(parsedVaultId)
-		if errV != nil{
+		if errV != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
@@ -86,10 +86,10 @@ func (vc *VaultController) GetVault() gin.HandlerFunc{
 	}
 }
 
-func (vc *VaultController) GetVaults() gin.HandlerFunc{
+func (vc *VaultController) GetVaults() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		vaults, errV := vc.vaultSrvc.GetVaults();
-		if errV != nil{
+		vaults, errV := vc.vaultSrvc.GetVaults()
+		if errV != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
@@ -107,11 +107,11 @@ func (vc *VaultController) GetVaults() gin.HandlerFunc{
 	}
 }
 
-func (vc *VaultController) UpdateVaultBalance() gin.HandlerFunc{
+func (vc *VaultController) UpdateVaultBalance() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.UpdateVaultBalance
 		err := c.ShouldBindJSON(&request)
-		if err != nil{
+		if err != nil {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
@@ -122,7 +122,7 @@ func (vc *VaultController) UpdateVaultBalance() gin.HandlerFunc{
 		}
 
 		vault, errV := vc.vaultSrvc.UpdateVaultBalance(request.Balance, request.Type)
-		if errV != nil{
+		if errV != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
@@ -140,11 +140,11 @@ func (vc *VaultController) UpdateVaultBalance() gin.HandlerFunc{
 	}
 }
 
-func (vc *VaultController) UpdateVaultStatus() gin.HandlerFunc{
+func (vc *VaultController) UpdateVaultStatus() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.UpdateVaultStatus
 		err := c.ShouldBindJSON(&request)
-		if err != nil{
+		if err != nil {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
@@ -156,20 +156,20 @@ func (vc *VaultController) UpdateVaultStatus() gin.HandlerFunc{
 
 		vaultId := c.Param("vault_id")
 		parsedVaultID, errP := uuid.Parse(vaultId)
-		if errP != nil{
-		dto.Fail(
-			c,
-			http.StatusBadRequest,
-			"PARSING_ERROR",
-			errP.Error(),
-		)
+		if errP != nil {
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"PARSING_ERROR",
+				errP.Error(),
+			)
 			return
 		}
 
 		updatedVault, errUV := vc.vaultSrvc.UpdateVaultStatus(request.Status, parsedVaultID)
-		if errUV != nil{
+		if errUV != nil {
 			dto.Fail(
-				c, 
+				c,
 				http.StatusInternalServerError,
 				"ERROR_UPDATING_VAULT",
 				errUV.Error(),

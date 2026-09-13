@@ -26,78 +26,78 @@ func NewRefundService(
 }
 
 func (rs *RefundService) ValidateCreateRefundRequest(
-    request *dto.CreateRefundRequest,
+	request *dto.CreateRefundRequest,
 ) error {
-    if request.PaymentID == uuid.Nil {
-        return errors.New("payment id not provided")
-    }
+	if request.PaymentID == uuid.Nil {
+		return errors.New("payment id not provided")
+	}
 
-    if request.MerchantID == uuid.Nil {
-        return errors.New("merchant id not provided")
-    }
+	if request.MerchantID == uuid.Nil {
+		return errors.New("merchant id not provided")
+	}
 
-    if request.Amount.LessThanOrEqual(decimal.Zero) {
-        return errors.New("amount must be greater than 0")
-    }
+	if request.Amount.LessThanOrEqual(decimal.Zero) {
+		return errors.New("amount must be greater than 0")
+	}
 
-    if request.Reason == nil || strings.TrimSpace(*request.Reason) == "" {
-        return errors.New("reason is necessary")
-    }
+	if request.Reason == nil || strings.TrimSpace(*request.Reason) == "" {
+		return errors.New("reason is necessary")
+	}
 
-    payment, err := rs.PaymentRepo.GetPaymentByID(request.PaymentID)
-    if err != nil {
-        return err
-    }
+	payment, err := rs.PaymentRepo.GetPaymentByID(request.PaymentID)
+	if err != nil {
+		return err
+	}
 
-    if payment == nil {
-        return errors.New("payment not found")
-    }
-    if payment.SenderMerchantID != request.MerchantID {
-        return errors.New("payment doesn't belong to the merchant")
-    }
+	if payment == nil {
+		return errors.New("payment not found")
+	}
+	if payment.SenderMerchantID != request.MerchantID {
+		return errors.New("payment doesn't belong to the merchant")
+	}
 
-    if request.Currency == "" {
-        return errors.New("currency is required")
-    }
+	if request.Currency == "" {
+		return errors.New("currency is required")
+	}
 
-    if request.Currency != *payment.Currency {
-        return errors.New("refund currency must match payment currency")
-    }
+	if request.Currency != *payment.Currency {
+		return errors.New("refund currency must match payment currency")
+	}
 
-    refunds, err := rs.RefundRepo.GetRefundsByPaymentID(request.PaymentID)
-    if err != nil {
-        return err
-    }
-	
-    refundedAmount := decimal.Zero
+	refunds, err := rs.RefundRepo.GetRefundsByPaymentID(request.PaymentID)
+	if err != nil {
+		return err
+	}
 
-    for _, refund := range refunds {
-        if refund == nil {
-            continue
-        }
+	refundedAmount := decimal.Zero
 
-        if refund.Status != "" &&
-            refund.Status == constants.TransactionStatusRefunded {
-            refundedAmount = refundedAmount.Add(refund.Amount)
-        }
-    }
+	for _, refund := range refunds {
+		if refund == nil {
+			continue
+		}
 
-    refundableAmount := payment.Amount.Sub(refundedAmount)
+		if refund.Status != "" &&
+			refund.Status == constants.TransactionStatusRefunded {
+			refundedAmount = refundedAmount.Add(refund.Amount)
+		}
+	}
 
-    if request.Amount.GreaterThan(refundableAmount) {
-        return errors.New("refund amount exceeds refundable amount")
-    }
+	refundableAmount := payment.Amount.Sub(refundedAmount)
 
-    return nil
+	if request.Amount.GreaterThan(refundableAmount) {
+		return errors.New("refund amount exceeds refundable amount")
+	}
+
+	return nil
 }
 
 func (rs *RefundService) GetRefundByReference(
-    refundRef string,
-    )(*models.Refund, error){
-    refund, errR := rs.RefundRepo.GetRefundByReference(refundRef)
-    if errR != nil{
-        return nil, errR
-    }
+	refundRef string,
+) (*models.Refund, error) {
+	refund, errR := rs.RefundRepo.GetRefundByReference(refundRef)
+	if errR != nil {
+		return nil, errR
+	}
 
-    return refund, nil
+	return refund, nil
 }

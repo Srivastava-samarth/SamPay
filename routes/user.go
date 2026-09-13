@@ -26,19 +26,19 @@ func (ur *UserRouter) UserRoutes(
 	user.Use(authMiddleware)
 	user.POST(
 		"",
-		middlewares.RequireRole("super_admin","owner"),
+		middlewares.RequireRole("super_admin", "owner"),
 		middlewares.RequireMerchantAccess("super_admin"),
 		ur.UserController.UserOnboarding(),
 	)
 	user.GET(
 		"/:user_id",
-		middlewares.RequireRole("super_admin","owner"),
+		middlewares.RequireRole("super_admin", "owner"),
 		middlewares.RequireMerchantAccess("super_admin"),
 		ur.UserController.GetUserByID(),
 	)
 	user.GET(
 		"/merchant",
-		middlewares.RequireRole("super_admin","owner"),
+		middlewares.RequireRole("super_admin", "owner"),
 		middlewares.RequireMerchantAccess("super_admin"),
 		ur.UserController.GetUsersByMerchant(),
 	)
@@ -49,7 +49,7 @@ func (ur *UserRouter) UserRoutes(
 	)
 	user.PATCH(
 		"/:user_id/status",
-		middlewares.RequireRole("super_admin","owner"),
+		middlewares.RequireRole("super_admin", "owner"),
 		middlewares.RequireMerchantAccess("super_admin"),
 		ur.UserController.UpdateUserStatus(),
 	)

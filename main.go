@@ -287,7 +287,7 @@ func main() {
 	authRouter.AuthRoutes(api)
 	userRouter.UserRoutes(api, jwtService.Authenticate())
 	bankRouter.BankAccountRoutes(api, jwtService.Authenticate())
-	walletRouter.WalletRoutes(api,jwtService.Authenticate())
+	walletRouter.WalletRoutes(api, jwtService.Authenticate())
 	vaultRouter.VaultRoutes(api, jwtService.Authenticate())
 	paymentRouter.PaymentRoutes(api, jwtService.Authenticate())
 	payoutRouter.PayoutRoutes(api, jwtService.Authenticate())

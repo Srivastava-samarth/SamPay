@@ -28,14 +28,14 @@ func NewPayoutController(
 	idempotencySrvc *services.IdempotencyService,
 	paymentCtrl *PaymentController,
 	paymentSrvc *services.PaymentService,
-	temporalClient  client.Client,
+	temporalClient client.Client,
 ) *PayoutController {
 	return &PayoutController{
 		payoutSrvc:      payoutSrvc,
 		idempotencySrvc: idempotencySrvc,
 		paymentCtrl:     paymentCtrl,
 		paymentSrvc:     paymentSrvc,
-		TemporalClient: temporalClient,
+		TemporalClient:  temporalClient,
 	}
 }
 

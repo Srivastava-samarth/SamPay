@@ -16,9 +16,9 @@ type PayoutRepository struct {
 
 func NewPayoutRepository(
 	db *gorm.DB,
-) *PayoutRepository{
+) *PayoutRepository {
 	return &PayoutRepository{
-		DB:db,
+		DB: db,
 	}
 }
 
@@ -28,60 +28,60 @@ func (pr *PayoutRepository) WithTx(tx *gorm.DB) *PayoutRepository {
 	}
 }
 
-func (pr *PayoutRepository) CreatePayoutWalletToBank(merchantID uuid.UUID, request *dto.CreateWalletToBankRequest, status string) (*models.Payout, error){
+func (pr *PayoutRepository) CreatePayoutWalletToBank(merchantID uuid.UUID, request *dto.CreateWalletToBankRequest, status string) (*models.Payout, error) {
 	createPayoutPayload := &models.Payout{
-		ID: utils.GenerateUUID(),
-		MerchantID: merchantID,
-		SourceWalletID: &request.SenderWalletID,
-		SourceBankAccountID: nil,
+		ID:                       utils.GenerateUUID(),
+		MerchantID:               merchantID,
+		SourceWalletID:           &request.SenderWalletID,
+		SourceBankAccountID:      nil,
 		DestinationBankAccountID: request.DestinationBankAccountID,
-		PayoutReference: *utils.GeneratePayoutReference(),
-		Amount: request.Amount,
-		Currency: request.Currency,
-		Description: request.Description,
-		ExternalReference: utils.GenerateCustomerReference(),
-		Status: status,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		PayoutReference:          *utils.GeneratePayoutReference(),
+		Amount:                   request.Amount,
+		Currency:                 request.Currency,
+		Description:              request.Description,
+		ExternalReference:        utils.GenerateCustomerReference(),
+		Status:                   status,
+		CreatedAt:                time.Now(),
+		UpdatedAt:                time.Now(),
 	}
 
 	err := pr.DB.Create(&createPayoutPayload).Error
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
 	return createPayoutPayload, nil
 }
 
-func (pr *PayoutRepository) CreatePayoutBankToBank(merchantID uuid.UUID, request *dto.CreateBankToBankRequest, status string) (*models.Payout, error){
+func (pr *PayoutRepository) CreatePayoutBankToBank(merchantID uuid.UUID, request *dto.CreateBankToBankRequest, status string) (*models.Payout, error) {
 	createPayoutPayload := &models.Payout{
-		ID: utils.GenerateUUID(),
-		MerchantID: merchantID,
-		SourceWalletID: nil,
-		SourceBankAccountID: &request.SourceBankAccountID,
+		ID:                       utils.GenerateUUID(),
+		MerchantID:               merchantID,
+		SourceWalletID:           nil,
+		SourceBankAccountID:      &request.SourceBankAccountID,
 		DestinationBankAccountID: request.DestinationBankAccountID,
-		PayoutReference: *utils.GeneratePayoutReference(),
-		Amount: request.Amount,
-		Currency: request.Currency,
-		Description: request.Description,
-		ExternalReference: utils.GenerateCustomerReference(),
-		Status: status,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		PayoutReference:          *utils.GeneratePayoutReference(),
+		Amount:                   request.Amount,
+		Currency:                 request.Currency,
+		Description:              request.Description,
+		ExternalReference:        utils.GenerateCustomerReference(),
+		Status:                   status,
+		CreatedAt:                time.Now(),
+		UpdatedAt:                time.Now(),
 	}
 
 	err := pr.DB.Create(&createPayoutPayload).Error
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
 	return createPayoutPayload, nil
 }
 
-func (pr *PayoutRepository) UpdatePayoutStatus(PayoutReference string, status string) (*models.Payout, error){
+func (pr *PayoutRepository) UpdatePayoutStatus(PayoutReference string, status string) (*models.Payout, error) {
 	var payout *models.Payout
 	err := pr.DB.Where("payout_reference = ?", PayoutReference).First(&payout).Error
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -89,24 +89,24 @@ func (pr *PayoutRepository) UpdatePayoutStatus(PayoutReference string, status st
 		"updated_at": time.Now(),
 	}
 
-	if status == payout.Status{
+	if status == payout.Status {
 		return payout, nil
 	}
 
 	updates["status"] = status
- 
+
 	errU := pr.DB.
 		Model(&models.Payout{}).
 		Where("id = ?", payout.ID).
 		Updates(updates).Error
 
-	if errU != nil{
+	if errU != nil {
 		return nil, errU
 	}
 
 	var updatedPayout *models.Payout
 	errF := pr.DB.Where("id = ?", payout.ID).First(&updatedPayout).Error
-	if errF != nil{
+	if errF != nil {
 		return nil, errF
 	}
 	return updatedPayout, nil

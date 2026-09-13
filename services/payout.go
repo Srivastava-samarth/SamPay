@@ -21,13 +21,13 @@ type PayoutService struct {
 func NewPayoutService(
 	payoutRepo *repositories.PayoutRepository,
 	walletRepo *repositories.WalletRepository,
-	bankAccountRepo       *repositories.BankRepository,
+	bankAccountRepo *repositories.BankRepository,
 	linkedBankAccountRepo *repositories.LinkedBankAccountRepository,
 ) *PayoutService {
 	return &PayoutService{
-		PayoutRepo: payoutRepo,
-		WalletRepo: walletRepo,
-		BankAccountRepo: bankAccountRepo,
+		PayoutRepo:            payoutRepo,
+		WalletRepo:            walletRepo,
+		BankAccountRepo:       bankAccountRepo,
 		LinkedBankAccountRepo: linkedBankAccountRepo,
 	}
 }
@@ -50,25 +50,24 @@ func (ps *PayoutService) ValidatePayoutRequestWalletToBank(request *dto.CreateWa
 	}
 
 	senderWallet, errSW := ps.WalletRepo.GetWalletByMerchantId(senderMerchantID)
-	if errSW != nil{
+	if errSW != nil {
 		return errSW
 	}
 
-	if(request.SenderWalletID == uuid.Nil || senderWallet.ID != request.SenderWalletID){
+	if request.SenderWalletID == uuid.Nil || senderWallet.ID != request.SenderWalletID {
 		return errors.New("sender_wallet_id issue")
 	}
 
 	destinationBankAccount, errDBA := ps.BankAccountRepo.GetBankAccountByID(request.DestinationBankAccountID)
-	if errDBA != nil{
+	if errDBA != nil {
 		return errDBA
 	}
 
-	if destinationBankAccount == nil{
+	if destinationBankAccount == nil {
 		return errors.New("destination bank account not found")
 	}
 	return nil
 }
-
 
 func (ps *PayoutService) ValidatePayoutRequestBankToBank(request *dto.CreateBankToBankRequest, senderMerchantID uuid.UUID) error {
 	if request == nil {
@@ -88,52 +87,52 @@ func (ps *PayoutService) ValidatePayoutRequestBankToBank(request *dto.CreateBank
 	}
 
 	senderBankAccount, errSBA := ps.BankAccountRepo.GetBankAccountByID(request.SourceBankAccountID)
-	if errSBA != nil{
+	if errSBA != nil {
 		return errSBA
 	}
 
 	linkedSenderBankAccount, errLSBA := ps.LinkedBankAccountRepo.GetBankAccountLinkedByID(senderBankAccount.ID)
-	if errLSBA != nil{
+	if errLSBA != nil {
 		return errLSBA
 	}
 
-	if(senderMerchantID != linkedSenderBankAccount.MerchantID) {
+	if senderMerchantID != linkedSenderBankAccount.MerchantID {
 		return errors.New("merchant id doesn't match")
 	}
 
 	destinationBankAccount, errDBA := ps.BankAccountRepo.GetBankAccountByID(request.DestinationBankAccountID)
-	if errDBA != nil{
+	if errDBA != nil {
 		return errDBA
 	}
 
-	if destinationBankAccount == nil{
+	if destinationBankAccount == nil {
 		return errors.New("destination bank account not found")
 	}
 
-	if senderBankAccount.ID == destinationBankAccount.ID{
+	if senderBankAccount.ID == destinationBankAccount.ID {
 		return errors.New("accounts must be differnt")
 	}
 	return nil
 }
 
 func (ps *PayoutService) CheckBankBalance(
-    ID uuid.UUID,
-    amount decimal.Decimal,
+	ID uuid.UUID,
+	amount decimal.Decimal,
 ) (bool, error) {
 
-    bankAccount, errBA := ps.BankAccountRepo.GetBankAccountByID(ID)
+	bankAccount, errBA := ps.BankAccountRepo.GetBankAccountByID(ID)
 
-    if errBA != nil {
-        return false, errBA
-    }
+	if errBA != nil {
+		return false, errBA
+	}
 
-    if bankAccount == nil {
-        return false, errors.New("bank account does not exist")
-    }
+	if bankAccount == nil {
+		return false, errors.New("bank account does not exist")
+	}
 
-    minimumBalance := decimal.NewFromInt(MinimumBankBalance)
+	minimumBalance := decimal.NewFromInt(MinimumBankBalance)
 
-    return bankAccount.Balance.GreaterThanOrEqual(
-        amount.Add(minimumBalance),
-    ), nil
+	return bankAccount.Balance.GreaterThanOrEqual(
+		amount.Add(minimumBalance),
+	), nil
 }

@@ -14,28 +14,28 @@ type IdempotencyRepository struct {
 
 func NewIdempotencyRepository(
 	db *gorm.DB,
-) *IdempotencyRepository{
+) *IdempotencyRepository {
 	return &IdempotencyRepository{
-		db:db,
+		db: db,
 	}
 }
 
-func (ir *IdempotencyRepository) GetIdempotencyByKey(merchantID uuid.UUID, key string) (*models.IdempotencyKey, error){
+func (ir *IdempotencyRepository) GetIdempotencyByKey(merchantID uuid.UUID, key string) (*models.IdempotencyKey, error) {
 	var idempotency *models.IdempotencyKey
 	err := ir.db.Where("merchant_id = ? AND idempotency_key = ?", merchantID, key).First(&idempotency).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
 	return idempotency, nil
 }
 
-func (ir *IdempotencyRepository) CreateIdempotencyKey(idempotencyKey *models.IdempotencyKey) (*models.IdempotencyKey, error){
+func (ir *IdempotencyRepository) CreateIdempotencyKey(idempotencyKey *models.IdempotencyKey) (*models.IdempotencyKey, error) {
 	err := ir.db.Create(idempotencyKey).Error
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 

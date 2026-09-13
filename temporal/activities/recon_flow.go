@@ -174,14 +174,14 @@ func (a *Registry) ReconcileLedgerTransactions(
 func (a *Registry) GenerateReconReport(
 	ctx context.Context,
 	result *dto.ReconResult,
-) (*dto.ReconReport, error){
+) (*dto.ReconReport, error) {
 	return a.ReportService.GenerateReconReport(result)
 }
 
 func (a *Registry) GenerateReportEmail(
 	ctx context.Context,
 	report *dto.ReconReport,
-) (string, error){
+) (string, error) {
 	return a.ReportService.GenerateReconEmailBody(report)
 }
 

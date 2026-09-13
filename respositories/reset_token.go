@@ -14,7 +14,7 @@ func NewPasswordResetTokenRepository(
 	db *gorm.DB,
 ) *PasswordResetTokenRepository {
 	return &PasswordResetTokenRepository{
-		db:db,
+		db: db,
 	}
 }
 
@@ -24,16 +24,16 @@ func (wr *PasswordResetTokenRepository) WithTx(tx *gorm.DB) *PasswordResetTokenR
 	}
 }
 
-func (pr *PasswordResetTokenRepository) CreatePasswordReset(resetRequest *models.PasswordResetToken) (*models.PasswordResetToken, error){
+func (pr *PasswordResetTokenRepository) CreatePasswordReset(resetRequest *models.PasswordResetToken) (*models.PasswordResetToken, error) {
 	resetRequestPayload := &models.PasswordResetToken{
-		ID: utils.GenerateUUID(),
-		UserID: resetRequest.UserID,
+		ID:        utils.GenerateUUID(),
+		UserID:    resetRequest.UserID,
 		TokenHash: resetRequest.TokenHash,
 		ExpiresAt: resetRequest.ExpiresAt,
 		CreatedAt: resetRequest.CreatedAt,
 	}
 
-	if err := pr.db.Create(resetRequestPayload).Error; err!=nil{
+	if err := pr.db.Create(resetRequestPayload).Error; err != nil {
 		return nil, err
 	}
 	return resetRequestPayload, nil

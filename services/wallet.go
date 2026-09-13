@@ -14,15 +14,15 @@ import (
 )
 
 type WalletService struct {
-	db *gorm.DB
+	db             *gorm.DB
 	WalletRepo     *repositories.WalletRepository
 	BankRepo       *repositories.BankRepository
 	LinkedBankRepo *repositories.LinkedBankAccountRepository
-	LedgerService *LedgerService
+	LedgerService  *LedgerService
 }
 
 func NewWalletService(
-		db *gorm.DB,
+	db *gorm.DB,
 	WalletRepo *repositories.WalletRepository,
 	BankRepo *repositories.BankRepository,
 	LinkedBankRepo *repositories.LinkedBankAccountRepository,
@@ -30,11 +30,11 @@ func NewWalletService(
 
 ) *WalletService {
 	return &WalletService{
-		db: db,
+		db:             db,
 		WalletRepo:     WalletRepo,
 		BankRepo:       BankRepo,
 		LinkedBankRepo: LinkedBankRepo,
-		LedgerService: LedgerService,
+		LedgerService:  LedgerService,
 	}
 }
 

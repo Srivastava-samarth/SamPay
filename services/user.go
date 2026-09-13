@@ -11,7 +11,7 @@ import (
 )
 
 type UserService struct {
-	UserRepo *repositories.UserRepository
+	UserRepo         *repositories.UserRepository
 	MerchantUserRepo *repositories.MerchantUserRepository
 }
 
@@ -20,7 +20,7 @@ func NewUserService(
 	merchantUserRepo *repositories.MerchantUserRepository,
 ) *UserService {
 	return &UserService{
-		UserRepo: userRepo,
+		UserRepo:         userRepo,
 		MerchantUserRepo: merchantUserRepo,
 	}
 }
@@ -112,46 +112,46 @@ func (us *UserService) UpdateUser(
 	return us.UserRepo.UpdateUser(updatedUserPayload)
 }
 
-func (us *UserService) UpdateUserStatus(status string, userID uuid.UUID) (*models.User, error){
-	if userID == uuid.Nil{
+func (us *UserService) UpdateUserStatus(status string, userID uuid.UUID) (*models.User, error) {
+	if userID == uuid.Nil {
 		return nil, errors.New("user_id is required")
 	}
 
-	if status == ""{
+	if status == "" {
 		return nil, errors.New("status is required")
 	}
 
 	if !utils.IsValidMerchantStatus(status) {
-        return nil, errors.New("invalid user status")
-    }
+		return nil, errors.New("invalid user status")
+	}
 
 	user, errU := us.UserRepo.GetUserByID(userID)
-	if errU != nil{
+	if errU != nil {
 		return nil, errU
 	}
 
-	if user.Status == status{
+	if user.Status == status {
 		return user, nil
 	}
 
 	updatedUser, errUU := us.UserRepo.UpdateUserStatus(status, userID)
-	if errUU != nil{
+	if errUU != nil {
 		return nil, errUU
 	}
 
 	return updatedUser, nil
 }
 
-func (us *UserService) GetUsersByMerchant(merchantID uuid.UUID) ([]*models.User, error){
+func (us *UserService) GetUsersByMerchant(merchantID uuid.UUID) ([]*models.User, error) {
 	merchantUsers, errMU := us.MerchantUserRepo.GetMerchantUsersByMerchantID(merchantID)
-	if errMU != nil{
+	if errMU != nil {
 		return nil, errMU
 	}
 
 	var users []*models.User
-	for _, merchantUser := range merchantUsers{
+	for _, merchantUser := range merchantUsers {
 		user, errU := us.UserRepo.GetUserByID(merchantUser.UserID)
-		if errU != nil{
+		if errU != nil {
 			return nil, errU
 		}
 

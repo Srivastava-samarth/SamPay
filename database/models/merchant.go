@@ -1,9 +1,10 @@
 package database
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
-	"time"
 )
 
 type Merchant struct {

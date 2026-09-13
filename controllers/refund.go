@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	models"github.com/Srivastava-samarth/sampay/database/models"
+	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/Srivastava-samarth/sampay/services"
 	"github.com/Srivastava-samarth/sampay/temporal"
@@ -19,21 +19,21 @@ type RefundController struct {
 	RefundSrvc      *services.RefundService
 	IdempotencySrvc *services.IdempotencyService
 	PaymentCtrl     *PaymentController
-		TemporalClient  client.Client
+	TemporalClient  client.Client
 }
 
 func NewRefundController(
 	refundSrvc *services.RefundService,
 	idempotencySrvc *services.IdempotencyService,
 	paymentCtrl *PaymentController,
-		temporalClient  client.Client,
+	temporalClient client.Client,
 
 ) *RefundController {
 	return &RefundController{
 		RefundSrvc:      refundSrvc,
 		IdempotencySrvc: idempotencySrvc,
 		PaymentCtrl:     paymentCtrl,
-		TemporalClient: temporalClient,
+		TemporalClient:  temporalClient,
 	}
 }
 
@@ -209,10 +209,10 @@ func (rc *RefundController) CreateRefund() gin.HandlerFunc {
 	}
 }
 
-func (rc *RefundController) GetRefundByReference() gin.HandlerFunc{
+func (rc *RefundController) GetRefundByReference() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		refundRef := c.Param("refund_reference")
-		if refundRef == ""{
+		if refundRef == "" {
 			dto.Fail(
 				c,
 				http.StatusNotFound,
@@ -222,6 +222,5 @@ func (rc *RefundController) GetRefundByReference() gin.HandlerFunc{
 			return
 		}
 
-		
 	}
 }

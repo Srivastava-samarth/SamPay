@@ -14,7 +14,7 @@ import (
 
 type UserController struct {
 	TemporalClient client.Client
-	UserService *services.UserService
+	UserService    *services.UserService
 }
 
 func NewUserController(
@@ -23,7 +23,7 @@ func NewUserController(
 ) *UserController {
 	return &UserController{
 		TemporalClient: temporalClient,
-		UserService: userSrvc,
+		UserService:    userSrvc,
 	}
 }
 
@@ -41,7 +41,7 @@ func (uc *UserController) UserOnboarding() gin.HandlerFunc {
 		}
 
 		workflowOptions := client.StartWorkflowOptions{
-			ID: "user-onboarding-" + request.MerchantID.String(),
+			ID:        "user-onboarding-" + request.MerchantID.String(),
 			TaskQueue: temporal.UserOnboardingTaskQueue,
 		}
 
@@ -68,7 +68,7 @@ func (uc *UserController) UserOnboarding() gin.HandlerFunc {
 
 func (uc *UserController) GetUserByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID:= c.Param("user_id")
+		userID := c.Param("user_id")
 
 		parsedUserId, errPM := uuid.Parse(userID)
 		if errPM != nil {
@@ -120,10 +120,10 @@ func (uc *UserController) GetUsers() gin.HandlerFunc {
 	}
 }
 
-func (uc *UserController) UpdateUserStatus() gin.HandlerFunc{
+func (uc *UserController) UpdateUserStatus() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.UpdateMerchantStatusRequest
-		if err := c.ShouldBindJSON(&request);err != nil {
+		if err := c.ShouldBindJSON(&request); err != nil {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
@@ -135,7 +135,7 @@ func (uc *UserController) UpdateUserStatus() gin.HandlerFunc{
 
 		userID := c.Param("user_id")
 		parsedUserID, errP := uuid.Parse(userID)
-		if errP != nil{
+		if errP != nil {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
@@ -144,10 +144,8 @@ func (uc *UserController) UpdateUserStatus() gin.HandlerFunc{
 			)
 		}
 
-
-
 		updatedUser, errUU := uc.UserService.UpdateUserStatus(request.Status, parsedUserID)
-		if errUU != nil{
+		if errUU != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
@@ -165,10 +163,10 @@ func (uc *UserController) UpdateUserStatus() gin.HandlerFunc{
 	}
 }
 
-func (uc *UserController) GetUsersByMerchant() gin.HandlerFunc{
+func (uc *UserController) GetUsersByMerchant() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		merchantID := c.Param("merchant_id")
-		if merchantID == ""{
+		if merchantID == "" {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
@@ -176,20 +174,20 @@ func (uc *UserController) GetUsersByMerchant() gin.HandlerFunc{
 				"Merchant ID not passed in params",
 			)
 		}
-		
+
 		parsedMerchantID, errP := uuid.Parse(merchantID)
-		if errP != nil{
+		if errP != nil {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
 				"PARSING_ERROR",
 				errP.Error(),
 			)
-			return 
+			return
 		}
 
 		users, errU := uc.UserService.GetUsersByMerchant(parsedMerchantID)
-		if errU != nil{
+		if errU != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,

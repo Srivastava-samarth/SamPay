@@ -278,10 +278,10 @@ func (pc *PaymentController) TriggerSettlement() gin.HandlerFunc {
 	}
 }
 
-func (pc *PaymentController) GetPaymentsByMerchantID() gin.HandlerFunc{
+func (pc *PaymentController) GetPaymentsByMerchantID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		merchantID := c.Param("merchant_id")
-		if merchantID == ""{
+		if merchantID == "" {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
@@ -291,7 +291,7 @@ func (pc *PaymentController) GetPaymentsByMerchantID() gin.HandlerFunc{
 		}
 
 		parsedMerchantID, errP := uuid.Parse(merchantID)
-		if errP != nil{
+		if errP != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
@@ -302,7 +302,7 @@ func (pc *PaymentController) GetPaymentsByMerchantID() gin.HandlerFunc{
 		}
 
 		payments, errGP := pc.paymentSrvc.GetPaymentsByMerchantID(parsedMerchantID)
-		if errGP != nil{
+		if errGP != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
@@ -319,10 +319,10 @@ func (pc *PaymentController) GetPaymentsByMerchantID() gin.HandlerFunc{
 	}
 }
 
-func (pc *PaymentController) GetPaymentByID() gin.HandlerFunc{
+func (pc *PaymentController) GetPaymentByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		paymentID := c.Param("payment_id")
-		if paymentID == ""{
+		if paymentID == "" {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
@@ -332,7 +332,7 @@ func (pc *PaymentController) GetPaymentByID() gin.HandlerFunc{
 		}
 
 		parsedPaymentID, errP := uuid.Parse(paymentID)
-		if errP != nil{
+		if errP != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
@@ -343,7 +343,7 @@ func (pc *PaymentController) GetPaymentByID() gin.HandlerFunc{
 		}
 
 		payment, errGP := pc.paymentSrvc.GetPaymentByID(parsedPaymentID)
-		if errGP != nil{
+		if errGP != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,

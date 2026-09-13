@@ -43,7 +43,7 @@ func (bs *BankService) CreateBankAccount(bankAccountRequest *dto.CreateBankAccou
 	}
 
 	if len(linkedBankAccounts) == 2 {
-		return nil, errors.New("Already have 2 bank accounts with this merchnat id")
+		return nil, errors.New("already have 2 bank accounts with this merchnat id")
 	}
 	var accountType = constants.BankAccountTypePrimary
 	for _, linkedBankAccount := range linkedBankAccounts {
@@ -98,7 +98,7 @@ func (bs *BankService) CreateBankAccountAndLink(bankAccountRequest *dto.CreateBa
 	}
 
 	if len(linkedBankAccounts) == 2 {
-		return nil, nil, errors.New("Already have 2 bank accounts with this merchnat id")
+		return nil, nil, errors.New("already have 2 bank accounts with this merchnat id")
 	}
 
 	bankAccountRequestPayload := &models.BankAccount{
@@ -132,36 +132,36 @@ func (bs *BankService) CreateBankAccountAndLink(bankAccountRequest *dto.CreateBa
 
 }
 
-func (bs *BankService) UpdateBankAccountAndlink(updateBankAccountRequest *dto.UpdateBankAccountRequest) (*models.BankAccount, *models.LinkedBankAccount, error){
-	updatedBankAccount, errUBA := bs.BankRepo.UpdateBankAccount(updateBankAccountRequest.ID,updateBankAccountRequest)
-	if errUBA != nil{
+func (bs *BankService) UpdateBankAccountAndlink(updateBankAccountRequest *dto.UpdateBankAccountRequest) (*models.BankAccount, *models.LinkedBankAccount, error) {
+	updatedBankAccount, errUBA := bs.BankRepo.UpdateBankAccount(updateBankAccountRequest.ID, updateBankAccountRequest)
+	if errUBA != nil {
 		return nil, nil, errUBA
 	}
 
 	updatedLinkedBanAccount, errULBA := bs.LinkedBankAccountRepo.UpdateLinkedBankAccount(updatedBankAccount.ID, &dto.UpdateLinkedBankAccountRequest{
-		Type: updateBankAccountRequest.AccountType,
+		Type:   updateBankAccountRequest.AccountType,
 		Status: updateBankAccountRequest.Status,
 	})
-	if errULBA != nil{
+	if errULBA != nil {
 		return nil, nil, errULBA
 	}
 
 	return updatedBankAccount, updatedLinkedBanAccount, nil
 }
 
-func (bs *BankService) GetBankAccountsByMerchantID(merchantID uuid.UUID) ([]*models.BankAccount, error){
+func (bs *BankService) GetBankAccountsByMerchantID(merchantID uuid.UUID) ([]*models.BankAccount, error) {
 	linkedBankAccounts, errLBA := bs.LinkedBankAccountRepo.GetAllBankAccountLinkedByMerchantID(merchantID)
-	if errLBA != nil{
+	if errLBA != nil {
 		return nil, errLBA
 	}
-	if len(linkedBankAccounts) == 0{
-		return nil, errors.New("No bank account found")
+	if len(linkedBankAccounts) == 0 {
+		return nil, errors.New("no bank account found")
 	}
 
 	var bankAccounts []*models.BankAccount
-	for _, linkedBankAccount := range linkedBankAccounts{
+	for _, linkedBankAccount := range linkedBankAccounts {
 		bankAccount, errBA := bs.BankRepo.GetBankAccountByID(linkedBankAccount.BankAccountID)
-		if errBA != nil{
+		if errBA != nil {
 			return nil, errBA
 		}
 
@@ -171,13 +171,13 @@ func (bs *BankService) GetBankAccountsByMerchantID(merchantID uuid.UUID) ([]*mod
 	return bankAccounts, nil
 }
 
-func (bs *BankService) GetBankAccount(bankAccountID uuid.UUID) (*models.BankAccount, error){
-	if bankAccountID == uuid.Nil{
+func (bs *BankService) GetBankAccount(bankAccountID uuid.UUID) (*models.BankAccount, error) {
+	if bankAccountID == uuid.Nil {
 		return nil, errors.New("bank_account_id is empty")
 	}
 
 	bankAccount, errBA := bs.BankRepo.GetBankAccountByID(bankAccountID)
-	if errBA != nil{
+	if errBA != nil {
 		return nil, errBA
 	}
 

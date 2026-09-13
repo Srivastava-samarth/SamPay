@@ -25,8 +25,6 @@ func NewLedgerService(
 	}
 }
 
-const transactionPageSize = 10
-
 func (ls *LedgerService) GetTransactions(
 	accountType *string,
 	accountID uuid.UUID,
@@ -151,7 +149,7 @@ func (ls *LedgerService) CreateLedgerTransaction(
 	transaction *models.LedgerTransaction,
 ) (*models.LedgerTransaction, error) {
 	if transaction == nil {
-		return nil, errors.New("Transaction not found")
+		return nil, errors.New("transaction not found")
 	}
 
 	ledgerTransaction, errLT := ls.LedgerRepo.CreateLedgerTransaction(transaction)

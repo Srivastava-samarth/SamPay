@@ -8,13 +8,11 @@ import (
 	"github.com/Srivastava-samarth/sampay/dto"
 )
 
-type ReportService struct {}
+type ReportService struct{}
 
-func NewReportService () *ReportService{
+func NewReportService() *ReportService {
 	return &ReportService{}
 }
-
-
 
 func (rs *ReportService) GenerateReconReport(
 	result *dto.ReconResult,
@@ -47,89 +45,60 @@ func (rs *ReportService) GenerateReconReport(
 	}, nil
 }
 
-func (rs *ReportService) GenerateReconEmailBody(
-    report *dto.ReconReport,
+func (*ReportService) GenerateReconEmailBody(
+	report *dto.ReconReport,
 ) (string, error) {
-    if report == nil {
-        return "", errors.New("recon report cannot be nil")
-    }
+	if report == nil {
+		return "", errors.New("recon report cannot be nil")
+	}
 
-    var builder strings.Builder
+	var builder strings.Builder
 
-    builder.WriteString("SAMPay Reconciliation Report\n")
-    builder.WriteString("============================\n\n")
+	builder.WriteString("SAMPay Reconciliation Report\n")
+	builder.WriteString("============================\n\n")
 
-    builder.WriteString(fmt.Sprintf(
-        "Recon Date: %s\n",
-        report.ReconDate,
-    ))
+	fmt.Fprintf(&builder, "Recon Date: %s\n", report.ReconDate)
+	fmt.Fprintf(&builder, "Total Transactions: %d\n", report.TotalTransactions)
+	fmt.Fprintf(&builder, "Matched: %d\n", report.MatchedCount)
+	fmt.Fprintf(&builder, "Failed: %d\n", report.FailedCount)
+	fmt.Fprintf(&builder, "Total Debit: %s\n", report.TotalDebit)
+	fmt.Fprintf(&builder, "Total Credit: %s\n", report.TotalCredit)
+	fmt.Fprintf(&builder, "Difference: %s\n", report.Difference)
+	fmt.Fprintf(&builder, "Status: %s\n\n", report.Status)
 
-    builder.WriteString(fmt.Sprintf(
-        "Total Transactions: %d\n",
-        report.TotalTransactions,
-    ))
+	if report.FailedCount > 0 {
+		builder.WriteString("Failed Transactions\n")
+		builder.WriteString("-------------------\n")
 
-    builder.WriteString(fmt.Sprintf(
-        "Matched: %d\n",
-        report.MatchedCount,
-    ))
+		for _, failure := range report.FailedTransactions {
+			fmt.Fprintf(
+				&builder,
+				"Ledger Transaction ID: %s\n",
+				failure.LedgerTransactionID,
+			)
+			fmt.Fprintf(
+				&builder,
+				"Reference ID: %s\n",
+				failure.ReferenceID,
+			)
+			fmt.Fprintf(
+				&builder,
+				"Debit: %s\n",
+				failure.TotalDebit,
+			)
+			fmt.Fprintf(
+				&builder,
+				"Credit: %s\n",
+				failure.TotalCredit,
+			)
+			fmt.Fprintf(
+				&builder,
+				"Difference: %s\n\n",
+				failure.Difference,
+			)
+		}
+	}
 
-    builder.WriteString(fmt.Sprintf(
-        "Failed: %d\n",
-        report.FailedCount,
-    ))
-
-    builder.WriteString(fmt.Sprintf(
-        "Total Debit: %s\n",
-        report.TotalDebit,
-    ))
-
-    builder.WriteString(fmt.Sprintf(
-        "Total Credit: %s\n",
-        report.TotalCredit,
-    ))
-
-    builder.WriteString(fmt.Sprintf(
-        "Difference: %s\n",
-        report.Difference,
-    ))
-
-    builder.WriteString(fmt.Sprintf(
-        "Status: %s\n\n",
-        report.Status,
-    ))
-
-    if report.FailedCount > 0 {
-        builder.WriteString("Failed Transactions\n")
-        builder.WriteString("-------------------\n")
-
-        for _, failure := range report.FailedTransactions {
-            builder.WriteString(fmt.Sprintf(
-                "Ledger Transaction ID: %s\n",
-                failure.LedgerTransactionID,
-            ))
-
-            builder.WriteString(fmt.Sprintf(
-                "Reference ID: %s\n",
-                failure.ReferenceID,
-            ))
-
-            builder.WriteString(fmt.Sprintf(
-                "Debit: %s\n",
-                failure.TotalDebit,
-            ))
-
-            builder.WriteString(fmt.Sprintf(
-                "Credit: %s\n",
-                failure.TotalCredit,
-            ))
-
-            builder.WriteString(fmt.Sprintf(
-                "Difference: %s\n\n",
-                failure.Difference,
-            ))
-        }
-    }
-
-    return builder.String(), nil
+	result := builder.String()
+	return result, nil
 }

@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type AuthRouter struct{
+type AuthRouter struct {
 	AuthController *controllers.AuthController
 }
 
@@ -17,7 +17,7 @@ func NewAuthRouter(
 	}
 }
 
-func(ar *AuthRouter) AuthRoutes(
+func (ar *AuthRouter) AuthRoutes(
 	router *gin.RouterGroup,
 ) {
 	router.POST(

@@ -11,17 +11,17 @@ type AuthResponse struct {
 	ExpiresIn    int    `json:"expires_in,omitempty"`
 }
 
-type ForgotPasswordRequest struct{
+type ForgotPasswordRequest struct {
 	Email string `json:"email"`
 }
 
-type ResetPasswordRequest struct{
-	Email string `json:"email" validate:"required"`
-	ResetToken string `json:"reset_token" validate:"required"`
-	NewPassword string `json:"new_password" validate:"required"`
+type ResetPasswordRequest struct {
+	Email           string `json:"email" validate:"required"`
+	ResetToken      string `json:"reset_token" validate:"required"`
+	NewPassword     string `json:"new_password" validate:"required"`
 	ConfirmPassword string `json:"confirm_password" validate:"required"`
 }
 
-type RefreshTokenRequest struct{
-	RefreshToken string `json:"refresh_token" validate:"required"`	 
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
 }

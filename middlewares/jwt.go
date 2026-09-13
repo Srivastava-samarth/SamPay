@@ -1,9 +1,9 @@
 package middlewares
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"errors"
-	"math/rand"
 	"strconv"
 	"time"
 

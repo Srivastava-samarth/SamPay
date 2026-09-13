@@ -1,8 +1,8 @@
 package constants
 
 const (
-	UserStatusActive   = "active"
-	UserStatusPending  = "pending"
+	UserStatusActive    = "active"
+	UserStatusPending   = "pending"
 	UserStatusSuspended = "suspended"
-	UserStatusInactive = "inactive"
+	UserStatusInactive  = "inactive"
 )

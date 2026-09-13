@@ -17,7 +17,7 @@ type Payment struct {
 	Status             *string         `json:"status" gorm:"not null"`
 	SettlementStatus   *string         `json:"settlement_status" gorm:"not null"`
 	Description        *string         `json:"description"`
-	CustomerReference *string         `json:"customer_reference"`
+	CustomerReference  *string         `json:"customer_reference"`
 	CreatedAt          time.Time       `json:"created_at" gorm:"autoCreateTime;not null"`
 	UpdatedAt          time.Time       `json:"updated_at" gorm:"autoUpdateTime;not null"`
 }
