@@ -124,7 +124,11 @@ func main() {
 	)
 
 	vaultService := services.NewVaultService(
+		db,
 		vaultRepo,
+		linkedBankAccountRepo,
+		ledgerService,
+		bankService,
 	)
 
 	paymentService := services.NewPaymentService(
@@ -180,6 +184,7 @@ func main() {
 	)
 
 	walletController := controllers.NewWalletController(
+		db,
 		walletService,
 		ledgerService,
 	)

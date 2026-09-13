@@ -109,6 +109,16 @@ func (vc *VaultController) GetVaults() gin.HandlerFunc {
 
 func (vc *VaultController) UpdateVaultBalance() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		merchantID, exist := c.Get("merchant_id")
+		if !exist {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"MERCHANT_ID_NOT_FOUND",
+				"merchant_id not found in context",
+			)
+			return
+		}
 		var request *dto.UpdateVaultBalance
 		err := c.ShouldBindJSON(&request)
 		if err != nil {
@@ -121,7 +131,7 @@ func (vc *VaultController) UpdateVaultBalance() gin.HandlerFunc {
 			return
 		}
 
-		vault, errV := vc.vaultSrvc.UpdateVaultBalance(request.Balance, request.Type)
+		vault, errV := vc.vaultSrvc.UpdateVaultBalance(merchantID.(uuid.UUID), request.Balance, request.Type)
 		if errV != nil {
 			dto.Fail(
 				c,
