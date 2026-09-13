@@ -8,18 +8,22 @@ import (
 	"github.com/Srivastava-samarth/sampay/services"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type WalletController struct {
+	db         *gorm.DB
 	WalletSrvc *services.WalletService
 	LedgerSrvc *services.LedgerService
 }
 
 func NewWalletController(
+	db *gorm.DB,
 	walletSrvc *services.WalletService,
 	ledgerSrvc *services.LedgerService,
 ) *WalletController {
 	return &WalletController{
+		db:         db,
 		WalletSrvc: walletSrvc,
 		LedgerSrvc: ledgerSrvc,
 	}
@@ -245,6 +249,61 @@ func (wc *WalletController) GetWalletTransaction() gin.HandlerFunc {
 			c,
 			http.StatusOK,
 			transaction,
+		)
+	}
+}
+
+func (wc *WalletController) TopUpWallet() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var request *dto.TopupWalletBalanceRequest
+		merchantID := c.Param("merchant_id")
+		parsedMerchantID, errP := uuid.Parse(merchantID)
+		if errP != nil {
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"PARSING_ERROR",
+				errP.Error(),
+			)
+			return
+		}
+
+		err := c.ShouldBindJSON(&request)
+		if err != nil {
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"BINDING_ERROR",
+				err.Error(),
+			)
+			return
+		}
+
+		wallet, errW := wc.WalletSrvc.GetWalletByMerchantID(parsedMerchantID)
+		if errW != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"ERROR_FINDING_WALLET",
+				errW.Error(),
+			)
+		}
+
+		updatedWallet, errUW := wc.WalletSrvc.TopUpWalletFromPrimaryBank(wc.db, wallet, request.Amount)
+		if errUW != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"ERROR_TOPING_UP_WALLET",
+				errUW.Error(),
+			)
+			return
+		}
+
+		dto.Respond(
+			c,
+			http.StatusOK,
+			updatedWallet,
 		)
 	}
 }

@@ -44,4 +44,9 @@ func (wr *WalletRouter) WalletRoutes(
 		middlewares.RequireMerchantAccess("super_admin"),
 		wr.walletCntlr.GetWalletTransaction(),
 	)
+	wallet.PUT(
+		"/:merchant_id/wallet/topup",
+		middlewares.RequireRole("super_admin"),
+		wr.walletCntlr.TopUpWallet(),
+	)
 }
