@@ -298,3 +298,13 @@ func (lr *LedgerRepository) GetEntriesByTransactionIDs(
 
 	return entries, nil
 }
+
+func (lr *LedgerRepository) GetLedgerTransactionByReferenceID(referenceID string) (*models.LedgerTransaction, error) {
+	var ledgerTransaction *models.LedgerTransaction
+	err := lr.db.Where("reference_id = ?", referenceID).First(&ledgerTransaction).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return ledgerTransaction, nil
+}

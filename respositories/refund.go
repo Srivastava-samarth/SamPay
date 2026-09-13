@@ -121,3 +121,38 @@ func (rr *RefundRepository) UpdateRefundStatus(RefundReference string, status st
 	return updatedRefund, nil
 
 }
+
+func (rr *RefundRepository) GetRefundById(
+	refundID uuid.UUID,
+) (*models.Refund, error) {
+	var refund *models.Refund
+
+	err := rr.DB.
+		Where("id = ?", refundID).
+		Order("created_at DESC").
+		Find(&refund).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return refund, nil
+}
+
+func (rr *RefundRepository) GetRefundsByMerchantId(
+	merchantID uuid.UUID,
+) ([]*models.Refund, error) {
+
+	var refunds []*models.Refund
+
+	err := rr.DB.
+		Where("merchant_id = ?", merchantID).
+		Order("created_at DESC").
+		Find(&refunds).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return refunds, nil
+}

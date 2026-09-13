@@ -183,14 +183,14 @@ func (a *Registry) ExecutePayment(
 			// 7. Wallet A -> Payment Vault
 			// ---------------------------------------------------------
 
-			_, err = vaultRepo.UpdateVaultBalance(
+			updatedPaymentVault, errUV := vaultRepo.UpdateVaultBalance(
 				paymentVault.Balance.Add(totalAmount),
 				constants.PaymentVault,
 			)
-			if err != nil {
+			if errUV != nil {
 				return fmt.Errorf(
 					"update payment vault balance: %w",
-					err,
+					errUV,
 				)
 			}
 
@@ -248,87 +248,7 @@ func (a *Registry) ExecutePayment(
 			}
 
 			// ---------------------------------------------------------
-			// 9. Get Receiver Wallet
-			// ---------------------------------------------------------
-
-			receiverWallet, err := walletRepo.GetWalletByMerchantId(
-				paymentRequest.ReceiverMerchantID,
-			)
-			if err != nil {
-				return fmt.Errorf(
-					"get receiver wallet: %w",
-					err,
-				)
-			}
-
-			// ---------------------------------------------------------
-			// 10. Payment Vault -> Receiver Wallet
-			// ---------------------------------------------------------
-
-			_, err = walletRepo.UpdateWalletBalance(
-				paymentRequest.ReceiverMerchantID,
-				&dto.UpdateWallletBalanceRequest{
-					ReservedBalance: receiverWallet.ReservedBalance.Add(
-						paymentRequest.Amount,
-					),
-				},
-			)
-			if err != nil {
-				return fmt.Errorf(
-					"update receiver wallet balance: %w",
-					err,
-				)
-			}
-
-			updatedPaymentVaultBalance := paymentVault.Balance.
-				Add(totalAmount).
-				Sub(paymentRequest.Amount)
-
-			updatedPaymentVault, err := vaultRepo.UpdateVaultBalance(
-				updatedPaymentVaultBalance,
-				constants.PaymentVault,
-			)
-			if err != nil {
-				return fmt.Errorf(
-					"update payment vault after receiver transfer: %w",
-					err,
-				)
-			}
-
-			// ---------------------------------------------------------
-			// 11. Ledger: Payment Vault -> Receiver Wallet
-			// ---------------------------------------------------------
-
-			_, err = a.LedgerService.CreateLedgerEntries(
-				tx,
-				[]*models.LedgerEntry{
-					{
-						LedgerTransactionID: ledgerTransaction.ID,
-						AccountType:         constants.LedgerAccountTypeVault,
-						AccountID:           paymentVault.ID,
-						EntryType:           constants.LedgerEntryTypeDebit,
-						Amount:              paymentRequest.Amount,
-						Currency:            "INR",
-					},
-					{
-						LedgerTransactionID: ledgerTransaction.ID,
-						AccountType:         constants.LedgerAccountTypeWallet,
-						AccountID:           receiverWallet.ID,
-						EntryType:           constants.LedgerEntryTypeCredit,
-						Amount:              paymentRequest.Amount,
-						Currency:            "INR",
-					},
-				},
-			)
-			if err != nil {
-				return fmt.Errorf(
-					"create receiver ledger entries: %w",
-					err,
-				)
-			}
-
-			// ---------------------------------------------------------
-			// 12. Payment Vault -> Company Vault
+			// 9. Payment Vault -> Company Vault
 			// ---------------------------------------------------------
 
 			paymentVaultBalanceAfterFees := updatedPaymentVault.Balance.Sub(
@@ -347,7 +267,7 @@ func (a *Registry) ExecutePayment(
 			}
 
 			// ---------------------------------------------------------
-			// 13. Get Company Vault
+			// 10. Get Company Vault
 			// ---------------------------------------------------------
 
 			companyVault, err := vaultRepo.GetVaultByType(
@@ -361,7 +281,7 @@ func (a *Registry) ExecutePayment(
 			}
 
 			// ---------------------------------------------------------
-			// 14. Add fees to Company Vault
+			// 11. Add fees to Company Vault
 			// ---------------------------------------------------------
 
 			updatedCompanyVault, err := vaultRepo.UpdateVaultBalance(
@@ -376,7 +296,7 @@ func (a *Registry) ExecutePayment(
 			}
 
 			// ---------------------------------------------------------
-			// 15. Ledger: Payment Vault -> Company Vault
+			// 12. Ledger: Payment Vault -> Company Vault
 			// ---------------------------------------------------------
 
 			_, err = a.LedgerService.CreateLedgerEntries(
@@ -408,7 +328,7 @@ func (a *Registry) ExecutePayment(
 			}
 
 			// ---------------------------------------------------------
-			// 16. Mark payment COMPLETED
+			// 13. Mark payment COMPLETED
 			// ---------------------------------------------------------
 
 			completedStatus := constants.TransactionStatusCompleted
