@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"errors"
 	"time"
 
 	"github.com/Srivastava-samarth/sampay/constants"
@@ -127,14 +126,6 @@ func (ur *UserRepository) GetUsers() ([]*models.User, error) {
 }
 
 func (ur *UserRepository) UpdateUserStatus(status string, userID uuid.UUID) (*models.User, error){
-	if status == ""{
-		return nil, errors.New("status is missing")
-	}
-
-	if userID == uuid.Nil{
-		return nil, errors.New("merchantId is missing")
-	}
-
 	updates := map[string]interface{}{
 		"status":status,
 		"updated_at": time.Now(),

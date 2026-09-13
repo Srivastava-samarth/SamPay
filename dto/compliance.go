@@ -13,11 +13,18 @@ type ComplianceCheckResponse struct {
 	ComplianceStatus string    `json:"compliance_status" gorm:"default:pending;not null"`
 	ComplianceDate   time.Time `json:"compliance_date"`
 	ComplianceReason string    `json:"compliance_reason"`
+	ComplianceDetails ComplianceDetails `json:"compliance_details" gorm:"type:jsonb"`
+	Country          string    `json:"country"`
 }
 
 type KYCData struct {
 	Status string `json:"status"`
 	Reason string `json:"reason"`
+}
+
+type ComplianceDetails struct {
+	IndividualComplianceCheckRequest *IndividualComplianceCheckRequest `json:"individual_compliance_check_request,omitempty"`
+	CompanyComplianceCheckRequest *CompanyComplianceCheckRequest `json:"company_compliance_check_request,omitempty"`
 }
 
 type IndividualComplianceCheckRequest struct {

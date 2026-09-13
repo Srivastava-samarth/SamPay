@@ -13,7 +13,7 @@ import (
 
 func (a *Registry) PerformComplianceCheck(
 	ctx context.Context,
-	request dto.CreateMerchantOnboardingRequest,
+	request *dto.CreateMerchantOnboardingRequest,
 	merchantID uuid.UUID,
 ) (*dto.ComplianceCheckResponse, error) {
 
@@ -25,6 +25,7 @@ func (a *Registry) PerformComplianceCheck(
 			DateOfBirth: request.Individual.DateOfBirth,
 			Country: request.Individual.Country,
 		}
+		
 		return a.ComplianceService.PerformIndividualComplianceCheck(
 			individualComplianceRequest,
 			merchantID,
@@ -46,7 +47,7 @@ func (a *Registry) PerformComplianceCheck(
 
 func (a *Registry) ProvisionMerchant(
 	ctx context.Context,
-	request dto.CreateMerchantOnboardingRequest,
+	request *dto.CreateMerchantOnboardingRequest,
 	merchantID uuid.UUID,
 ) (*services.MerchantProvisioningResult, error) {
 
@@ -70,7 +71,7 @@ func (a *Registry) SendWelcomeEmail(
 
 func (a *Registry) SendKYCReattemptEmail(
 	ctx context.Context,
-	request dto.CreateMerchantOnboardingRequest,
+	request *dto.CreateMerchantOnboardingRequest,
 	merchantID uuid.UUID,
 ) error {
 

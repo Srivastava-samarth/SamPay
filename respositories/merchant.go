@@ -50,15 +50,19 @@ func (mp *MerchantRepository) CreateMerchant(request models.Merchant) (*models.M
 }
 
 func (mp *MerchantRepository) GetMerchantByID(merchantID uuid.UUID) (*models.Merchant, error) {
-	var merchant models.Merchant
-	err := mp.db.Where("id = ? AND status = ?", merchantID, "active").First(&merchant).Error
+	var merchant *models.Merchant
+	err := mp.db.Where(
+		"id = ?",
+		merchantID).
+		First(&merchant).
+		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	return &merchant, nil
+	return merchant, nil
 }
 
 func (mp *MerchantRepository) GetMerchants() ([]*models.Merchant, error) {
@@ -87,12 +91,19 @@ func (mp *MerchantRepository) UpdateMerchantCompliance(
 		return nil, err
 	}
 
+	complianceDetails, errCD := json.Marshal(complianceResponse.ComplianceDetails)
+	if errCD != nil{
+		return nil, errCD
+	}
+
 	merchant.ComplianceDate = &complianceResponse.ComplianceDate
 	merchant.ComplianceStatus = complianceResponse.ComplianceStatus
 	merchant.ComplianceReason = complianceResponse.ComplianceReason
 	merchant.KYC = datatypes.JSON(kycJSON)
 	merchant.KYCDate = &complianceResponse.KYCDate
 	merchant.UpdatedAt = time.Now()
+	merchant.ComplianceDetails = datatypes.JSON(complianceDetails)
+	merchant.Country = complianceResponse.Country
 
 	if err := mp.db.Save(&merchant).Error; err != nil {
 		return nil, err
@@ -102,16 +113,8 @@ func (mp *MerchantRepository) UpdateMerchantCompliance(
 }
 
 func (mp *MerchantRepository) UpdateMerchantStatus(merchantID uuid.UUID, status string) (*models.Merchant, error) {
-	if status == ""{
-		return nil, errors.New("status is missing")
-	}
-
-	if merchantID == uuid.Nil{
-		return nil, errors.New("merchantId is missing")
-	}
-
 	updates := map[string]interface{}{
-		"status":status,
+		"status":     status,
 		"updated_at": time.Now(),
 	}
 
@@ -126,7 +129,7 @@ func (mp *MerchantRepository) UpdateMerchantStatus(merchantID uuid.UUID, status 
 
 	var merchant *models.Merchant
 	errM := mp.db.Where("id = ?", merchantID).First(&merchant).Error
-	if errM != nil{
+	if errM != nil {
 		return nil, errM
 	}
 
@@ -138,14 +141,14 @@ func (mp *MerchantRepository) UpdateMerchant(request *dto.UpdateMerchantRequest,
 		"updated_at": time.Now(),
 	}
 
-	if request.MerchantName != ""{
+	if request.MerchantName != "" {
 		updates["merchant_name"] = request.MerchantName
 	}
 
-	if request.PhoneNumber != ""{
+	if request.PhoneNumber != "" {
 		updates["phone_number"] = request.PhoneNumber
 	}
-	
+
 	err := mp.db.
 		Model(&models.Merchant{}).
 		Where("id = ?", merchantID).
@@ -156,7 +159,27 @@ func (mp *MerchantRepository) UpdateMerchant(request *dto.UpdateMerchantRequest,
 	}
 
 	var merchant *models.Merchant
-	if err := mp.db.Where("id = ?", merchantID).First(&merchant).Error; err != nil {
+	if err := mp.db.
+		Where("id = ?", merchantID).
+		First(&merchant).
+		Error; err != nil {
+		return nil, err
+	}
+
+	return merchant, nil
+}
+
+func (mp *MerchantRepository) GetMerchantByEmail(email string) (*models.Merchant, error) {
+	var merchant *models.Merchant
+	err := mp.db.
+		Where("email = ?", email).
+		First(&merchant).
+		Error
+	
+	if err != nil{
+		if errors.Is(err, gorm.ErrRecordNotFound){
+			return nil, nil
+		}
 		return nil, err
 	}
 

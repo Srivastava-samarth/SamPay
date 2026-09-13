@@ -71,3 +71,13 @@ var AMLBlockedEntities = []AMLRecord{
 		Country: "United States",
 	},
 }
+
+var ValidCountries = map[string]struct{}{
+	"india":                {},
+	"singapore":            {},
+	"united states":        {},
+	"united kingdom":       {},
+	"australia":            {},
+	"canada":               {},
+	"united arab emirates": {},
+}

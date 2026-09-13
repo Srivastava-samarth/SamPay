@@ -14,6 +14,8 @@ type Merchant struct {
 	PhoneNumber       string         `json:"phone_number"`
 	Status            string         `json:"status"`
 	MerchantType      string         `json:"merchant_type" gorm:"not null"`
+	ComplianceDetails datatypes.JSON `json:"compliance_details"`
+	Country           string         `json:"country"`
 	KYC               datatypes.JSON `json:"-"`
 	KYCDate           *time.Time     `json:"kyc_date"`
 	ComplianceStatus  string         `json:"compliance_status" gorm:"default:pending;not null"`
