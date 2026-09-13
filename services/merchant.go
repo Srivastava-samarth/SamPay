@@ -10,7 +10,6 @@ import (
 	"github.com/Srivastava-samarth/sampay/notifications"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/utils"
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -59,8 +58,6 @@ func NewMerchantService(
 	}
 }
 
-var validate = validator.New()
-
 func (ms *MerchantService) GetMerchantByID(merchantID uuid.UUID) (*models.Merchant, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant_id is required")
@@ -85,7 +82,7 @@ func (ms *MerchantService) GetMerchants() ([]*models.Merchant, error) {
 }
 
 func (ms *MerchantService) CreateInitialMerchant(merchantRequest *dto.CreateMerchantOnboardingRequest) (*dto.CreateMerchantOnboardingResponse, error) {
-	if merchantRequest == nil{
+	if merchantRequest == nil {
 		return nil, errors.New("request can't be empty")
 	}
 
@@ -521,7 +518,7 @@ func (ms *MerchantService) UpdateMerchantKycInfo(
 			return err
 		}
 
-		if len(merchantUsers) == 0{
+		if len(merchantUsers) == 0 {
 			return errors.New("no user linked to merchant")
 		}
 
@@ -546,13 +543,13 @@ func (ms *MerchantService) UpdateMerchantKycInfo(
 	return updatedMerchant, nil
 }
 
-func (ms *MerchantService) GetMerchantByEmail(email string) (*models.Merchant, error){
-	if email == ""{
+func (ms *MerchantService) GetMerchantByEmail(email string) (*models.Merchant, error) {
+	if email == "" {
 		return nil, errors.New("email is required")
 	}
 
 	merchant, errM := ms.MerchantRepo.GetMerchantByEmail(email)
-	if errM != nil{
+	if errM != nil {
 		return nil, errM
 	}
 

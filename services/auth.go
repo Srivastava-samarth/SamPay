@@ -55,15 +55,15 @@ func (as *AuthService) Authentication(authRequest *dto.AuthRequest) (*dto.AuthRe
 	}
 
 	if user == nil {
-		return nil, errors.New("User doen not exist !")
+		return nil, errors.New("user doen not exist")
 	}
 
-	if user.Status != constants.UserStatusActive{
+	if user.Status != constants.UserStatusActive {
 		return nil, errors.New("user not valid")
 	}
 
-	if user.MustChangePassword == true {
-		return nil, errors.New("Temporary password can't be used. Please reset the password")
+	if user.MustChangePassword {
+		return nil, errors.New("temporary password can't be used. Please reset the password")
 	}
 
 	merchantUser, errMU := as.MerchantUserRepo.GetMerchantUserByUserID(user.ID)
@@ -77,16 +77,16 @@ func (as *AuthService) Authentication(authRequest *dto.AuthRequest) (*dto.AuthRe
 	)
 
 	if errCHP != nil {
-		return nil, errors.New("Invalid Credentials: email or password is incorrect")
+		return nil, errors.New("invalid Credentials: email or password is incorrect")
 	}
 
 	token, errT := as.JwtService.GenarateTokenAndExpiry(merchantUser.UserID, merchantUser.MerchantID, merchantUser.Role)
-	if errT != nil{
+	if errT != nil {
 		return nil, errT
 	}
 
 	refreshToken, errRT := as.JwtService.GenerateRefreshToken()
-	if errRT != nil{
+	if errRT != nil {
 		return nil, errRT
 	}
 
@@ -131,7 +131,7 @@ func (as *AuthService) ForgotPasswod(forgotPasswordRequest *dto.ForgotPasswordRe
 	}
 
 	if user == nil {
-		return errors.New("User doen not exist !")
+		return errors.New("user doen not exist")
 	}
 
 	resetToken, errRT := as.JwtService.GenerateResetPasswordToken(user.ID, user.Email)
@@ -305,8 +305,8 @@ func (as *AuthService) RefreshToken(
 	}
 
 	if userSession.RevokedAt != nil {
-	return nil, errors.New("refresh token revoked")
-}
+		return nil, errors.New("refresh token revoked")
+	}
 
 	user, err := userRepo.GetUserByID(userSession.UserID)
 	if err != nil {
@@ -336,6 +336,6 @@ func (as *AuthService) RefreshToken(
 	committed = true
 
 	return &dto.AuthResponse{
-		AccessToken:  accessToken,
+		AccessToken: accessToken,
 	}, nil
 }

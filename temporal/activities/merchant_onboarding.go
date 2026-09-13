@@ -19,13 +19,13 @@ func (a *Registry) PerformComplianceCheck(
 
 	if request.MerchantType == constants.MerchantTypeIndividual {
 		individualComplianceRequest := &dto.IndividualComplianceCheckRequest{
-			FirstName: request.Individual.FirstName,
-			LastName: request.Individual.LastName,
-			Email: request.Email,
+			FirstName:   request.Individual.FirstName,
+			LastName:    request.Individual.LastName,
+			Email:       request.Email,
 			DateOfBirth: request.Individual.DateOfBirth,
-			Country: request.Individual.Country,
+			Country:     request.Individual.Country,
 		}
-		
+
 		return a.ComplianceService.PerformIndividualComplianceCheck(
 			individualComplianceRequest,
 			merchantID,
@@ -33,12 +33,12 @@ func (a *Registry) PerformComplianceCheck(
 	}
 
 	companyComplianceRequest := &dto.CompanyComplianceCheckRequest{
-			LegalName: request.Company.LegalName,
-			Email: request.Email,
-			RegistrationNumber: request.Company.RegistrationNumber,
-			IncorporationCountry: request.Company.IncorporationCountry,
-			TaxID: request.Company.TaxID,
-		}
+		LegalName:            request.Company.LegalName,
+		Email:                request.Email,
+		RegistrationNumber:   request.Company.RegistrationNumber,
+		IncorporationCountry: request.Company.IncorporationCountry,
+		TaxID:                request.Company.TaxID,
+	}
 	return a.ComplianceService.PerformCorporateComplianceCheck(
 		companyComplianceRequest,
 		merchantID,
@@ -88,7 +88,7 @@ func (a *Registry) UpdateMerchantCompliance(
 	complianceResponse *dto.ComplianceCheckResponse,
 ) (*models.Merchant, error) {
 	return a.MerchantService.UpdateMerchantCompliance(
-		merchantID, 
+		merchantID,
 		complianceResponse,
 	)
 }

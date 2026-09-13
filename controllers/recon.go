@@ -18,13 +18,13 @@ type ReconController struct {
 
 func NewReconController(
 	temporalClient client.Client,
-) *ReconController{
+) *ReconController {
 	return &ReconController{
 		TemporalClient: temporalClient,
 	}
 }
 
-func (rc *ReconController) TriggerRecon() gin.HandlerFunc{
+func (rc *ReconController) TriggerRecon() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		workflowOptions := client.StartWorkflowOptions{
 			ID: fmt.Sprintf(

@@ -56,7 +56,7 @@ func (bc *BankController) CreateBankAccount() gin.HandlerFunc {
 	}
 }
 
-func (bc *BankController) UpdateBankAccount() gin.HandlerFunc{
+func (bc *BankController) UpdateBankAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.UpdateBankAccountRequest
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -69,20 +69,20 @@ func (bc *BankController) UpdateBankAccount() gin.HandlerFunc{
 			return
 		}
 
-		if request.ID == uuid.Nil{
+		if request.ID == uuid.Nil {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
 				"id is empty",
 				"ID should be passed",
 			)
-			return 
+			return
 		}
 
 		updatedBankAccount, updateLinkedBankAccount, err := bc.BankSrvc.UpdateBankAccountAndlink(request)
-		if err != nil{
+		if err != nil {
 			dto.Fail(
-				c, 
+				c,
 				http.StatusInternalServerError,
 				"UPDATION_ISSUE",
 				err.Error(),
@@ -100,7 +100,7 @@ func (bc *BankController) UpdateBankAccount() gin.HandlerFunc{
 	}
 }
 
-func (bc *BankController) GetBankAccounts() gin.HandlerFunc{
+func (bc *BankController) GetBankAccounts() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		merchantID := c.Param("merchant_id")
 		if merchantID == "" {
@@ -114,7 +114,7 @@ func (bc *BankController) GetBankAccounts() gin.HandlerFunc{
 		}
 
 		parsedMerchantID, errP := uuid.Parse(merchantID)
-		if errP != nil{
+		if errP != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
@@ -125,7 +125,7 @@ func (bc *BankController) GetBankAccounts() gin.HandlerFunc{
 		}
 
 		bankAccounts, errBA := bc.BankSrvc.GetBankAccountsByMerchantID(parsedMerchantID)
-		if errBA != nil{
+		if errBA != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
@@ -143,11 +143,11 @@ func (bc *BankController) GetBankAccounts() gin.HandlerFunc{
 	}
 }
 
-func (bc *BankController) GetBankAccount() gin.HandlerFunc{
+func (bc *BankController) GetBankAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		bankAccountID := c.Param("bank_account_id")
 		parsedBankAccountID, errP := uuid.Parse(bankAccountID)
-		if errP != nil{
+		if errP != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
@@ -158,7 +158,7 @@ func (bc *BankController) GetBankAccount() gin.HandlerFunc{
 		}
 
 		bankAccount, errBA := bc.BankSrvc.GetBankAccount(parsedBankAccountID)
-		if errBA != nil{
+		if errBA != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,

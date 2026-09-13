@@ -11,23 +11,22 @@ import (
 	"go.temporal.io/sdk/client"
 )
 
-type AuthController struct{
+type AuthController struct {
 	TemporalClient client.Client
-	AuthService *services.AuthService
+	AuthService    *services.AuthService
 }
 
 func NewAuthController(
 	authService *services.AuthService,
 	temporalClient client.Client,
-) *AuthController{
+) *AuthController {
 	return &AuthController{
-		AuthService: authService,
+		AuthService:    authService,
 		TemporalClient: temporalClient,
 	}
 }
 
-
-func(ac *AuthController) Login() gin.HandlerFunc {
+func (ac *AuthController) Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var loginRequest *dto.AuthRequest
 		if err := c.ShouldBindJSON(&loginRequest); err != nil {
@@ -55,11 +54,11 @@ func(ac *AuthController) Login() gin.HandlerFunc {
 	}
 }
 
-func (ac *AuthController) ForgotPassword() gin.HandlerFunc{
-	return func(c *gin.Context){
+func (ac *AuthController) ForgotPassword() gin.HandlerFunc {
+	return func(c *gin.Context) {
 		var request *dto.ForgotPasswordRequest
 
-		if err := c.ShouldBindJSON(&request); err != nil{
+		if err := c.ShouldBindJSON(&request); err != nil {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
@@ -70,7 +69,7 @@ func (ac *AuthController) ForgotPassword() gin.HandlerFunc{
 		}
 
 		workflowOptions := client.StartWorkflowOptions{
-			ID: "forgot password-" + request.Email,
+			ID:        "forgot password-" + request.Email,
 			TaskQueue: temporal.ForgotPasswordTaskQueue,
 		}
 
@@ -95,15 +94,15 @@ func (ac *AuthController) ForgotPassword() gin.HandlerFunc{
 			c,
 			http.StatusOK,
 			"email sent to the user for reset password",
-		) 
+		)
 	}
 }
 
-func (ac *AuthController) ResetPassword() gin.HandlerFunc{
-	return func(c *gin.Context){
+func (ac *AuthController) ResetPassword() gin.HandlerFunc {
+	return func(c *gin.Context) {
 		var request *dto.ResetPasswordRequest
 
-		if err := c.ShouldBindJSON(&request); err != nil{
+		if err := c.ShouldBindJSON(&request); err != nil {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
@@ -114,7 +113,7 @@ func (ac *AuthController) ResetPassword() gin.HandlerFunc{
 		}
 
 		err := ac.AuthService.ResetPassword(request)
-		if err != nil{
+		if err != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
@@ -132,10 +131,10 @@ func (ac *AuthController) ResetPassword() gin.HandlerFunc{
 	}
 }
 
-func (ac *AuthController) RefreshToken() gin.HandlerFunc{
+func (ac *AuthController) RefreshToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.RefreshTokenRequest
-		if err := c.ShouldBindJSON(&request); err != nil{
+		if err := c.ShouldBindJSON(&request); err != nil {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
@@ -153,7 +152,7 @@ func (ac *AuthController) RefreshToken() gin.HandlerFunc{
 				"TOKEN_REFRESH_FAILED",
 				errR.Error(),
 			)
-			return 
+			return
 		}
 		dto.Respond(
 			c,

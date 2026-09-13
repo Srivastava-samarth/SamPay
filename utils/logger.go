@@ -10,10 +10,10 @@ func NewLogger() *log.Logger {
 		os.Stdout,
 		"",
 		log.Ldate|
-		log.Ltime|
-		log.Lmicroseconds|
-		log.LUTC|
-		log.Lshortfile,
+			log.Ltime|
+			log.Lmicroseconds|
+			log.LUTC|
+			log.Lshortfile,
 	)
 	return logger
 }

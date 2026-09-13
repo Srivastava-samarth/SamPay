@@ -7,14 +7,14 @@ import (
 )
 
 type ComplianceCheckResponse struct {
-	MerchantID       uuid.UUID `json:"merchant_id"`
-	KYC              KYCData   `json:"kyc" gorm:"type:jsonb"`
-	KYCDate          time.Time `json:"kyc_date"`
-	ComplianceStatus string    `json:"compliance_status" gorm:"default:pending;not null"`
-	ComplianceDate   time.Time `json:"compliance_date"`
-	ComplianceReason string    `json:"compliance_reason"`
+	MerchantID        uuid.UUID         `json:"merchant_id"`
+	KYC               KYCData           `json:"kyc" gorm:"type:jsonb"`
+	KYCDate           time.Time         `json:"kyc_date"`
+	ComplianceStatus  string            `json:"compliance_status" gorm:"default:pending;not null"`
+	ComplianceDate    time.Time         `json:"compliance_date"`
+	ComplianceReason  string            `json:"compliance_reason"`
 	ComplianceDetails ComplianceDetails `json:"compliance_details" gorm:"type:jsonb"`
-	Country          string    `json:"country"`
+	Country           string            `json:"country"`
 }
 
 type KYCData struct {
@@ -24,7 +24,7 @@ type KYCData struct {
 
 type ComplianceDetails struct {
 	IndividualComplianceCheckRequest *IndividualComplianceCheckRequest `json:"individual_compliance_check_request,omitempty"`
-	CompanyComplianceCheckRequest *CompanyComplianceCheckRequest `json:"company_compliance_check_request,omitempty"`
+	CompanyComplianceCheckRequest    *CompanyComplianceCheckRequest    `json:"company_compliance_check_request,omitempty"`
 }
 
 type IndividualComplianceCheckRequest struct {
@@ -37,8 +37,8 @@ type IndividualComplianceCheckRequest struct {
 
 type CompanyComplianceCheckRequest struct {
 	LegalName            string `json:"legal_name"`
-	Email                string  `json:"email" validate:"required,email"`
+	Email                string `json:"email" validate:"required,email"`
 	RegistrationNumber   string `json:"registration_number"`
 	IncorporationCountry string `json:"incorporation_country"`
-	TaxID                string  `json:"tax_id" validate:"required"`
+	TaxID                string `json:"tax_id" validate:"required"`
 }

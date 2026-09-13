@@ -18,6 +18,6 @@ type CreateLinkedBankAccountResponse struct {
 }
 
 type UpdateLinkedBankAccountRequest struct {
-	Type                string    `json:"type"`
-	Status              string    `json:"status"`
+	Type   string `json:"type"`
+	Status string `json:"status"`
 }

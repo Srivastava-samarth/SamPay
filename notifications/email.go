@@ -150,7 +150,6 @@ func (s *EmailService) SendReconEmail(
 	)
 }
 
-
 func (s *EmailService) SendKYCReattemptEmail(
 	email string,
 	merchantID uuid.UUID,
@@ -182,4 +181,3 @@ SamPay Team
 		body,
 	)
 }
-

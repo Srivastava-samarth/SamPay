@@ -66,8 +66,8 @@ func Load() (*Config, error) {
 			Host: os.Getenv("SAMPAY_TEMPORAL_HOST"),
 		},
 		JWT: JWTConfig{
-			Secret : os.Getenv("JWT_SECRET"),
-			AccessExpiry : os.Getenv("JWT_ACCESS_EXPIRY"),
+			Secret:        os.Getenv("JWT_SECRET"),
+			AccessExpiry:  os.Getenv("JWT_ACCESS_EXPIRY"),
 			RefreshExpiry: os.Getenv("JWT_REFRESH_EXPIRY"),
 		},
 	}

@@ -14,7 +14,7 @@ import (
 func UserOnboardingFlow(
 	ctx workflow.Context,
 	request dto.UserOnboardingRequest,
-) (*dto.CreateUserResponse,error) {
+) (*dto.CreateUserResponse, error) {
 
 	activityOptions := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Minute,
@@ -39,16 +39,16 @@ func UserOnboardingFlow(
 		return nil, errM
 	}
 
-	if merchant.MerchantType == "individual"{
-		return nil, errors.New("Individual type merchnat can't create more than one user")
+	if merchant.MerchantType == "individual" {
+		return nil, errors.New("individual type merchnat can't create more than one user")
 	}
 
 	var user *services.CreatedUserResult
 	createUserPayload := &dto.CreateUserRequest{
-		Email: request.Email,
+		Email:     request.Email,
 		FirstName: request.FirstName,
-		LastName: request.LastName,
-	} 
+		LastName:  request.LastName,
+	}
 
 	errCU := workflow.ExecuteActivity(
 		ctx,
@@ -63,8 +63,8 @@ func UserOnboardingFlow(
 	var merchantUser dto.CreateMerchantUserResponse
 	createMerchantUserPayload := &dto.CreateMerchantUserRequest{
 		MerchantID: request.MerchantID,
-		UserID: user.User.ID,
-		Role: request.Role,
+		UserID:     user.User.ID,
+		Role:       request.Role,
 	}
 
 	errMU := workflow.ExecuteActivity(

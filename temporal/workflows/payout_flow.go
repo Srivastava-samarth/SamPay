@@ -18,7 +18,7 @@ func PayoutFlow(
 	ctx workflow.Context,
 	request *dto.CreateWalletToBankRequest,
 	merchantID uuid.UUID,
-) (*models.Payout ,error) {
+) (*models.Payout, error) {
 	activityOptions := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Minute,
 		RetryPolicy: &temporal.RetryPolicy{
@@ -69,9 +69,9 @@ func PayoutFlow(
 
 	executePaymentPayload := &activities.PayoutWorkflowWalletToBanRequest{
 		PayoutReference: payout.PayoutReference,
-		MerchantID: merchantID,
-		Fee: fees,
-		Request: *request,
+		MerchantID:      merchantID,
+		Fee:             fees,
+		Request:         *request,
 	}
 	var updatedPayout *models.Payout
 	errEP := workflow.ExecuteActivity(
@@ -80,7 +80,7 @@ func PayoutFlow(
 		executePaymentPayload,
 	).Get(ctx, &updatedPayout)
 
-	if errEP == nil{
+	if errEP == nil {
 		return updatedPayout, nil
 	}
 
@@ -109,7 +109,7 @@ func PayoutFlowBankToBank(
 	ctx workflow.Context,
 	request *dto.CreateBankToBankRequest,
 	merchantID uuid.UUID,
-) (*models.Payout ,error) {
+) (*models.Payout, error) {
 	activityOptions := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Minute,
 		RetryPolicy: &temporal.RetryPolicy{
@@ -148,9 +148,9 @@ func PayoutFlowBankToBank(
 
 	executePaymentPayload := &activities.PayoutWorkflowBankToBanRequest{
 		PayoutReference: payout.PayoutReference,
-		MerchantID: merchantID,
-		Fee: decimal.Zero,
-		Request: *request,
+		MerchantID:      merchantID,
+		Fee:             decimal.Zero,
+		Request:         *request,
 	}
 	var updatedPayout *models.Payout
 	errEP := workflow.ExecuteActivity(
@@ -159,7 +159,7 @@ func PayoutFlowBankToBank(
 		executePaymentPayload,
 	).Get(ctx, &updatedPayout)
 
-	if errEP == nil{
+	if errEP == nil {
 		return updatedPayout, nil
 	}
 

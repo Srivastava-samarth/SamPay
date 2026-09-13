@@ -7,7 +7,7 @@ import (
 
 	"github.com/Srivastava-samarth/sampay/constants"
 	"github.com/Srivastava-samarth/sampay/dto"
-	"github.com/Srivastava-samarth/sampay/respositories"
+	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )

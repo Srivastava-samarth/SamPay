@@ -17,17 +17,17 @@ func (a *Registry) CreateUser(
 }
 
 func (a *Registry) CreateMerchantUser(
-    ctx context.Context,
-    request *dto.CreateMerchantUserRequest,
+	ctx context.Context,
+	request *dto.CreateMerchantUserRequest,
 ) (*dto.CreateMerchantUserResponse, error) {
-    return a.MerchantUserService.CreateMerchantUser(
-        request,
-    )
+	return a.MerchantUserService.CreateMerchantUser(
+		request,
+	)
 }
 
 func (a *Registry) GetMerchantById(
 	merchantID uuid.UUID,
- ) (*models.Merchant, error){
+) (*models.Merchant, error) {
 	return a.MerchantRepo.GetMerchantByID(merchantID)
 }
 

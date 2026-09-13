@@ -12,7 +12,7 @@ type VaultRouter struct {
 
 func NewVaultRouter(
 	vaultCtlr *controllers.VaultController,
-) *VaultRouter{
+) *VaultRouter {
 	return &VaultRouter{
 		vaultCtlr: vaultCtlr,
 	}

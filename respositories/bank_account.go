@@ -92,7 +92,7 @@ func (br *BankRepository) UpdateBankAccount(bankAccountID uuid.UUID, request *dt
 	}
 
 	if len(updates) == 1 {
-		return nil, errors.New("No updates to be done")
+		return nil, errors.New("no updates to be done")
 	}
 
 	err := br.db.
@@ -111,4 +111,3 @@ func (br *BankRepository) UpdateBankAccount(bankAccountID uuid.UUID, request *dt
 
 	return updatedBankAccount, nil
 }
-

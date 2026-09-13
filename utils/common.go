@@ -1,10 +1,10 @@
 package utils
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"math/rand"
-	"strconv"
+	"math/big"
 
 	"github.com/Srivastava-samarth/sampay/constants"
 	"github.com/google/uuid"
@@ -57,10 +57,20 @@ func GenerateCustomerReference() *string {
 }
 
 func GenerateBankAccountNumber() string {
-	n := rand.Int63n(9000000000000) + 1000000000000
-	accountNumber := strconv.FormatInt(n, 10)
+	min := big.NewInt(1_000_000_000_000)
+	max := big.NewInt(9_999_999_999_999)
 
-	return accountNumber
+	rangeSize := new(big.Int).Sub(max, min)
+	rangeSize.Add(rangeSize, big.NewInt(1))
+
+	n, err := rand.Int(rand.Reader, rangeSize)
+	if err != nil {
+		panic("failed to generate bank account number")
+	}
+
+	n.Add(n, min)
+
+	return n.String()
 }
 
 func GenerateTemporaryPassword(length int) (string, error) {
@@ -123,13 +133,13 @@ func IsValidVaultType(vaultType string) bool {
 }
 
 func IsValidMerchantStatus(status string) bool {
-    switch status {
-    case constants.MerchantStatusActive,
-        constants.MerchantStatusPending,
-        constants.MerchantStatusSuspended,
-        constants.MerchantStatusInactive:
-        return true
-    default:
-        return false
-    }
+	switch status {
+	case constants.MerchantStatusActive,
+		constants.MerchantStatusPending,
+		constants.MerchantStatusSuspended,
+		constants.MerchantStatusInactive:
+		return true
+	default:
+		return false
+	}
 }

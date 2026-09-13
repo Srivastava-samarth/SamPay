@@ -2,22 +2,23 @@ package database
 
 import (
 	"fmt"
+	"time"
+
 	config "github.com/Srivastava-samarth/sampay/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"time"
 )
 
 // Connect establishes a connection to the PostgreSQL database using the provided configuration.
 func Connect(cfg *config.DatabaseConfig) (*gorm.DB, error) {
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s TimeZone=%s",
-	 cfg.Host, 
-	 cfg.Port, 
-	 cfg.User, 
-	 cfg.Password, 
-	 cfg.Name, 
-	 cfg.SSLMode, 
-	 cfg.TimeZone,
+		cfg.Host,
+		cfg.Port,
+		cfg.User,
+		cfg.Password,
+		cfg.Name,
+		cfg.SSLMode,
+		cfg.TimeZone,
 	)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {

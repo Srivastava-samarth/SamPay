@@ -46,16 +46,16 @@ func (mc *MerchantController) CreateMerchant() gin.HandlerFunc {
 		}
 
 		existingMerchant, errEM := mc.MerchantService.GetMerchantByEmail(request.Email)
-		if errEM != nil{
+		if errEM != nil {
 			dto.Fail(
-				c, 
+				c,
 				http.StatusInternalServerError,
 				"ERROR_FINDING_EXISTING_MERCHANT",
 				errEM.Error(),
 			)
 		}
 
-		if existingMerchant != nil{
+		if existingMerchant != nil {
 			dto.Fail(
 				c, http.StatusBadRequest,
 				"MERCHANT_ALREADY_EXIST",
@@ -313,9 +313,9 @@ func (mc *MerchantController) UpdateMerchantInfo() gin.HandlerFunc {
 			return
 		}
 
-		if merchant.Status != constants.MerchantStatusActive{
+		if merchant.Status != constants.MerchantStatusActive {
 			dto.Fail(
-				c, 
+				c,
 				http.StatusConflict,
 				"MERCHANT_NOT_ACTIVE",
 				"merchant is not active",
@@ -342,10 +342,10 @@ func (mc *MerchantController) UpdateMerchantInfo() gin.HandlerFunc {
 	}
 }
 
-func (mc *MerchantController) UpdateMerchantStatus() gin.HandlerFunc{
+func (mc *MerchantController) UpdateMerchantStatus() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.UpdateMerchantStatusRequest
-		if err := c.ShouldBindJSON(&request);err != nil {
+		if err := c.ShouldBindJSON(&request); err != nil {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
@@ -354,7 +354,7 @@ func (mc *MerchantController) UpdateMerchantStatus() gin.HandlerFunc{
 			)
 			return
 		}
-		
+
 		merchantID := c.Param("merchant_id")
 		if merchantID == "" {
 			dto.Fail(
@@ -378,7 +378,7 @@ func (mc *MerchantController) UpdateMerchantStatus() gin.HandlerFunc{
 		}
 
 		updatedMerchant, errUM := mc.MerchantService.UpdateMerchantStatus(&request.Status, pasredMerchantId)
-		if errUM != nil{
+		if errUM != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
@@ -433,14 +433,14 @@ func (mc *MerchantController) UpdateMerchantKyc() gin.HandlerFunc {
 		}
 
 		updatedMerchant, errUM := mc.MerchantService.UpdateMerchantKycInfo(updateMerchantPayload, pasredMerchantId)
-		if errUM != nil{
+		if errUM != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
 				"UPDATION_MERCHANT_FAILED",
 				errUM.Error(),
 			)
-			return 
+			return
 		}
 
 		dto.Respond(

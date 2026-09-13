@@ -17,7 +17,7 @@ type RefundRepository struct {
 
 func NewRefundRepository(
 	db *gorm.DB,
-) *RefundRepository{
+) *RefundRepository {
 	return &RefundRepository{
 		DB: db,
 	}
@@ -29,23 +29,23 @@ func (pr *RefundRepository) WithTx(tx *gorm.DB) *RefundRepository {
 	}
 }
 
-func (rr *RefundRepository) CreateRefund(request *dto.CreateRefundRequest) (*models.Refund, error){
+func (rr *RefundRepository) CreateRefund(request *dto.CreateRefundRequest) (*models.Refund, error) {
 	createRefundPayload := &models.Refund{
-		ID: utils.GenerateUUID(),
-		PaymentID: request.PaymentID,
-		MerchantID: request.MerchantID,
+		ID:                utils.GenerateUUID(),
+		PaymentID:         request.PaymentID,
+		MerchantID:        request.MerchantID,
 		ExternalReference: request.ExternalReference,
-		RefundReference: *utils.GenerateRefundReference(),
-		Amount: request.Amount,
-		Currency: request.Currency,
-		Reason: request.Reason,
-		Status: constants.TransactionStatusProcessing,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		RefundReference:   *utils.GenerateRefundReference(),
+		Amount:            request.Amount,
+		Currency:          request.Currency,
+		Reason:            request.Reason,
+		Status:            constants.TransactionStatusProcessing,
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
 	}
 
 	err := rr.DB.Create(&createRefundPayload).Error
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -53,21 +53,21 @@ func (rr *RefundRepository) CreateRefund(request *dto.CreateRefundRequest) (*mod
 }
 
 func (rr *RefundRepository) GetRefundsByPaymentID(
-    paymentID uuid.UUID,
+	paymentID uuid.UUID,
 ) ([]*models.Refund, error) {
 
-    var refunds []*models.Refund
+	var refunds []*models.Refund
 
-    err := rr.DB.
-        Where("payment_id = ?", paymentID).
-        Order("created_at DESC").
-        Find(&refunds).Error
+	err := rr.DB.
+		Where("payment_id = ?", paymentID).
+		Order("created_at DESC").
+		Find(&refunds).Error
 
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 
-    return refunds, nil
+	return refunds, nil
 }
 
 func (rr *RefundRepository) GetRefundByReference(
@@ -75,22 +75,22 @@ func (rr *RefundRepository) GetRefundByReference(
 ) (*models.Refund, error) {
 	var refund *models.Refund
 
-    err := rr.DB.
-        Where("refund_reference = ?", refundRef).
-        Order("created_at DESC").
-        Find(&refund).Error
+	err := rr.DB.
+		Where("refund_reference = ?", refundRef).
+		Order("created_at DESC").
+		Find(&refund).Error
 
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 
-    return refund, nil
+	return refund, nil
 }
 
-func (rr *RefundRepository) UpdateRefundStatus(RefundReference string, status string) (*models.Refund, error){
+func (rr *RefundRepository) UpdateRefundStatus(RefundReference string, status string) (*models.Refund, error) {
 	var refund *models.Refund
 	err := rr.DB.Where("refund_reference = ?", RefundReference).First(&refund).Error
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -98,24 +98,24 @@ func (rr *RefundRepository) UpdateRefundStatus(RefundReference string, status st
 		"updated_at": time.Now(),
 	}
 
-	if status == refund.Status{
+	if status == refund.Status {
 		return refund, nil
 	}
 
 	updates["status"] = status
- 
+
 	errU := rr.DB.
 		Model(&models.Refund{}).
 		Where("id = ?", refund.ID).
 		Updates(updates).Error
 
-	if errU != nil{
+	if errU != nil {
 		return nil, errU
 	}
 
 	var updatedRefund *models.Refund
 	errF := rr.DB.Where("id = ?", refund.ID).First(&updatedRefund).Error
-	if errF != nil{
+	if errF != nil {
 		return nil, errF
 	}
 	return updatedRefund, nil

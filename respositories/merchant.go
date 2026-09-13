@@ -92,7 +92,7 @@ func (mp *MerchantRepository) UpdateMerchantCompliance(
 	}
 
 	complianceDetails, errCD := json.Marshal(complianceResponse.ComplianceDetails)
-	if errCD != nil{
+	if errCD != nil {
 		return nil, errCD
 	}
 
@@ -175,9 +175,9 @@ func (mp *MerchantRepository) GetMerchantByEmail(email string) (*models.Merchant
 		Where("email = ?", email).
 		First(&merchant).
 		Error
-	
-	if err != nil{
-		if errors.Is(err, gorm.ErrRecordNotFound){
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 		return nil, err

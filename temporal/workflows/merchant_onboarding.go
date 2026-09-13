@@ -58,7 +58,7 @@ func MerchantONboardingWorkflow(
 	// 3. Stop if rejected
 	if complianceResponse.ComplianceStatus ==
 		constants.ComplianceStatusRejected {
-		// Send KYC re-attempt mail 
+		// Send KYC re-attempt mail
 		err = workflow.ExecuteActivity(
 			ctx,
 			"SendKYCReattemptEmail",

@@ -74,7 +74,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 ) (*models.Payout, error) {
 
 	var finalPayoutAfterUpdate *models.Payout
-		err := a.DB.Transaction(
+	err := a.DB.Transaction(
 		func(tx *gorm.DB) error {
 
 			merchantID := request.MerchantID
@@ -478,7 +478,6 @@ func (a *Registry) ExecutePayoutBankToBank(
 				)
 			}
 
-			
 			if !isBalanceSufficient {
 				return fmt.Errorf(
 					"balance is insufficient: %w",
@@ -494,7 +493,6 @@ func (a *Registry) ExecutePayoutBankToBank(
 				)
 			}
 
-
 			updatedSenderBankAccount, err := bankAccountRepo.UpdateBankAccount(
 				senderBankAccount.ID,
 				&dto.UpdateBankAccountRequest{
@@ -509,7 +507,7 @@ func (a *Registry) ExecutePayoutBankToBank(
 			}
 
 			receiverBankAccount, errRBA := bankAccountRepo.GetBankAccountByID(request.Request.DestinationBankAccountID)
-			if errRBA != nil{
+			if errRBA != nil {
 				return fmt.Errorf(
 					"getting receiver bank account: %w",
 					errRBA,
@@ -522,7 +520,7 @@ func (a *Registry) ExecutePayoutBankToBank(
 					Balance: receiverBankAccount.Balance.Add(totalAmount),
 				},
 			)
-			if errURBA != nil{
+			if errURBA != nil {
 				return fmt.Errorf(
 					"update receiver bank account: %w",
 					errRBA,

@@ -16,7 +16,7 @@ func MerchantUpdateKycFlow(
 	ctx workflow.Context,
 	request dto.UpdateKYCRequest,
 	merchantID uuid.UUID,
-) (*models.Merchant, error ){
+) (*models.Merchant, error) {
 
 	activityOptions := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Minute,
@@ -36,7 +36,7 @@ func MerchantUpdateKycFlow(
 
 	complianceRequest := &dto.CreateMerchantOnboardingRequest{
 		Individual: request.Individual,
-		Company: request.Company,
+		Company:    request.Company,
 	}
 	err := workflow.ExecuteActivity(
 		ctx,
@@ -68,7 +68,7 @@ func MerchantUpdateKycFlow(
 		merchantID,
 	).Get(ctx, &merchant)
 
-	if errM != nil{
+	if errM != nil {
 		return nil, err
 	}
 
@@ -95,10 +95,10 @@ func MerchantUpdateKycFlow(
 	merchantOnboardingRequest := &dto.CreateMerchantOnboardingRequest{
 		MerchantType: merchant.MerchantType,
 		MerchantName: merchant.MerchantName,
-		Email: merchant.Email,
-		PhoneNumber: merchant.PhoneNumber,
-		Individual: request.Individual,
-		Company: request.Company,
+		Email:        merchant.Email,
+		PhoneNumber:  merchant.PhoneNumber,
+		Individual:   request.Individual,
+		Company:      request.Company,
 	}
 
 	err = workflow.ExecuteActivity(
@@ -132,7 +132,7 @@ func MerchantUpdateKycFlow(
 		merchantID,
 	).Get(ctx, &updatedMerchant)
 
-	if errUM != nil{
+	if errUM != nil {
 		return nil, errUM
 	}
 

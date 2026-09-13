@@ -1,6 +1,6 @@
 package constants
 
 const (
-	BankAccountTypePrimary = "primary"
+	BankAccountTypePrimary   = "primary"
 	BankAccountTypeSecondary = "secondary"
 )

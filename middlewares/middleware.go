@@ -47,7 +47,6 @@ func (j *Jwt) Authenticate() gin.HandlerFunc {
 	}
 }
 
-
 func RequireRole(roles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
@@ -91,7 +90,7 @@ func RequireMerchantAccess(role string) gin.HandlerFunc {
 			return
 		}
 
-		if roleAssigned == role{
+		if roleAssigned == role {
 			c.Next()
 		}
 
