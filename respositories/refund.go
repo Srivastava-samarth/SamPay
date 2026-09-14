@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"time"
 
 	"github.com/Srivastava-samarth/sampay/constants"
@@ -81,6 +82,9 @@ func (rr *RefundRepository) GetRefundByReference(
 		Find(&refund).Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 

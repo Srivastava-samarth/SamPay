@@ -5,7 +5,7 @@ CREATE TABLE payouts (
     merchant_id UUID NOT NULL,
     source_wallet_id UUID,
     source_bank_account_id UUID,
-    destination_linked_bank_account_id  UUID NOT NULL,
+    destination_bank_account_id  UUID NOT NULL,
     payout_reference VARCHAR(255) UNIQUE NOT NULL,
     external_reference VARCHAR(255),
     amount NUMERIC(20, 2) NOT NULL,
@@ -27,9 +27,9 @@ CREATE TABLE payouts (
         FOREIGN KEY (source_bank_account_id)
         REFERENCES bank_accounts(id),
 
-    CONSTRAINT fk_payouts_destination_linked_bank_account
-    FOREIGN KEY (destination_linked_bank_account_id)
-    REFERENCES linked_bank_accounts(id),
+    CONSTRAINT fk_payouts_destination_bank_account
+    FOREIGN KEY (destination_bank_account_id)
+    REFERENCES bank_account(id),
 
     CONSTRAINT chk_payouts_amount
         CHECK (amount > 0),

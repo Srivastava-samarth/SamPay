@@ -101,6 +101,10 @@ func (rs *RefundService) GetRefundByReference(
 		return nil, errR
 	}
 
+	if refund == nil {
+		return nil, errors.New("refund not found")
+	}
+
 	return refund, nil
 }
 
