@@ -123,7 +123,7 @@ func (a *Registry) RefundFromMerchantWallet(
 
 			updateSenderAvailableAmount := refundSenderWallet.AvailableBalance.Sub(Amount)
 			updatedSenderReservedAmount := refundSenderWallet.ReservedBalance.Add(Amount)
-			updatedRefundSenderWallet, errURSW := walletRepo.UpdateWalletBalance(refundSenderMerchantID, &dto.UpdateWallletBalanceRequest{
+			updatedRefundSenderWallet, errURSW := walletRepo.UpdateWalletBalance(refundSenderMerchantID, &dto.UpdateWalletBalanceRequest{
 				AvailableBalance: updateSenderAvailableAmount,
 				ReservedBalance:  updatedSenderReservedAmount,
 			})
@@ -151,7 +151,7 @@ func (a *Registry) RefundFromMerchantWallet(
 				return errUPV
 			}
 
-			updatedRefundSenderWalletAfterBalance, errRSWAB := walletRepo.UpdateWalletBalance(refundSenderMerchantID, &dto.UpdateWallletBalanceRequest{
+			updatedRefundSenderWalletAfterBalance, errRSWAB := walletRepo.UpdateWalletBalance(refundSenderMerchantID, &dto.UpdateWalletBalanceRequest{
 				ReservedBalance: updatedRefundSenderWallet.ReservedBalance.Sub(Amount),
 			})
 
@@ -198,7 +198,7 @@ func (a *Registry) RefundFromMerchantWallet(
 				return errUPVAB
 			}
 
-			updatedRefundReceiverWallet, errURRW := walletRepo.UpdateWalletBalance(refundReceiverMerchantID, &dto.UpdateWallletBalanceRequest{
+			updatedRefundReceiverWallet, errURRW := walletRepo.UpdateWalletBalance(refundReceiverMerchantID, &dto.UpdateWalletBalanceRequest{
 				AvailableBalance: refundReceiverWallet.AvailableBalance.Add(Amount),
 			})
 
@@ -311,7 +311,7 @@ func (a *Registry) RefundFromPaymentVault(
 				return errUPV
 			}
 
-			updatedReceiverWallet, errURW := walletRepo.UpdateWalletBalance(refundReceiverMerchantID, &dto.UpdateWallletBalanceRequest{
+			updatedReceiverWallet, errURW := walletRepo.UpdateWalletBalance(refundReceiverMerchantID, &dto.UpdateWalletBalanceRequest{
 				AvailableBalance: refundReceiverWallet.AvailableBalance.Add(Amount),
 			})
 

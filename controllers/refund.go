@@ -223,7 +223,7 @@ func (rc *RefundController) GetRefundByReference() gin.HandlerFunc {
 		}
 
 		refund, errR := rc.RefundSrvc.GetRefundByReference(refundRef)
-		if errR != nil{
+		if errR != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,

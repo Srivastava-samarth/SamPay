@@ -80,7 +80,7 @@ func (wr *WalletRepository) UpdateWalletStatus(merchantId uuid.UUID, status stri
 	return wallet, nil
 }
 
-func (wr *WalletRepository) UpdateWalletBalance(merchantID uuid.UUID, walletRequest *dto.UpdateWallletBalanceRequest) (*models.Wallets, error) {
+func (wr *WalletRepository) UpdateWalletBalance(merchantID uuid.UUID, walletRequest *dto.UpdateWalletBalanceRequest) (*models.Wallets, error) {
 	updates := map[string]interface{}{
 		"updated_at": time.Now(),
 	}

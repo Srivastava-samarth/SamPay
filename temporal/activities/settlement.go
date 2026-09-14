@@ -57,7 +57,7 @@ func (a *Registry) ExecuteSettlementByMerchant(
 			return errUPV
 		}
 
-		updatedWallet, errUW := walletRepo.UpdateWalletBalance(merchantID, &dto.UpdateWallletBalanceRequest{
+		updatedWallet, errUW := walletRepo.UpdateWalletBalance(merchantID, &dto.UpdateWalletBalanceRequest{
 			AvailableBalance: wallet.AvailableBalance.Add(payment.Amount),
 		})
 

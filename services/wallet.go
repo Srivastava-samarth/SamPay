@@ -39,6 +39,19 @@ func NewWalletService(
 }
 
 func (ws *WalletService) CreateWalletForMerchant(merchantID uuid.UUID) (*models.Wallets, error) {
+	if merchantID == uuid.Nil {
+		return nil, errors.New("merchant id is required")
+	}
+
+	existingWallet, errEW := ws.WalletRepo.GetWalletByMerchantId(merchantID)
+	if errEW != nil {
+		return nil, errEW
+	}
+
+	if existingWallet != nil {
+		return nil, errors.New("wallet already exists for this merchant")
+	}
+
 	wallet, walletErr := ws.WalletRepo.CreateWalletForMerchant(merchantID)
 	if walletErr != nil {
 		return nil, walletErr
@@ -47,6 +60,10 @@ func (ws *WalletService) CreateWalletForMerchant(merchantID uuid.UUID) (*models.
 }
 
 func (ws *WalletService) GetWalletByMerchantID(merchantID uuid.UUID) (*models.Wallets, error) {
+	if merchantID == uuid.Nil {
+		return nil, errors.New("merchant id is required")
+	}
+
 	wallet, errW := ws.WalletRepo.GetWalletByMerchantId(merchantID)
 	if errW != nil {
 		return nil, errW
@@ -55,6 +72,9 @@ func (ws *WalletService) GetWalletByMerchantID(merchantID uuid.UUID) (*models.Wa
 }
 
 func (ws *WalletService) UpdateWalletStatus(merchantId uuid.UUID, status string) (*models.Wallets, error) {
+	if merchantId == uuid.Nil {
+		return nil, errors.New("merchant id is required")
+	}
 	updatedWallet, errUW := ws.WalletRepo.UpdateWalletStatus(merchantId, status)
 	if errUW != nil {
 		return nil, errUW
@@ -125,7 +145,7 @@ func (ws *WalletService) TopUpWalletFromPrimaryBank(
 
 	updatedWallet, err := walletRepo.UpdateWalletBalance(
 		wallet.MerchantID,
-		&dto.UpdateWallletBalanceRequest{
+		&dto.UpdateWalletBalanceRequest{
 			AvailableBalance: wallet.AvailableBalance.Add(amount),
 		},
 	)
