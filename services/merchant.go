@@ -86,6 +86,22 @@ func (ms *MerchantService) CreateInitialMerchant(merchantRequest *dto.CreateMerc
 		return nil, errors.New("request can't be empty")
 	}
 
+	if merchantRequest.MerchantName == "" {
+		return nil, errors.New("merchant name is required")
+	}
+
+	if merchantRequest.Email == "" {
+		return nil, errors.New("email is required")
+	}
+
+	if merchantRequest.MerchantType == "" {
+		return nil, errors.New("merchant type is required")
+	}
+
+	if merchantRequest.PhoneNumber == "" {
+		return nil, errors.New("phone number is required")
+	}
+
 	initialMerchantRequest := models.Merchant{
 		MerchantName:     merchantRequest.MerchantName,
 		Email:            merchantRequest.Email,
@@ -263,6 +279,14 @@ func (ms *MerchantService) ProvisionMerchant(
 }
 
 func (ms *MerchantService) UpdateMerchantCompliance(merchantID uuid.UUID, complianceResponse *dto.ComplianceCheckResponse) (*models.Merchant, error) {
+	if merchantID == uuid.Nil {
+		return nil, errors.New("merchant_id is required")
+	}
+
+	if complianceResponse == nil {
+		return nil, errors.New("compliance response is required")
+	}
+
 	updatedMerchant, err := ms.MerchantRepo.UpdateMerchantCompliance(merchantID, complianceResponse)
 	if err != nil {
 		return nil, err
@@ -277,18 +301,9 @@ func (ms *MerchantService) ValidateMerchantOnboardingRequest(r *dto.CreateMercha
 			return errors.New("individual details are required")
 		}
 
-		if r.Company != nil {
-			return errors.New("company details are not allowed for individual merchant")
-
-		}
-
 	case "company":
 		if r.Company == nil {
 			return errors.New("company details are required")
-		}
-
-		if r.Individual != nil {
-			return errors.New("individual details are not allowed for company merchant")
 		}
 	}
 

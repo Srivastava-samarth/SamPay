@@ -31,6 +31,22 @@ type CreatedUserResult struct {
 }
 
 func (us *UserService) CreateUser(userRequest *dto.CreateUserRequest) (*CreatedUserResult, error) {
+	if userRequest == nil {
+		return nil, errors.New("request is required")
+	}
+
+	if userRequest.Email == "" {
+		return nil, errors.New("email is required")
+	}
+
+	if userRequest.FirstName == "" {
+		return nil, errors.New("first name is required")
+	}
+
+	if userRequest.LastName == "" {
+		return nil, errors.New("last name is required")
+	}
+
 	password, errP := utils.GenerateTemporaryPassword(8)
 	if errP != nil {
 		return nil, errP
@@ -69,6 +85,9 @@ func (us *UserService) CreateUser(userRequest *dto.CreateUserRequest) (*CreatedU
 }
 
 func (us *UserService) GetUser(userId uuid.UUID) (*models.User, error) {
+	if userId == uuid.Nil {
+		return nil, errors.New("user_id is required")
+	}
 	user, errU := us.UserRepo.GetUserByID(userId)
 	if errU != nil {
 		return nil, errU
@@ -146,6 +165,9 @@ func (us *UserService) UpdateUserStatus(status string, userID uuid.UUID) (*model
 }
 
 func (us *UserService) GetUsersByMerchant(merchantID uuid.UUID) ([]*models.User, error) {
+	if merchantID == uuid.Nil {
+		return nil, errors.New("merchant_id is required")
+	}
 	merchantUsers, errMU := us.MerchantUserRepo.GetMerchantUsersByMerchantID(merchantID)
 	if errMU != nil {
 		return nil, errMU
