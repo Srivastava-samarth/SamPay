@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"os"
 	"testing"
 
 	"github.com/Srivastava-samarth/sampay/constants"
@@ -9,27 +8,7 @@ import (
 	"github.com/Srivastava-samarth/sampay/testutils"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
 )
-
-var db *gorm.DB
-
-func TestMain(m *testing.M) {
-	var err error
-
-	db, err = testutils.SetupTestDB()
-	if err != nil {
-		panic(err)
-	}
-
-	code := m.Run()
-
-	if err := testutils.CleanupTestDB(db); err != nil {
-		panic(err)
-	}
-
-	os.Exit(code)
-}
 
 func TestCreatePayment(t *testing.T) {
 	senderMerchant := testutils.GenerateTestMerchant()
@@ -43,8 +22,6 @@ func TestCreatePayment(t *testing.T) {
 		t.Fatalf("failed to create receiver merchant: %v", err)
 	}
 
-	repo := NewPaymentRepository(db)
-
 	status := constants.TransactionStatusCompleted
 
 	request := &dto.CreatePaymentRequest{
@@ -54,7 +31,7 @@ func TestCreatePayment(t *testing.T) {
 		Description:        "integration test payment",
 	}
 
-	payment, err := repo.CreatePayment(
+	payment, err := testRepo.CreatePayment(
 		senderMerchant.ID,
 		request,
 		&status,
@@ -121,7 +98,6 @@ func TestCreatePayment(t *testing.T) {
 }
 
 func TestUpdatePaymentStatus(t *testing.T) {
-	repo := NewPaymentRepository(db)
 
 	t.Run("updates payment status", func(t *testing.T) {
 		senderMerchant := testutils.GenerateTestMerchant()
@@ -144,7 +120,7 @@ func TestUpdatePaymentStatus(t *testing.T) {
 			Description:        "update status test",
 		}
 
-		payment, err := repo.CreatePayment(
+		payment, err := testRepo.CreatePayment(
 			senderMerchant.ID,
 			request,
 			&initialStatus,
@@ -155,7 +131,7 @@ func TestUpdatePaymentStatus(t *testing.T) {
 
 		newStatus := constants.TransactionStatusCompleted
 
-		updatedPayment, err := repo.UpdatePaymentStatus(
+		updatedPayment, err := testRepo.UpdatePaymentStatus(
 			*payment.PaymentReference,
 			&newStatus,
 		)
@@ -201,7 +177,7 @@ func TestUpdatePaymentStatus(t *testing.T) {
 			Description:        "same status test",
 		}
 
-		payment, err := repo.CreatePayment(
+		payment, err := testRepo.CreatePayment(
 			senderMerchant.ID,
 			request,
 			&status,
@@ -210,7 +186,7 @@ func TestUpdatePaymentStatus(t *testing.T) {
 			t.Fatalf("failed to create payment: %v", err)
 		}
 
-		updatedPayment, err := repo.UpdatePaymentStatus(
+		updatedPayment, err := testRepo.UpdatePaymentStatus(
 			*payment.PaymentReference,
 			&status,
 		)
@@ -247,7 +223,7 @@ func TestUpdatePaymentStatus(t *testing.T) {
 		status := constants.TransactionStatusCompleted
 		paymentReference := "nonexistent-payment-reference"
 
-		updatedPayment, err := repo.UpdatePaymentStatus(
+		updatedPayment, err := testRepo.UpdatePaymentStatus(
 			paymentReference,
 			&status,
 		)
@@ -263,7 +239,6 @@ func TestUpdatePaymentStatus(t *testing.T) {
 }
 
 func TestUpdateSettlementStatusByID(t *testing.T) {
-	repo := NewPaymentRepository(db)
 
 	t.Run("updates settlement status", func(t *testing.T) {
 		senderMerchant := testutils.GenerateTestMerchant()
@@ -286,7 +261,7 @@ func TestUpdateSettlementStatusByID(t *testing.T) {
 			Description:        "settlement status test",
 		}
 
-		payment, err := repo.CreatePayment(
+		payment, err := testRepo.CreatePayment(
 			senderMerchant.ID,
 			request,
 			&status,
@@ -297,7 +272,7 @@ func TestUpdateSettlementStatusByID(t *testing.T) {
 
 		newSettlementStatus := constants.LedgerSettlementSettled
 
-		updatedPayment, err := repo.UpdateSettlementStatusByID(
+		updatedPayment, err := testRepo.UpdateSettlementStatusByID(
 			payment.ID,
 			&newSettlementStatus,
 		)
@@ -334,7 +309,7 @@ func TestUpdateSettlementStatusByID(t *testing.T) {
 		paymentID := uuid.New()
 		settlementStatus := constants.LedgerSettlementSettled
 
-		updatedPayment, err := repo.UpdateSettlementStatusByID(
+		updatedPayment, err := testRepo.UpdateSettlementStatusByID(
 			paymentID,
 			&settlementStatus,
 		)
@@ -350,7 +325,6 @@ func TestUpdateSettlementStatusByID(t *testing.T) {
 }
 
 func TestGetPaymentByID(t *testing.T) {
-	repo := NewPaymentRepository(db)
 
 	t.Run("returns payment by ID", func(t *testing.T) {
 		senderMerchant := testutils.GenerateTestMerchant()
@@ -373,7 +347,7 @@ func TestGetPaymentByID(t *testing.T) {
 			Description:        "get payment test",
 		}
 
-		createdPayment, err := repo.CreatePayment(
+		createdPayment, err := testRepo.CreatePayment(
 			senderMerchant.ID,
 			request,
 			&status,
@@ -382,7 +356,7 @@ func TestGetPaymentByID(t *testing.T) {
 			t.Fatalf("failed to create payment: %v", err)
 		}
 
-		payment, err := repo.GetPaymentByID(createdPayment.ID)
+		payment, err := testRepo.GetPaymentByID(createdPayment.ID)
 		if err != nil {
 			t.Fatalf("failed to get payment: %v", err)
 		}
@@ -419,7 +393,7 @@ func TestGetPaymentByID(t *testing.T) {
 	t.Run("returns nil when payment does not exist", func(t *testing.T) {
 		paymentID := uuid.New()
 
-		payment, err := repo.GetPaymentByID(paymentID)
+		payment, err := testRepo.GetPaymentByID(paymentID)
 
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
@@ -432,7 +406,6 @@ func TestGetPaymentByID(t *testing.T) {
 }
 
 func TestGetPaymentsBySettlementStatus(t *testing.T) {
-	repo := NewPaymentRepository(db)
 
 	t.Run("returns completed payments with matching settlement status", func(t *testing.T) {
 		senderMerchant := testutils.GenerateTestMerchant()
@@ -455,7 +428,7 @@ func TestGetPaymentsBySettlementStatus(t *testing.T) {
 			Description:        "settlement status filter test",
 		}
 
-		payment, err := repo.CreatePayment(
+		payment, err := testRepo.CreatePayment(
 			senderMerchant.ID,
 			request,
 			&status,
@@ -466,7 +439,7 @@ func TestGetPaymentsBySettlementStatus(t *testing.T) {
 
 		settlementStatus := constants.LedgerSettlementSettled
 
-		_, err = repo.UpdateSettlementStatusByID(
+		_, err = testRepo.UpdateSettlementStatusByID(
 			payment.ID,
 			&settlementStatus,
 		)
@@ -474,7 +447,7 @@ func TestGetPaymentsBySettlementStatus(t *testing.T) {
 			t.Fatalf("failed to update settlement status: %v", err)
 		}
 
-		payments, err := repo.GetPaymentsBySettlementStatus(
+		payments, err := testRepo.GetPaymentsBySettlementStatus(
 			settlementStatus,
 		)
 		if err != nil {
@@ -519,7 +492,7 @@ func TestGetPaymentsBySettlementStatus(t *testing.T) {
 			Description:        "different settlement status test",
 		}
 
-		payment, err := repo.CreatePayment(
+		payment, err := testRepo.CreatePayment(
 			senderMerchant.ID,
 			request,
 			&status,
@@ -530,7 +503,7 @@ func TestGetPaymentsBySettlementStatus(t *testing.T) {
 
 		differentSettlementStatus := constants.LedgerSettlementSettled
 
-		_, err = repo.UpdateSettlementStatusByID(
+		_, err = testRepo.UpdateSettlementStatusByID(
 			payment.ID,
 			&differentSettlementStatus,
 		)
@@ -540,7 +513,7 @@ func TestGetPaymentsBySettlementStatus(t *testing.T) {
 
 		requestedSettlementStatus := constants.LedgerSettlementPending
 
-		payments, err := repo.GetPaymentsBySettlementStatus(
+		payments, err := testRepo.GetPaymentsBySettlementStatus(
 			requestedSettlementStatus,
 		)
 		if err != nil {
@@ -578,7 +551,7 @@ func TestGetPaymentsBySettlementStatus(t *testing.T) {
 			Description:        "non completed payment test",
 		}
 
-		payment, err := repo.CreatePayment(
+		payment, err := testRepo.CreatePayment(
 			senderMerchant.ID,
 			request,
 			&status,
@@ -589,7 +562,7 @@ func TestGetPaymentsBySettlementStatus(t *testing.T) {
 
 		settlementStatus := constants.LedgerSettlementPending
 
-		payments, err := repo.GetPaymentsBySettlementStatus(
+		payments, err := testRepo.GetPaymentsBySettlementStatus(
 			settlementStatus,
 		)
 		if err != nil {
@@ -609,7 +582,7 @@ func TestGetPaymentsBySettlementStatus(t *testing.T) {
 	t.Run("returns empty result when no payments match", func(t *testing.T) {
 		settlementStatus := "non_existent_settlement_status"
 
-		payments, err := repo.GetPaymentsBySettlementStatus(
+		payments, err := testRepo.GetPaymentsBySettlementStatus(
 			settlementStatus,
 		)
 		if err != nil {
@@ -626,7 +599,6 @@ func TestGetPaymentsBySettlementStatus(t *testing.T) {
 }
 
 func TestGetPaymentsByMerchantID(t *testing.T) {
-	repo := NewPaymentRepository(db)
 
 	t.Run("returns payments for merchant", func(t *testing.T) {
 		senderMerchant := testutils.GenerateTestMerchant()
@@ -649,7 +621,7 @@ func TestGetPaymentsByMerchantID(t *testing.T) {
 			Description:        "merchant payment test",
 		}
 
-		payment, err := repo.CreatePayment(
+		payment, err := testRepo.CreatePayment(
 			senderMerchant.ID,
 			request,
 			&status,
@@ -658,7 +630,7 @@ func TestGetPaymentsByMerchantID(t *testing.T) {
 			t.Fatalf("failed to create payment: %v", err)
 		}
 
-		payments, err := repo.GetPaymentsByMerchantID(senderMerchant.ID)
+		payments, err := testRepo.GetPaymentsByMerchantID(senderMerchant.ID)
 		if err != nil {
 			t.Fatalf("failed to get payments: %v", err)
 		}
@@ -707,7 +679,7 @@ func TestGetPaymentsByMerchantID(t *testing.T) {
 			Description:        "merchant filter test",
 		}
 
-		payment, err := repo.CreatePayment(
+		payment, err := testRepo.CreatePayment(
 			senderMerchant.ID,
 			request,
 			&status,
@@ -716,7 +688,7 @@ func TestGetPaymentsByMerchantID(t *testing.T) {
 			t.Fatalf("failed to create payment: %v", err)
 		}
 
-		payments, err := repo.GetPaymentsByMerchantID(otherMerchant.ID)
+		payments, err := testRepo.GetPaymentsByMerchantID(otherMerchant.ID)
 		if err != nil {
 			t.Fatalf("failed to get payments: %v", err)
 		}
@@ -739,7 +711,7 @@ func TestGetPaymentsByMerchantID(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		payments, err := repo.GetPaymentsByMerchantID(merchant.ID)
+		payments, err := testRepo.GetPaymentsByMerchantID(merchant.ID)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}

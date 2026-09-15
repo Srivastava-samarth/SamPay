@@ -11,7 +11,6 @@ import (
 )
 
 func TestCreateWalletForMerchant(t *testing.T) {
-	repo := NewWalletRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 
@@ -19,7 +18,7 @@ func TestCreateWalletForMerchant(t *testing.T) {
 		t.Fatalf("failed to create merchant: %v", err)
 	}
 
-	result, err := repo.CreateWalletForMerchant(merchant.ID)
+	result, err := testRepo.CreateWalletForMerchant(merchant.ID)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -63,7 +62,6 @@ func TestCreateWalletForMerchant(t *testing.T) {
 }
 
 func TestGetWalletByMerchantId(t *testing.T) {
-	repo := NewWalletRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 
@@ -85,7 +83,7 @@ func TestGetWalletByMerchantId(t *testing.T) {
 		t.Fatalf("failed to create wallet: %v", err)
 	}
 
-	result, err := repo.GetWalletByMerchantId(merchant.ID)
+	result, err := testRepo.GetWalletByMerchantId(merchant.ID)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -105,7 +103,7 @@ func TestGetWalletByMerchantId(t *testing.T) {
 
 	nonExistentMerchantID := uuid.New()
 
-	result, err = repo.GetWalletByMerchantId(nonExistentMerchantID)
+	result, err = testRepo.GetWalletByMerchantId(nonExistentMerchantID)
 
 	if err != nil {
 		t.Fatalf("unexpected error for non-existent merchant: %v", err)
@@ -117,7 +115,6 @@ func TestGetWalletByMerchantId(t *testing.T) {
 }
 
 func TestUpdateWalletStatus(t *testing.T) {
-	repo := NewWalletRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 
@@ -141,7 +138,7 @@ func TestUpdateWalletStatus(t *testing.T) {
 
 	newStatus := "inactive"
 
-	result, err := repo.UpdateWalletStatus(merchant.ID, newStatus)
+	result, err := testRepo.UpdateWalletStatus(merchant.ID, newStatus)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -165,7 +162,6 @@ func TestUpdateWalletStatus(t *testing.T) {
 }
 
 func TestUpdateWalletBalance(t *testing.T) {
-	repo := NewWalletRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 
@@ -192,7 +188,7 @@ func TestUpdateWalletBalance(t *testing.T) {
 		ReservedBalance:  decimal.NewFromInt(2000),
 	}
 
-	result, err := repo.UpdateWalletBalance(merchant.ID, request)
+	result, err := testRepo.UpdateWalletBalance(merchant.ID, request)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -227,7 +223,7 @@ func TestUpdateWalletBalance(t *testing.T) {
 		ReservedBalance:  decimal.Zero,
 	}
 
-	result, err = repo.UpdateWalletBalance(merchant.ID, request)
+	result, err = testRepo.UpdateWalletBalance(merchant.ID, request)
 
 	if err != nil {
 		t.Fatalf("unexpected error when updating with zero values: %v", err)

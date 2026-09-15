@@ -15,7 +15,6 @@ import (
 )
 
 func TestCreateBankAccount(t *testing.T) {
-	repo := NewBankRepository(db)
 
 	accountName := "Test Bank Account"
 	accountType := constants.BankAccountTypePrimary
@@ -25,7 +24,7 @@ func TestCreateBankAccount(t *testing.T) {
 		AccountType: accountType,
 	}
 
-	bankAccount, err := repo.CreateBankAccount(request)
+	bankAccount, err := testRepo.CreateBankAccount(request)
 
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -106,7 +105,6 @@ func TestCreateBankAccount(t *testing.T) {
 }
 
 func TestGetBankAccountByID(t *testing.T) {
-	repo := NewBankRepository(db)
 
 	accountName := "Test Bank Account"
 	accountType := "savings"
@@ -116,13 +114,13 @@ func TestGetBankAccountByID(t *testing.T) {
 		AccountType: accountType,
 	}
 
-	createdBankAccount, err := repo.CreateBankAccount(request)
+	createdBankAccount, err := testRepo.CreateBankAccount(request)
 	if err != nil {
 		t.Fatalf("failed to create bank account: %v", err)
 	}
 
 	t.Run("existing bank account", func(t *testing.T) {
-		bankAccount, err := repo.GetBankAccountByID(createdBankAccount.ID)
+		bankAccount, err := testRepo.GetBankAccountByID(createdBankAccount.ID)
 
 		if err != nil {
 			t.Fatalf("expected no error, got: %v", err)
@@ -160,7 +158,7 @@ func TestGetBankAccountByID(t *testing.T) {
 	t.Run("non-existing bank account", func(t *testing.T) {
 		nonExistingID := uuid.New()
 
-		bankAccount, err := repo.GetBankAccountByID(nonExistingID)
+		bankAccount, err := testRepo.GetBankAccountByID(nonExistingID)
 
 		if err == nil {
 			t.Fatal("expected error, got nil")
@@ -180,8 +178,6 @@ func TestGetBankAccountByID(t *testing.T) {
 }
 
 func TestUpdateBankAccount(t *testing.T) {
-	repo := NewBankRepository(db)
-
 	accountName := "Original Account"
 	accountType := constants.BankAccountTypePrimary
 
@@ -190,7 +186,7 @@ func TestUpdateBankAccount(t *testing.T) {
 		AccountType: accountType,
 	}
 
-	bankAccount, err := repo.CreateBankAccount(request)
+	bankAccount, err := testRepo.CreateBankAccount(request)
 	if err != nil {
 		t.Fatalf("failed to create bank account: %v", err)
 	}
@@ -208,7 +204,7 @@ func TestUpdateBankAccount(t *testing.T) {
 			Status:      newStatus,
 		}
 
-		updatedBankAccount, err := repo.UpdateBankAccount(
+		updatedBankAccount, err := testRepo.UpdateBankAccount(
 			bankAccount.ID,
 			updateRequest,
 		)
@@ -276,7 +272,7 @@ func TestUpdateBankAccount(t *testing.T) {
 			AccountType: accountType,
 		}
 
-		account, err := repo.CreateBankAccount(createRequest)
+		account, err := testRepo.CreateBankAccount(createRequest)
 		if err != nil {
 			t.Fatalf("failed to create bank account: %v", err)
 		}
@@ -288,7 +284,7 @@ func TestUpdateBankAccount(t *testing.T) {
 			Status:      account.Status,
 		}
 
-		updatedBankAccount, err := repo.UpdateBankAccount(
+		updatedBankAccount, err := testRepo.UpdateBankAccount(
 			account.ID,
 			updateRequest,
 		)
@@ -341,7 +337,7 @@ func TestUpdateBankAccount(t *testing.T) {
 			AccountName: newName,
 		}
 
-		updatedBankAccount, err := repo.UpdateBankAccount(
+		updatedBankAccount, err := testRepo.UpdateBankAccount(
 			inactiveAccount.ID,
 			updateRequest,
 		)

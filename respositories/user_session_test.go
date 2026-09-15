@@ -10,7 +10,6 @@ import (
 )
 
 func TestCreateUserSession(t *testing.T) {
-	repo := NewUserSessionRepository(db)
 
 	refreshTokenHash := "test-refresh-token-" + uuid.NewString()
 	expiresAt := time.Now().Add(time.Hour)
@@ -42,7 +41,7 @@ func TestCreateUserSession(t *testing.T) {
 		ExpiresAt:        expiresAt,
 	}
 
-	result, err := repo.CreateUserSession(session)
+	result, err := testRepo.CreateUserSession(session)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -78,7 +77,6 @@ func TestCreateUserSession(t *testing.T) {
 }
 
 func TestGetUserSessionByRefreshTokenHash(t *testing.T) {
-	repo := NewUserSessionRepository(db)
 
 	refreshTokenHash := "test-refresh-token-" + uuid.NewString()
 	email := uuid.NewString() + "@test.com"
@@ -115,7 +113,7 @@ func TestGetUserSessionByRefreshTokenHash(t *testing.T) {
 		t.Fatalf("failed to create user session: %v", err)
 	}
 
-	result, err := repo.GetUserSessionByRefreshTokenHash(refreshTokenHash)
+	result, err := testRepo.GetUserSessionByRefreshTokenHash(refreshTokenHash)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -135,7 +133,7 @@ func TestGetUserSessionByRefreshTokenHash(t *testing.T) {
 
 	invalidHash := "invalid-refresh-token-" + uuid.NewString()
 
-	_, err = repo.GetUserSessionByRefreshTokenHash(invalidHash)
+	_, err = testRepo.GetUserSessionByRefreshTokenHash(invalidHash)
 
 	if err == nil {
 		t.Fatal("expected error for invalid refresh token hash")

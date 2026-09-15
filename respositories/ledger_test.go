@@ -14,7 +14,6 @@ import (
 )
 
 func TestCreateLedgerEntry(t *testing.T) {
-	repo := NewLedgerRepository(db)
 
 	ledgerTransaction := &models.LedgerTransaction{
 		ID:               uuid.New(),
@@ -46,7 +45,7 @@ func TestCreateLedgerEntry(t *testing.T) {
 		Currency:            currency,
 	}
 
-	result, err := repo.CreateLedgerEntry(requestEntry)
+	result, err := testRepo.CreateLedgerEntry(requestEntry)
 
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -94,7 +93,6 @@ func TestCreateLedgerEntry(t *testing.T) {
 }
 
 func TestCreateLedgerTransaction(t *testing.T) {
-	repo := NewLedgerRepository(db)
 
 	referenceID := uuid.NewString()
 
@@ -105,7 +103,7 @@ func TestCreateLedgerTransaction(t *testing.T) {
 		SettlementStatus: constants.LedgerSettlementPending,
 	}
 
-	result, err := repo.CreateLedgerTransaction(requestTransaction)
+	result, err := testRepo.CreateLedgerTransaction(requestTransaction)
 
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -179,7 +177,6 @@ func TestCreateLedgerTransaction(t *testing.T) {
 }
 
 func TestExistingLedgerTransactionByReferenceID(t *testing.T) {
-	repo := NewLedgerRepository(db)
 
 	referenceID := uuid.NewString()
 
@@ -199,7 +196,7 @@ func TestExistingLedgerTransactionByReferenceID(t *testing.T) {
 	}
 
 	t.Run("existing reference ID", func(t *testing.T) {
-		result, err := repo.ExistingLedgerTransactionByReferenceID(referenceID)
+		result, err := testRepo.ExistingLedgerTransactionByReferenceID(referenceID)
 
 		if err != nil {
 			t.Fatalf("expected no error, got: %v", err)
@@ -213,7 +210,7 @@ func TestExistingLedgerTransactionByReferenceID(t *testing.T) {
 	t.Run("non-existing reference ID", func(t *testing.T) {
 		nonExistingReferenceID := uuid.NewString()
 
-		result, err := repo.ExistingLedgerTransactionByReferenceID(
+		result, err := testRepo.ExistingLedgerTransactionByReferenceID(
 			nonExistingReferenceID,
 		)
 
@@ -228,7 +225,6 @@ func TestExistingLedgerTransactionByReferenceID(t *testing.T) {
 }
 
 func TestGetLedgerTransactionByID(t *testing.T) {
-	repo := NewLedgerRepository(db)
 
 	ledgerTransaction := &models.LedgerTransaction{
 		ID:               uuid.New(),
@@ -246,7 +242,7 @@ func TestGetLedgerTransactionByID(t *testing.T) {
 	}
 
 	t.Run("existing ledger transaction", func(t *testing.T) {
-		result, err := repo.GetLedgerTransactionByID(ledgerTransaction.ID)
+		result, err := testRepo.GetLedgerTransactionByID(ledgerTransaction.ID)
 
 		if err != nil {
 			t.Fatalf("expected no error, got: %v", err)
@@ -284,7 +280,7 @@ func TestGetLedgerTransactionByID(t *testing.T) {
 	t.Run("non-existing ledger transaction", func(t *testing.T) {
 		nonExistingID := uuid.New()
 
-		result, err := repo.GetLedgerTransactionByID(nonExistingID)
+		result, err := testRepo.GetLedgerTransactionByID(nonExistingID)
 
 		if result != nil {
 			t.Errorf("expected nil result, got %v", result)
@@ -304,7 +300,6 @@ func TestGetLedgerTransactionByID(t *testing.T) {
 }
 
 func TestGetTransactionsByCreatedAtRange(t *testing.T) {
-	repo := NewLedgerRepository(db)
 
 	baseTime := time.Now().Add(-10 * time.Minute)
 
@@ -354,7 +349,7 @@ func TestGetTransactionsByCreatedAtRange(t *testing.T) {
 	startTimestamp := baseTime
 	endTimestamp := baseTime.Add(5 * time.Second)
 
-	result, err := repo.GetTransactionsByCreatedAtRange(
+	result, err := testRepo.GetTransactionsByCreatedAtRange(
 		startTimestamp,
 		endTimestamp,
 	)
@@ -408,7 +403,6 @@ func TestGetTransactionsByCreatedAtRange(t *testing.T) {
 }
 
 func TestGetEntriesByTransactionIDs(t *testing.T) {
-	repo := NewLedgerRepository(db)
 
 	transaction1 := &models.LedgerTransaction{
 		ID:               uuid.New(),
@@ -486,7 +480,7 @@ func TestGetEntriesByTransactionIDs(t *testing.T) {
 		t.Fatalf("failed to create ledger entries: %v", err)
 	}
 
-	result, err := repo.GetEntriesByTransactionIDs(
+	result, err := testRepo.GetEntriesByTransactionIDs(
 		[]uuid.UUID{transaction1.ID},
 	)
 
@@ -540,7 +534,6 @@ func TestGetEntriesByTransactionIDs(t *testing.T) {
 }
 
 func TestGetLedgerTransactionByReferenceID(t *testing.T) {
-	repo := NewLedgerRepository(db)
 
 	referenceID := uuid.NewString()
 
@@ -560,7 +553,7 @@ func TestGetLedgerTransactionByReferenceID(t *testing.T) {
 	}
 
 	t.Run("existing reference ID", func(t *testing.T) {
-		result, err := repo.GetLedgerTransactionByReferenceID(referenceID)
+		result, err := testRepo.GetLedgerTransactionByReferenceID(referenceID)
 
 		if err != nil {
 			t.Fatalf("expected no error, got: %v", err)
@@ -598,7 +591,7 @@ func TestGetLedgerTransactionByReferenceID(t *testing.T) {
 	t.Run("non-existing reference ID", func(t *testing.T) {
 		nonExistingReferenceID := uuid.NewString()
 
-		result, err := repo.GetLedgerTransactionByReferenceID(
+		result, err := testRepo.GetLedgerTransactionByReferenceID(
 			nonExistingReferenceID,
 		)
 
@@ -620,7 +613,6 @@ func TestGetLedgerTransactionByReferenceID(t *testing.T) {
 }
 
 func TestUpdateLedgerStatus(t *testing.T) {
-	repo := NewLedgerRepository(db)
 
 	ledgerTransaction := &models.LedgerTransaction{
 		ID:               uuid.New(),
@@ -641,7 +633,7 @@ func TestUpdateLedgerStatus(t *testing.T) {
 		newStatus := constants.TransactionStatusCompleted
 		settlementStatus := ledgerTransaction.SettlementStatus
 
-		result, err := repo.UpdateLedgerStatus(
+		result, err := testRepo.UpdateLedgerStatus(
 			ledgerTransaction.ID,
 			newStatus,
 			settlementStatus,
@@ -668,7 +660,7 @@ func TestUpdateLedgerStatus(t *testing.T) {
 		status := constants.TransactionStatusCompleted
 		newSettlementStatus := constants.LedgerSettlementSettled
 
-		result, err := repo.UpdateLedgerStatus(
+		result, err := testRepo.UpdateLedgerStatus(
 			ledgerTransaction.ID,
 			status,
 			newSettlementStatus,
@@ -695,7 +687,7 @@ func TestUpdateLedgerStatus(t *testing.T) {
 		currentStatus := constants.TransactionStatusCompleted
 		currentSettlementStatus := constants.LedgerSettlementSettled
 
-		result, err := repo.UpdateLedgerStatus(
+		result, err := testRepo.UpdateLedgerStatus(
 			ledgerTransaction.ID,
 			currentStatus,
 			currentSettlementStatus,
@@ -712,7 +704,6 @@ func TestUpdateLedgerStatus(t *testing.T) {
 }
 
 func TestGetWalletTransactions(t *testing.T) {
-	repo := NewLedgerRepository(db)
 
 	accountType := "wallet"
 	accountID := uuid.New()
@@ -757,7 +748,7 @@ func TestGetWalletTransactions(t *testing.T) {
 	}
 
 	t.Run("without cursor", func(t *testing.T) {
-		result, err := repo.GetWalletTransactions(
+		result, err := testRepo.GetWalletTransactions(
 			&accountType,
 			accountID,
 			nil,
@@ -794,7 +785,7 @@ func TestGetWalletTransactions(t *testing.T) {
 	t.Run("next cursor", func(t *testing.T) {
 		cursor := transactionIDs[7]
 
-		result, err := repo.GetWalletTransactions(
+		result, err := testRepo.GetWalletTransactions(
 			&accountType,
 			accountID,
 			&cursor,
@@ -831,7 +822,7 @@ func TestGetWalletTransactions(t *testing.T) {
 	t.Run("previous cursor", func(t *testing.T) {
 		cursor := transactionIDs[4]
 
-		result, err := repo.GetWalletTransactions(
+		result, err := testRepo.GetWalletTransactions(
 			&accountType,
 			accountID,
 			&cursor,
@@ -867,7 +858,6 @@ func TestGetWalletTransactions(t *testing.T) {
 }
 
 func TestGetWalletTransactionById(t *testing.T) {
-	repo := NewLedgerRepository(db)
 
 	accountID := uuid.New()
 	otherAccountID := uuid.New()
@@ -904,7 +894,7 @@ func TestGetWalletTransactionById(t *testing.T) {
 	}
 
 	t.Run("existing transaction", func(t *testing.T) {
-		result, err := repo.GetWalletTransactionById(
+		result, err := testRepo.GetWalletTransactionById(
 			accountID,
 			transaction.ID,
 		)
@@ -991,7 +981,7 @@ func TestGetWalletTransactionById(t *testing.T) {
 	})
 
 	t.Run("wrong account", func(t *testing.T) {
-		result, err := repo.GetWalletTransactionById(
+		result, err := testRepo.GetWalletTransactionById(
 			otherAccountID,
 			transaction.ID,
 		)
@@ -1010,7 +1000,7 @@ func TestGetWalletTransactionById(t *testing.T) {
 	})
 
 	t.Run("non existing transaction", func(t *testing.T) {
-		result, err := repo.GetWalletTransactionById(
+		result, err := testRepo.GetWalletTransactionById(
 			accountID,
 			uuid.New(),
 		)

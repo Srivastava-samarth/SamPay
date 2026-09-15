@@ -9,7 +9,6 @@ import (
 )
 
 func TestGetIdempotencyByKey(t *testing.T) {
-	repo := NewIdempotencyRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 	if err := db.Create(merchant).Error; err != nil {
@@ -42,7 +41,7 @@ func TestGetIdempotencyByKey(t *testing.T) {
 	}
 
 	t.Run("existing idempotency key", func(t *testing.T) {
-		result, err := repo.GetIdempotencyByKey(
+		result, err := testRepo.GetIdempotencyByKey(
 			merchant.ID,
 			idempotencyKey,
 		)
@@ -84,7 +83,7 @@ func TestGetIdempotencyByKey(t *testing.T) {
 	t.Run("non-existing idempotency key", func(t *testing.T) {
 		nonExistingKey := "non-existing-idempotency-key"
 
-		result, err := repo.GetIdempotencyByKey(
+		result, err := testRepo.GetIdempotencyByKey(
 			merchant.ID,
 			nonExistingKey,
 		)
@@ -100,7 +99,6 @@ func TestGetIdempotencyByKey(t *testing.T) {
 }
 
 func TestCreateIdempotencyKey(t *testing.T) {
-	repo := NewIdempotencyRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 	if err := db.Create(merchant).Error; err != nil {
@@ -128,7 +126,7 @@ func TestCreateIdempotencyKey(t *testing.T) {
 		ResponseBody:   responseBody,
 	}
 
-	result, err := repo.CreateIdempotencyKey(request)
+	result, err := testRepo.CreateIdempotencyKey(request)
 
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)

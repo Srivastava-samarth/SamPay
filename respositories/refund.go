@@ -9,6 +9,7 @@ import (
 	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (rr *Repository) CreateRefund(request *dto.CreateRefundRequest) (*models.Refund, error) {

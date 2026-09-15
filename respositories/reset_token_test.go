@@ -11,7 +11,6 @@ import (
 )
 
 func TestCreatePasswordReset(t *testing.T) {
-	repo := NewPasswordResetTokenRepository(db)
 
 	email := uuid.NewString() + "@test.com"
 	passwordHash := "test-password-hash"
@@ -44,7 +43,7 @@ func TestCreatePasswordReset(t *testing.T) {
 		CreatedAt: createdAt,
 	}
 
-	result, err := repo.CreatePasswordReset(resetToken)
+	result, err := testRepo.CreatePasswordReset(resetToken)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -72,7 +71,6 @@ func TestCreatePasswordReset(t *testing.T) {
 }
 
 func TestUpdatePasswordReset(t *testing.T) {
-	repo := NewPasswordResetTokenRepository(db)
 
 	email := uuid.NewString() + "@test.com"
 	passwordHash := "test-password-hash"
@@ -109,7 +107,7 @@ func TestUpdatePasswordReset(t *testing.T) {
 	usedAt := time.Now()
 	resetToken.UsedAt = usedAt
 
-	result, err := repo.UpdatePasswordReset(resetToken)
+	result, err := testRepo.UpdatePasswordReset(resetToken)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -128,7 +126,7 @@ func TestUpdatePasswordReset(t *testing.T) {
 		UsedAt: usedAt,
 	}
 
-	_, err = repo.UpdatePasswordReset(nonExisting)
+	_, err = testRepo.UpdatePasswordReset(nonExisting)
 
 	if err == nil {
 		t.Fatal("expected record not found error")
@@ -140,7 +138,6 @@ func TestUpdatePasswordReset(t *testing.T) {
 }
 
 func TestFindByToken(t *testing.T) {
-	repo := NewPasswordResetTokenRepository(db)
 
 	token := "test-reset-token-" + uuid.NewString()
 	email := uuid.NewString() + "@test.com"
@@ -176,7 +173,7 @@ func TestFindByToken(t *testing.T) {
 		t.Fatalf("failed to create reset token: %v", err)
 	}
 
-	result, err := repo.FindByToken(token)
+	result, err := testRepo.FindByToken(token)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -196,7 +193,7 @@ func TestFindByToken(t *testing.T) {
 
 	invalidToken := "invalid-token-" + uuid.NewString()
 
-	_, err = repo.FindByToken(invalidToken)
+	_, err = testRepo.FindByToken(invalidToken)
 
 	if err == nil {
 		t.Fatal("expected error for invalid token")

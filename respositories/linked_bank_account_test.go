@@ -11,7 +11,6 @@ import (
 )
 
 func TestCreateLinkedBankAccount(t *testing.T) {
-	repo := NewLinkedBankRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 
@@ -35,7 +34,7 @@ func TestCreateLinkedBankAccount(t *testing.T) {
 		Status:        status,
 	}
 
-	result, err := repo.CreateLinkedBankAccount(linkedBankAccount)
+	result, err := testRepo.CreateLinkedBankAccount(linkedBankAccount)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -117,7 +116,6 @@ func TestCreateLinkedBankAccount(t *testing.T) {
 }
 
 func TestGetAllBankAccountLinkedByMerchantID(t *testing.T) {
-	repo := NewLinkedBankRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 	if err := db.Create(merchant).Error; err != nil {
@@ -194,7 +192,7 @@ func TestGetAllBankAccountLinkedByMerchantID(t *testing.T) {
 		}
 	}
 
-	result, err := repo.GetAllBankAccountLinkedByMerchantID(merchant.ID)
+	result, err := testRepo.GetAllBankAccountLinkedByMerchantID(merchant.ID)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -250,7 +248,6 @@ func TestGetAllBankAccountLinkedByMerchantID(t *testing.T) {
 }
 
 func TestUpdateLinkedBankAccount(t *testing.T) {
-	repo := NewLinkedBankRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 	if err := db.Create(merchant).Error; err != nil {
@@ -285,7 +282,7 @@ func TestUpdateLinkedBankAccount(t *testing.T) {
 		Status: newStatus,
 	}
 
-	result, err := repo.UpdateLinkedBankAccount(
+	result, err := testRepo.UpdateLinkedBankAccount(
 		bankAccount.ID,
 		request,
 	)
@@ -364,7 +361,6 @@ func TestUpdateLinkedBankAccount(t *testing.T) {
 }
 
 func TestGetPrimaryBankAccountLinkedByMerchantID(t *testing.T) {
-	repo := NewLinkedBankRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 	if err := db.Create(merchant).Error; err != nil {
@@ -431,7 +427,7 @@ func TestGetPrimaryBankAccountLinkedByMerchantID(t *testing.T) {
 		}
 	}
 
-	result, err := repo.GetPrimaryBankAccountLinkedByMerchantID(merchant.ID)
+	result, err := testRepo.GetPrimaryBankAccountLinkedByMerchantID(merchant.ID)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -483,7 +479,6 @@ func TestGetPrimaryBankAccountLinkedByMerchantID(t *testing.T) {
 }
 
 func TestGetBankAccountLinkedByID(t *testing.T) {
-	repo := NewLinkedBankRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 	if err := db.Create(merchant).Error; err != nil {
@@ -530,7 +525,7 @@ func TestGetBankAccountLinkedByID(t *testing.T) {
 	}
 
 	t.Run("active linked bank account", func(t *testing.T) {
-		result, err := repo.GetBankAccountLinkedByID(activeBankAccount.ID)
+		result, err := testRepo.GetBankAccountLinkedByID(activeBankAccount.ID)
 
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -574,7 +569,7 @@ func TestGetBankAccountLinkedByID(t *testing.T) {
 	})
 
 	t.Run("inactive linked bank account", func(t *testing.T) {
-		result, err := repo.GetBankAccountLinkedByID(inactiveBankAccount.ID)
+		result, err := testRepo.GetBankAccountLinkedByID(inactiveBankAccount.ID)
 
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -588,7 +583,7 @@ func TestGetBankAccountLinkedByID(t *testing.T) {
 	t.Run("non existing bank account", func(t *testing.T) {
 		nonExistingID := uuid.New()
 
-		_, err := repo.GetBankAccountLinkedByID(nonExistingID)
+		_, err := testRepo.GetBankAccountLinkedByID(nonExistingID)
 
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)

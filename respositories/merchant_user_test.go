@@ -11,7 +11,6 @@ import (
 )
 
 func TestCreateMerchantUser(t *testing.T) {
-	repo := NewMerchantUserRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 	if err := db.Create(merchant).Error; err != nil {
@@ -45,7 +44,7 @@ func TestCreateMerchantUser(t *testing.T) {
 		Role:       "admin",
 	}
 
-	result, err := repo.CreateMerchantUser(merchantUser)
+	result, err := testRepo.CreateMerchantUser(merchantUser)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -81,7 +80,6 @@ func TestCreateMerchantUser(t *testing.T) {
 }
 
 func TestGetMerchantUserByUserID(t *testing.T) {
-	repo := NewMerchantUserRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 	if err := db.Create(merchant).Error; err != nil {
@@ -119,7 +117,7 @@ func TestGetMerchantUserByUserID(t *testing.T) {
 		t.Fatalf("failed to create merchant user: %v", err)
 	}
 
-	result, err := repo.GetMerchantUserByUserID(user.ID)
+	result, err := testRepo.GetMerchantUserByUserID(user.ID)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -139,7 +137,7 @@ func TestGetMerchantUserByUserID(t *testing.T) {
 
 	nonExistingUserID := uuid.New()
 
-	_, err = repo.GetMerchantUserByUserID(nonExistingUserID)
+	_, err = testRepo.GetMerchantUserByUserID(nonExistingUserID)
 
 	if err == nil {
 		t.Fatal("expected error for non-existing user")
@@ -151,7 +149,6 @@ func TestGetMerchantUserByUserID(t *testing.T) {
 }
 
 func TestGetMerchantUsersByMerchantID(t *testing.T) {
-	repo := NewMerchantUserRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 	if err := db.Create(merchant).Error; err != nil {
@@ -192,7 +189,7 @@ func TestGetMerchantUsersByMerchantID(t *testing.T) {
 		}
 	}
 
-	result, err := repo.GetMerchantUsersByMerchantID(merchant.ID)
+	result, err := testRepo.GetMerchantUsersByMerchantID(merchant.ID)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -204,7 +201,7 @@ func TestGetMerchantUsersByMerchantID(t *testing.T) {
 
 	nonExistingMerchantID := uuid.New()
 
-	result, err = repo.GetMerchantUsersByMerchantID(nonExistingMerchantID)
+	result, err = testRepo.GetMerchantUsersByMerchantID(nonExistingMerchantID)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

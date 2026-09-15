@@ -13,7 +13,6 @@ import (
 )
 
 func TestCreateRefund(t *testing.T) {
-	repo := NewRefundRepository(db)
 
 	merchant1 := testutils.GenerateTestMerchant()
 	if err := db.Create(merchant1).Error; err != nil {
@@ -61,7 +60,7 @@ func TestCreateRefund(t *testing.T) {
 		Reason:            &reason,
 	}
 
-	refund, err := repo.CreateRefund(request)
+	refund, err := testRepo.CreateRefund(request)
 
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -118,8 +117,6 @@ func TestCreateRefund(t *testing.T) {
 }
 
 func TestGetRefundsByPaymentID(t *testing.T) {
-	repo := NewRefundRepository(db)
-
 	merchant1 := testutils.GenerateTestMerchant()
 	if err := db.Create(merchant1).Error; err != nil {
 		t.Fatalf("failed to create merchant: %v", err)
@@ -178,7 +175,7 @@ func TestGetRefundsByPaymentID(t *testing.T) {
 		Reason:            &reason1,
 	}
 
-	refund1, err := repo.CreateRefund(refund1Request)
+	refund1, err := testRepo.CreateRefund(refund1Request)
 	if err != nil {
 		t.Fatalf("failed to create refund1: %v", err)
 	}
@@ -192,7 +189,7 @@ func TestGetRefundsByPaymentID(t *testing.T) {
 		Reason:            &reason2,
 	}
 
-	refund2, err := repo.CreateRefund(refund2Request)
+	refund2, err := testRepo.CreateRefund(refund2Request)
 	if err != nil {
 		t.Fatalf("failed to create refund2: %v", err)
 	}
@@ -208,12 +205,12 @@ func TestGetRefundsByPaymentID(t *testing.T) {
 		Currency:          currency,
 	}
 
-	_, err = repo.CreateRefund(refund3Request)
+	_, err = testRepo.CreateRefund(refund3Request)
 	if err != nil {
 		t.Fatalf("failed to create refund3: %v", err)
 	}
 
-	refunds, err := repo.GetRefundsByPaymentID(payment1.ID)
+	refunds, err := testRepo.GetRefundsByPaymentID(payment1.ID)
 
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -249,7 +246,6 @@ func TestGetRefundsByPaymentID(t *testing.T) {
 }
 
 func TestGetRefundByReference(t *testing.T) {
-	repo := NewRefundRepository(db)
 
 	merchant1 := testutils.GenerateTestMerchant()
 	if err := db.Create(merchant1).Error; err != nil {
@@ -292,13 +288,13 @@ func TestGetRefundByReference(t *testing.T) {
 		Reason:            &reason,
 	}
 
-	createdRefund, err := repo.CreateRefund(request)
+	createdRefund, err := testRepo.CreateRefund(request)
 	if err != nil {
 		t.Fatalf("failed to create refund: %v", err)
 	}
 
 	t.Run("existing refund", func(t *testing.T) {
-		refund, err := repo.GetRefundByReference(createdRefund.RefundReference)
+		refund, err := testRepo.GetRefundByReference(createdRefund.RefundReference)
 
 		if err != nil {
 			t.Fatalf("expected no error, got: %v", err)
@@ -328,7 +324,7 @@ func TestGetRefundByReference(t *testing.T) {
 	t.Run("non-existing refund", func(t *testing.T) {
 		nonExistingReference := "NON-EXISTING-REF"
 
-		_, err := repo.GetRefundByReference(nonExistingReference)
+		_, err := testRepo.GetRefundByReference(nonExistingReference)
 
 		if err != nil {
 			t.Fatalf("expected no error, got: %v", err)
@@ -337,7 +333,6 @@ func TestGetRefundByReference(t *testing.T) {
 }
 
 func TestUpdateRefundStatus(t *testing.T) {
-	repo := NewRefundRepository(db)
 
 	merchant1 := testutils.GenerateTestMerchant()
 	if err := db.Create(merchant1).Error; err != nil {
@@ -380,7 +375,7 @@ func TestUpdateRefundStatus(t *testing.T) {
 		Reason:            &reason,
 	}
 
-	refund, err := repo.CreateRefund(request)
+	refund, err := testRepo.CreateRefund(request)
 	if err != nil {
 		t.Fatalf("failed to create refund: %v", err)
 	}
@@ -388,7 +383,7 @@ func TestUpdateRefundStatus(t *testing.T) {
 	t.Run("update refund status", func(t *testing.T) {
 		newStatus := constants.TransactionStatusCompleted
 
-		updatedRefund, err := repo.UpdateRefundStatus(
+		updatedRefund, err := testRepo.UpdateRefundStatus(
 			refund.RefundReference,
 			newStatus,
 		)
@@ -421,7 +416,7 @@ func TestUpdateRefundStatus(t *testing.T) {
 	t.Run("same status", func(t *testing.T) {
 		currentStatus := constants.TransactionStatusCompleted
 
-		updatedRefund, err := repo.UpdateRefundStatus(
+		updatedRefund, err := testRepo.UpdateRefundStatus(
 			refund.RefundReference,
 			currentStatus,
 		)
@@ -453,7 +448,6 @@ func TestUpdateRefundStatus(t *testing.T) {
 }
 
 func TestGetRefundById(t *testing.T) {
-	repo := NewRefundRepository(db)
 
 	merchant1 := testutils.GenerateTestMerchant()
 	if err := db.Create(merchant1).Error; err != nil {
@@ -496,13 +490,13 @@ func TestGetRefundById(t *testing.T) {
 		Reason:            &reason,
 	}
 
-	createdRefund, err := repo.CreateRefund(request)
+	createdRefund, err := testRepo.CreateRefund(request)
 	if err != nil {
 		t.Fatalf("failed to create refund: %v", err)
 	}
 
 	t.Run("existing refund", func(t *testing.T) {
-		refund, err := repo.GetRefundById(createdRefund.ID)
+		refund, err := testRepo.GetRefundById(createdRefund.ID)
 
 		if err != nil {
 			t.Fatalf("expected no error, got: %v", err)
@@ -538,7 +532,7 @@ func TestGetRefundById(t *testing.T) {
 	})
 
 	t.Run("non-existing refund", func(t *testing.T) {
-		_, err := repo.GetRefundById(uuid.New())
+		_, err := testRepo.GetRefundById(uuid.New())
 
 		if err != nil {
 			t.Fatalf("expected no error, got: %v", err)
@@ -547,7 +541,6 @@ func TestGetRefundById(t *testing.T) {
 }
 
 func TestGetRefundsByMerchantId(t *testing.T) {
-	repo := NewRefundRepository(db)
 
 	merchant1 := testutils.GenerateTestMerchant()
 	if err := db.Create(merchant1).Error; err != nil {
@@ -605,7 +598,7 @@ func TestGetRefundsByMerchantId(t *testing.T) {
 		Currency:          currency,
 	}
 
-	refund1, err := repo.CreateRefund(refund1Request)
+	refund1, err := testRepo.CreateRefund(refund1Request)
 	if err != nil {
 		t.Fatalf("failed to create refund1: %v", err)
 	}
@@ -618,7 +611,7 @@ func TestGetRefundsByMerchantId(t *testing.T) {
 		Currency:          currency,
 	}
 
-	refund2, err := repo.CreateRefund(refund2Request)
+	refund2, err := testRepo.CreateRefund(refund2Request)
 	if err != nil {
 		t.Fatalf("failed to create refund2: %v", err)
 	}
@@ -631,12 +624,12 @@ func TestGetRefundsByMerchantId(t *testing.T) {
 		Currency:          currency,
 	}
 
-	_, err = repo.CreateRefund(refund3Request)
+	_, err = testRepo.CreateRefund(refund3Request)
 	if err != nil {
 		t.Fatalf("failed to create refund3: %v", err)
 	}
 
-	refunds, err := repo.GetRefundsByMerchantId(merchant1.ID)
+	refunds, err := testRepo.GetRefundsByMerchantId(merchant1.ID)
 
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)

@@ -12,7 +12,6 @@ import (
 )
 
 func TestCreateMerchant(t *testing.T) {
-	repo := NewMerchantRepository(db)
 
 	name := "Test Merchant"
 	email := uuid.NewString() + "@test.com"
@@ -30,7 +29,7 @@ func TestCreateMerchant(t *testing.T) {
 		ComplianceStatus: complianceStatus,
 	}
 
-	result, err := repo.CreateMerchant(*merchant)
+	result, err := testRepo.CreateMerchant(*merchant)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -58,7 +57,6 @@ func TestCreateMerchant(t *testing.T) {
 }
 
 func TestGetMerchantByID(t *testing.T) {
-	repo := NewMerchantRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 
@@ -66,7 +64,7 @@ func TestGetMerchantByID(t *testing.T) {
 		t.Fatalf("failed to create merchant: %v", err)
 	}
 
-	result, err := repo.GetMerchantByID(merchant.ID)
+	result, err := testRepo.GetMerchantByID(merchant.ID)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -82,7 +80,7 @@ func TestGetMerchantByID(t *testing.T) {
 
 	nonExistingID := uuid.New()
 
-	result, err = repo.GetMerchantByID(nonExistingID)
+	result, err = testRepo.GetMerchantByID(nonExistingID)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -94,7 +92,6 @@ func TestGetMerchantByID(t *testing.T) {
 }
 
 func TestGetMerchants(t *testing.T) {
-	repo := NewMerchantRepository(db)
 
 	merchant1 := testutils.GenerateTestMerchant()
 	merchant2 := testutils.GenerateTestMerchant()
@@ -107,7 +104,7 @@ func TestGetMerchants(t *testing.T) {
 		t.Fatalf("failed to create merchant: %v", err)
 	}
 
-	result, err := repo.GetMerchants()
+	result, err := testRepo.GetMerchants()
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -135,7 +132,6 @@ func TestGetMerchants(t *testing.T) {
 }
 
 func TestUpdateMerchantCompliance(t *testing.T) {
-	repo := NewMerchantRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 
@@ -162,7 +158,7 @@ func TestUpdateMerchantCompliance(t *testing.T) {
 		ComplianceDetails: dto.ComplianceDetails{},
 	}
 
-	result, err := repo.UpdateMerchantCompliance(merchant.ID, complianceResponse)
+	result, err := testRepo.UpdateMerchantCompliance(merchant.ID, complianceResponse)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -199,7 +195,6 @@ func TestUpdateMerchantCompliance(t *testing.T) {
 }
 
 func TestUpdateMerchantStatus(t *testing.T) {
-	repo := NewMerchantRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 
@@ -209,7 +204,7 @@ func TestUpdateMerchantStatus(t *testing.T) {
 
 	status := "inactive"
 
-	result, err := repo.UpdateMerchantStatus(merchant.ID, status)
+	result, err := testRepo.UpdateMerchantStatus(merchant.ID, status)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -229,7 +224,6 @@ func TestUpdateMerchantStatus(t *testing.T) {
 }
 
 func TestUpdateMerchant(t *testing.T) {
-	repo := NewMerchantRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 
@@ -245,7 +239,7 @@ func TestUpdateMerchant(t *testing.T) {
 		PhoneNumber:  newPhone,
 	}
 
-	result, err := repo.UpdateMerchant(request, merchant.ID)
+	result, err := testRepo.UpdateMerchant(request, merchant.ID)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -270,7 +264,7 @@ func TestUpdateMerchant(t *testing.T) {
 		PhoneNumber:  "",
 	}
 
-	result, err = repo.UpdateMerchant(request, merchant.ID)
+	result, err = testRepo.UpdateMerchant(request, merchant.ID)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -286,7 +280,6 @@ func TestUpdateMerchant(t *testing.T) {
 }
 
 func TestGetMerchantByEmail(t *testing.T) {
-	repo := NewMerchantRepository(db)
 
 	merchant := testutils.GenerateTestMerchant()
 
@@ -294,7 +287,7 @@ func TestGetMerchantByEmail(t *testing.T) {
 		t.Fatalf("failed to create merchant: %v", err)
 	}
 
-	result, err := repo.GetMerchantByEmail(merchant.Email)
+	result, err := testRepo.GetMerchantByEmail(merchant.Email)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -314,7 +307,7 @@ func TestGetMerchantByEmail(t *testing.T) {
 
 	nonExistingEmail := uuid.NewString() + "@test.com"
 
-	result, err = repo.GetMerchantByEmail(nonExistingEmail)
+	result, err = testRepo.GetMerchantByEmail(nonExistingEmail)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

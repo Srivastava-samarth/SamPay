@@ -12,7 +12,6 @@ import (
 )
 
 func TestCreatePayoutWalletToBank(t *testing.T) {
-	repo := NewPayoutRepository(db)
 
 	t.Run("creates wallet to bank payout", func(t *testing.T) {
 
@@ -45,7 +44,7 @@ func TestCreatePayoutWalletToBank(t *testing.T) {
 		}
 		status := constants.TransactionStatusPending
 
-		payout, err := repo.CreatePayoutWalletToBank(
+		payout, err := testRepo.CreatePayoutWalletToBank(
 			merchant.ID,
 			request,
 			status,
@@ -162,7 +161,6 @@ func TestCreatePayoutWalletToBank(t *testing.T) {
 }
 
 func TestCreatePayoutBankToBank(t *testing.T) {
-	repo := NewPayoutRepository(db)
 
 	t.Run("creates bank to bank payout", func(t *testing.T) {
 		merchant := testutils.GenerateTestMerchant()
@@ -194,7 +192,7 @@ func TestCreatePayoutBankToBank(t *testing.T) {
 			Description:              &description,
 		}
 
-		payout, err := repo.CreatePayoutBankToBank(
+		payout, err := testRepo.CreatePayoutBankToBank(
 			merchant.ID,
 			request,
 			status,
@@ -298,7 +296,6 @@ func TestCreatePayoutBankToBank(t *testing.T) {
 }
 
 func TestUpdatePayoutStatus(t *testing.T) {
-	repo := NewPayoutRepository(db)
 
 	t.Run("updates payout status", func(t *testing.T) {
 		merchant := testutils.GenerateTestMerchant()
@@ -330,7 +327,7 @@ func TestUpdatePayoutStatus(t *testing.T) {
 			Description:              &description,
 		}
 
-		payout, err := repo.CreatePayoutWalletToBank(
+		payout, err := testRepo.CreatePayoutWalletToBank(
 			merchant.ID,
 			request,
 			status,
@@ -342,7 +339,7 @@ func TestUpdatePayoutStatus(t *testing.T) {
 
 		updatedStatus := constants.TransactionStatusCompleted
 
-		updatedPayout, err := repo.UpdatePayoutStatus(
+		updatedPayout, err := testRepo.UpdatePayoutStatus(
 			payout.PayoutReference,
 			updatedStatus,
 		)
@@ -418,7 +415,7 @@ func TestUpdatePayoutStatus(t *testing.T) {
 			Description:              &description,
 		}
 
-		payout, err := repo.CreatePayoutWalletToBank(
+		payout, err := testRepo.CreatePayoutWalletToBank(
 			merchant.ID,
 			request,
 			status,
@@ -428,7 +425,7 @@ func TestUpdatePayoutStatus(t *testing.T) {
 			t.Fatalf("failed to create payout: %v", err)
 		}
 
-		updatedPayout, err := repo.UpdatePayoutStatus(
+		updatedPayout, err := testRepo.UpdatePayoutStatus(
 			payout.PayoutReference,
 			status,
 		)
@@ -456,7 +453,6 @@ func TestUpdatePayoutStatus(t *testing.T) {
 }
 
 func TestGetPayoutsByMerchantID(t *testing.T) {
-	repo := NewPayoutRepository(db)
 
 	t.Run("returns payouts for merchant", func(t *testing.T) {
 		merchant := testutils.GenerateTestMerchant()
@@ -488,7 +484,7 @@ func TestGetPayoutsByMerchantID(t *testing.T) {
 			Description:              &description,
 		}
 
-		payout, err := repo.CreatePayoutWalletToBank(
+		payout, err := testRepo.CreatePayoutWalletToBank(
 			merchant.ID,
 			request,
 			status,
@@ -498,7 +494,7 @@ func TestGetPayoutsByMerchantID(t *testing.T) {
 			t.Fatalf("failed to create payout: %v", err)
 		}
 
-		payouts, err := repo.GetPayoutsByMerchantID(merchant.ID)
+		payouts, err := testRepo.GetPayoutsByMerchantID(merchant.ID)
 
 		if err != nil {
 			t.Fatalf("failed to get payouts: %v", err)
@@ -534,7 +530,6 @@ func TestGetPayoutsByMerchantID(t *testing.T) {
 }
 
 func TestGetPayoutByID(t *testing.T) {
-	repo := NewPayoutRepository(db)
 
 	t.Run("returns payout by ID", func(t *testing.T) {
 		merchant := testutils.GenerateTestMerchant()
@@ -566,7 +561,7 @@ func TestGetPayoutByID(t *testing.T) {
 			Description:              &description,
 		}
 
-		createdPayout, err := repo.CreatePayoutWalletToBank(
+		createdPayout, err := testRepo.CreatePayoutWalletToBank(
 			merchant.ID,
 			request,
 			status,
@@ -576,7 +571,7 @@ func TestGetPayoutByID(t *testing.T) {
 			t.Fatalf("failed to create payout: %v", err)
 		}
 
-		payout, err := repo.GetPayoutByID(createdPayout.ID)
+		payout, err := testRepo.GetPayoutByID(createdPayout.ID)
 
 		if err != nil {
 			t.Fatalf("failed to get payout: %v", err)
@@ -606,7 +601,7 @@ func TestGetPayoutByID(t *testing.T) {
 	t.Run("returns nil when payout does not exist", func(t *testing.T) {
 		payoutID := uuid.New()
 
-		payout, err := repo.GetPayoutByID(payoutID)
+		payout, err := testRepo.GetPayoutByID(payoutID)
 
 		if err != nil {
 			t.Fatalf("expected no error, got: %v", err)

@@ -11,8 +11,6 @@ import (
 )
 
 func TestGetBlockedUserByEmail(t *testing.T) {
-	repo := NewUserRepository(db)
-
 	email := uuid.NewString() + "@test.com"
 	passwordHash := "test-password-hash"
 	firstName := "Test"
@@ -34,7 +32,7 @@ func TestGetBlockedUserByEmail(t *testing.T) {
 		t.Fatalf("failed to create user: %v", err)
 	}
 
-	result, err := repo.GetBlockedUserByEmail(email)
+	result, err := testRepo.GetBlockedUserByEmail(email)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -46,7 +44,7 @@ func TestGetBlockedUserByEmail(t *testing.T) {
 
 	nonExistingEmail := uuid.NewString() + "@test.com"
 
-	result, err = repo.GetBlockedUserByEmail(nonExistingEmail)
+	result, err = testRepo.GetBlockedUserByEmail(nonExistingEmail)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -58,7 +56,6 @@ func TestGetBlockedUserByEmail(t *testing.T) {
 }
 
 func TestCreateUser(t *testing.T) {
-	repo := NewUserRepository(db)
 
 	email := uuid.NewString() + "@test.com"
 	passwordHash := "test-password-hash"
@@ -74,7 +71,7 @@ func TestCreateUser(t *testing.T) {
 		Status:       status,
 	}
 
-	result, err := repo.CreateUser(user)
+	result, err := testRepo.CreateUser(user)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -110,7 +107,6 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestGetUserByEmail(t *testing.T) {
-	repo := NewUserRepository(db)
 
 	email := uuid.NewString() + "@test.com"
 	passwordHash := "test-password-hash"
@@ -133,7 +129,7 @@ func TestGetUserByEmail(t *testing.T) {
 		t.Fatalf("failed to create user: %v", err)
 	}
 
-	result, err := repo.GetUserByEmail(email)
+	result, err := testRepo.GetUserByEmail(email)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -153,7 +149,7 @@ func TestGetUserByEmail(t *testing.T) {
 
 	nonExistingEmail := uuid.NewString() + "@test.com"
 
-	_, err = repo.GetUserByEmail(nonExistingEmail)
+	_, err = testRepo.GetUserByEmail(nonExistingEmail)
 
 	if err == nil {
 		t.Fatal("expected error for non-existing email")
@@ -165,7 +161,6 @@ func TestGetUserByEmail(t *testing.T) {
 }
 
 func TestUpdateUser(t *testing.T) {
-	repo := NewUserRepository(db)
 
 	email := uuid.NewString() + "@test.com"
 	passwordHash := "old-password"
@@ -195,7 +190,7 @@ func TestUpdateUser(t *testing.T) {
 		MustChangePassword: true,
 	}
 
-	result, err := repo.UpdateUser(user.ID, request)
+	result, err := testRepo.UpdateUser(user.ID, request)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -223,7 +218,7 @@ func TestUpdateUser(t *testing.T) {
 
 	request = &dto.UpdateUserRequest{}
 
-	result, err = repo.UpdateUser(user.ID, request)
+	result, err = testRepo.UpdateUser(user.ID, request)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -237,7 +232,6 @@ func TestUpdateUser(t *testing.T) {
 }
 
 func TestGetUserByID(t *testing.T) {
-	repo := NewUserRepository(db)
 
 	email := uuid.NewString() + "@test.com"
 	passwordHash := "test-password-hash"
@@ -260,7 +254,7 @@ func TestGetUserByID(t *testing.T) {
 		t.Fatalf("failed to create user: %v", err)
 	}
 
-	result, err := repo.GetUserByID(user.ID)
+	result, err := testRepo.GetUserByID(user.ID)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -276,7 +270,7 @@ func TestGetUserByID(t *testing.T) {
 
 	nonExistingID := uuid.New()
 
-	_, err = repo.GetUserByID(nonExistingID)
+	_, err = testRepo.GetUserByID(nonExistingID)
 
 	if err == nil {
 		t.Fatal("expected error for non-existing user")
@@ -288,7 +282,6 @@ func TestGetUserByID(t *testing.T) {
 }
 
 func TestGetUsers(t *testing.T) {
-	repo := NewUserRepository(db)
 
 	email1 := uuid.NewString() + "@test.com"
 	email2 := uuid.NewString() + "@test.com"
@@ -326,7 +319,7 @@ func TestGetUsers(t *testing.T) {
 		t.Fatalf("failed to create user: %v", err)
 	}
 
-	result, err := repo.GetUsers()
+	result, err := testRepo.GetUsers()
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -354,7 +347,6 @@ func TestGetUsers(t *testing.T) {
 }
 
 func TestUpdateUserStatus(t *testing.T) {
-	repo := NewUserRepository(db)
 
 	email := uuid.NewString() + "@test.com"
 	passwordHash := "test-password-hash"
@@ -379,7 +371,7 @@ func TestUpdateUserStatus(t *testing.T) {
 
 	newStatus := "suspended"
 
-	result, err := repo.UpdateUserStatus(newStatus, user.ID)
+	result, err := testRepo.UpdateUserStatus(newStatus, user.ID)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
