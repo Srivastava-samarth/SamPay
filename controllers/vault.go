@@ -4,24 +4,11 @@ import (
 	"net/http"
 
 	"github.com/Srivastava-samarth/sampay/dto"
-	"github.com/Srivastava-samarth/sampay/services"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
-type VaultController struct {
-	vaultSrvc *services.VaultService
-}
-
-func NewVaultController(
-	vaultSrvc *services.VaultService,
-) *VaultController {
-	return &VaultController{
-		vaultSrvc: vaultSrvc,
-	}
-}
-
-func (vc *VaultController) CreateVault() gin.HandlerFunc {
+func (vc *Controller) CreateVault() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var vaultRequest *dto.CreateVaultRequest
 		if err := c.ShouldBindJSON(&vaultRequest); err != nil {
@@ -34,7 +21,7 @@ func (vc *VaultController) CreateVault() gin.HandlerFunc {
 			return
 		}
 
-		vault, errV := vc.vaultSrvc.CreateVault(vaultRequest)
+		vault, errV := vc.VaultService.CreateVault(vaultRequest)
 		if errV != nil {
 			dto.Fail(
 				c,
@@ -53,7 +40,7 @@ func (vc *VaultController) CreateVault() gin.HandlerFunc {
 	}
 }
 
-func (vc *VaultController) GetVault() gin.HandlerFunc {
+func (vc *Controller) GetVault() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		vaultId := c.Param("vault_id")
 		parsedVaultId, errP := uuid.Parse(vaultId)
@@ -67,7 +54,7 @@ func (vc *VaultController) GetVault() gin.HandlerFunc {
 			return
 		}
 
-		vault, errV := vc.vaultSrvc.GetVaultByID(parsedVaultId)
+		vault, errV := vc.VaultService.GetVaultByID(parsedVaultId)
 		if errV != nil {
 			dto.Fail(
 				c,
@@ -86,9 +73,9 @@ func (vc *VaultController) GetVault() gin.HandlerFunc {
 	}
 }
 
-func (vc *VaultController) GetVaults() gin.HandlerFunc {
+func (vc *Controller) GetVaults() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		vaults, errV := vc.vaultSrvc.GetVaults()
+		vaults, errV := vc.VaultService.GetVaults()
 		if errV != nil {
 			dto.Fail(
 				c,
@@ -107,7 +94,7 @@ func (vc *VaultController) GetVaults() gin.HandlerFunc {
 	}
 }
 
-func (vc *VaultController) UpdateVaultBalance() gin.HandlerFunc {
+func (vc *Controller) UpdateVaultBalance() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		merchantID, exist := c.Get("merchant_id")
 		if !exist {
@@ -131,7 +118,7 @@ func (vc *VaultController) UpdateVaultBalance() gin.HandlerFunc {
 			return
 		}
 
-		vault, errV := vc.vaultSrvc.UpdateVaultBalance(merchantID.(uuid.UUID), request.Balance, request.Type)
+		vault, errV := vc.VaultService.UpdateVaultBalance(merchantID.(uuid.UUID), request.Balance, request.Type)
 		if errV != nil {
 			dto.Fail(
 				c,
@@ -150,7 +137,7 @@ func (vc *VaultController) UpdateVaultBalance() gin.HandlerFunc {
 	}
 }
 
-func (vc *VaultController) UpdateVaultStatus() gin.HandlerFunc {
+func (vc *Controller) UpdateVaultStatus() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.UpdateVaultStatus
 		err := c.ShouldBindJSON(&request)
@@ -176,7 +163,7 @@ func (vc *VaultController) UpdateVaultStatus() gin.HandlerFunc {
 			return
 		}
 
-		updatedVault, errUV := vc.vaultSrvc.UpdateVaultStatus(request.Status, parsedVaultID)
+		updatedVault, errUV := vc.VaultService.UpdateVaultStatus(request.Status, parsedVaultID)
 		if errUV != nil {
 			dto.Fail(
 				c,

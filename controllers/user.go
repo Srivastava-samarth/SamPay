@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/Srivastava-samarth/sampay/dto"
-	"github.com/Srivastava-samarth/sampay/services"
 	"github.com/Srivastava-samarth/sampay/temporal"
 	"github.com/Srivastava-samarth/sampay/temporal/workflows"
 	"github.com/gin-gonic/gin"
@@ -12,22 +11,7 @@ import (
 	"go.temporal.io/sdk/client"
 )
 
-type UserController struct {
-	TemporalClient client.Client
-	UserService    *services.UserService
-}
-
-func NewUserController(
-	temporalClient client.Client,
-	userSrvc *services.UserService,
-) *UserController {
-	return &UserController{
-		TemporalClient: temporalClient,
-		UserService:    userSrvc,
-	}
-}
-
-func (uc *UserController) UserOnboarding() gin.HandlerFunc {
+func (uc *Controller) UserOnboarding() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request dto.UserOnboardingRequest
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -66,7 +50,7 @@ func (uc *UserController) UserOnboarding() gin.HandlerFunc {
 	}
 }
 
-func (uc *UserController) GetUserByID() gin.HandlerFunc {
+func (uc *Controller) GetUserByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Param("user_id")
 
@@ -99,7 +83,7 @@ func (uc *UserController) GetUserByID() gin.HandlerFunc {
 	}
 }
 
-func (uc *UserController) GetUsers() gin.HandlerFunc {
+func (uc *Controller) GetUsers() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		merchants, errM := uc.UserService.GetUsers()
 		if errM != nil {
@@ -120,7 +104,7 @@ func (uc *UserController) GetUsers() gin.HandlerFunc {
 	}
 }
 
-func (uc *UserController) UpdateUserStatus() gin.HandlerFunc {
+func (uc *Controller) UpdateUserStatus() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.UpdateMerchantStatusRequest
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -163,7 +147,7 @@ func (uc *UserController) UpdateUserStatus() gin.HandlerFunc {
 	}
 }
 
-func (uc *UserController) GetUsersByMerchant() gin.HandlerFunc {
+func (uc *Controller) GetUsersByMerchant() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		merchantID := c.Param("merchant_id")
 		if merchantID == "" {
