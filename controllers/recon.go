@@ -12,19 +12,7 @@ import (
 	"go.temporal.io/sdk/client"
 )
 
-type ReconController struct {
-	TemporalClient client.Client
-}
-
-func NewReconController(
-	temporalClient client.Client,
-) *ReconController {
-	return &ReconController{
-		TemporalClient: temporalClient,
-	}
-}
-
-func (rc *ReconController) TriggerRecon() gin.HandlerFunc {
+func (rc *Controller) TriggerRecon() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		workflowOptions := client.StartWorkflowOptions{
 			ID: fmt.Sprintf(

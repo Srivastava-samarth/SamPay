@@ -6,7 +6,6 @@ import (
 	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	services "github.com/Srivastava-samarth/sampay/services"
 	"github.com/Srivastava-samarth/sampay/temporal"
 	"github.com/Srivastava-samarth/sampay/temporal/workflows"
 	"github.com/gin-gonic/gin"
@@ -14,22 +13,7 @@ import (
 	"go.temporal.io/sdk/client"
 )
 
-type MerchantController struct {
-	MerchantService *services.MerchantService
-	TemporalClient  client.Client
-}
-
-func NewMerchantController(
-	merchantSrvc *services.MerchantService,
-	temporalClient client.Client,
-) *MerchantController {
-	return &MerchantController{
-		MerchantService: merchantSrvc,
-		TemporalClient:  temporalClient,
-	}
-}
-
-func (mc *MerchantController) CreateMerchant() gin.HandlerFunc {
+func (mc *Controller) CreateMerchant() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
@@ -120,7 +104,7 @@ func (mc *MerchantController) CreateMerchant() gin.HandlerFunc {
 	}
 }
 
-func (mc *MerchantController) GetMerchantByID() gin.HandlerFunc {
+func (mc *Controller) GetMerchantByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		merchantID := c.Param("merchant_id")
 		if merchantID == "" {
@@ -162,7 +146,7 @@ func (mc *MerchantController) GetMerchantByID() gin.HandlerFunc {
 	}
 }
 
-func (mc *MerchantController) GetMerchants() gin.HandlerFunc {
+func (mc *Controller) GetMerchants() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		merchants, errM := mc.MerchantService.GetMerchants()
 		if errM != nil {
@@ -183,7 +167,7 @@ func (mc *MerchantController) GetMerchants() gin.HandlerFunc {
 	}
 }
 
-func (mc *MerchantController) ReattemptOnboardingKyc() gin.HandlerFunc {
+func (mc *Controller) ReattemptOnboardingKyc() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.UpdateKYCRequest
 		merchantID := c.Param("merchant_id")
@@ -266,7 +250,7 @@ func (mc *MerchantController) ReattemptOnboardingKyc() gin.HandlerFunc {
 	}
 }
 
-func (mc *MerchantController) UpdateMerchantInfo() gin.HandlerFunc {
+func (mc *Controller) UpdateMerchantInfo() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var updateMerchantPayload *dto.UpdateMerchantRequest
 
@@ -342,7 +326,7 @@ func (mc *MerchantController) UpdateMerchantInfo() gin.HandlerFunc {
 	}
 }
 
-func (mc *MerchantController) UpdateMerchantStatus() gin.HandlerFunc {
+func (mc *Controller) UpdateMerchantStatus() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.UpdateMerchantStatusRequest
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -396,7 +380,7 @@ func (mc *MerchantController) UpdateMerchantStatus() gin.HandlerFunc {
 	}
 }
 
-func (mc *MerchantController) UpdateMerchantKyc() gin.HandlerFunc {
+func (mc *Controller) UpdateMerchantKyc() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var updateMerchantPayload *dto.UpdateMerchantKycRequest
 

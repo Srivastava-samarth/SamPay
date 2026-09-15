@@ -7,7 +7,6 @@ import (
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	"github.com/Srivastava-samarth/sampay/services"
 	"github.com/Srivastava-samarth/sampay/temporal"
 	"github.com/Srivastava-samarth/sampay/temporal/workflows"
 	"github.com/gin-gonic/gin"
@@ -15,29 +14,7 @@ import (
 	"go.temporal.io/sdk/client"
 )
 
-type RefundController struct {
-	RefundSrvc      *services.RefundService
-	IdempotencySrvc *services.IdempotencyService
-	PaymentCtrl     *PaymentController
-	TemporalClient  client.Client
-}
-
-func NewRefundController(
-	refundSrvc *services.RefundService,
-	idempotencySrvc *services.IdempotencyService,
-	paymentCtrl *PaymentController,
-	temporalClient client.Client,
-
-) *RefundController {
-	return &RefundController{
-		RefundSrvc:      refundSrvc,
-		IdempotencySrvc: idempotencySrvc,
-		PaymentCtrl:     paymentCtrl,
-		TemporalClient:  temporalClient,
-	}
-}
-
-func (rc *RefundController) CreateRefund() gin.HandlerFunc {
+func (rc *Controller) CreateRefund() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.CreateRefundRequest
 		merchantID := c.Param("merchant_id")
@@ -65,7 +42,7 @@ func (rc *RefundController) CreateRefund() gin.HandlerFunc {
 			return
 		}
 
-		existingIdempotencyKey, errEI := rc.IdempotencySrvc.GetIdempotencyByKeyAndMerchantId(parsedMerchantID, idempotencyKey)
+		existingIdempotencyKey, errEI := rc.IdempotencyService.GetIdempotencyByKeyAndMerchantId(parsedMerchantID, idempotencyKey)
 		if errEI != nil {
 			dto.Fail(
 				c,
@@ -107,7 +84,7 @@ func (rc *RefundController) CreateRefund() gin.HandlerFunc {
 				},
 			}
 
-			rc.PaymentCtrl.SaveIdempotencyResponse(
+			rc.SaveIdempotencyResponse(
 				parsedMerchantID,
 				idempotencyKey,
 				response,
@@ -144,7 +121,7 @@ func (rc *RefundController) CreateRefund() gin.HandlerFunc {
 				},
 			}
 
-			rc.PaymentCtrl.SaveIdempotencyResponse(
+			rc.SaveIdempotencyResponse(
 				parsedMerchantID,
 				idempotencyKey,
 				response,
@@ -175,7 +152,7 @@ func (rc *RefundController) CreateRefund() gin.HandlerFunc {
 				},
 			}
 
-			rc.PaymentCtrl.SaveIdempotencyResponse(
+			rc.SaveIdempotencyResponse(
 				parsedMerchantID,
 				idempotencyKey,
 				response,
@@ -195,7 +172,7 @@ func (rc *RefundController) CreateRefund() gin.HandlerFunc {
 			Data:    refund,
 		}
 
-		rc.PaymentCtrl.SaveIdempotencyResponse(
+		rc.SaveIdempotencyResponse(
 			parsedMerchantID,
 			idempotencyKey,
 			response,
@@ -209,7 +186,7 @@ func (rc *RefundController) CreateRefund() gin.HandlerFunc {
 	}
 }
 
-func (rc *RefundController) GetRefundByReference() gin.HandlerFunc {
+func (rc *Controller) GetRefundByReference() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		refundRef := c.Param("refund_reference")
 		if refundRef == "" {
@@ -222,7 +199,7 @@ func (rc *RefundController) GetRefundByReference() gin.HandlerFunc {
 			return
 		}
 
-		refund, errR := rc.RefundSrvc.GetRefundByReference(refundRef)
+		refund, errR := rc.RefundService.GetRefundByReference(refundRef)
 		if errR != nil {
 			dto.Fail(
 				c,
@@ -241,7 +218,7 @@ func (rc *RefundController) GetRefundByReference() gin.HandlerFunc {
 	}
 }
 
-func (rc *RefundController) GetRefundById() gin.HandlerFunc {
+func (rc *Controller) GetRefundById() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		refundId := c.Param("refund_id")
 		if refundId == "" {
@@ -265,7 +242,7 @@ func (rc *RefundController) GetRefundById() gin.HandlerFunc {
 			return
 		}
 
-		refund, errR := rc.RefundSrvc.GetRefundById(parsedRefundId)
+		refund, errR := rc.RefundService.GetRefundById(parsedRefundId)
 		if errR != nil {
 			dto.Fail(
 				c,
@@ -284,7 +261,7 @@ func (rc *RefundController) GetRefundById() gin.HandlerFunc {
 	}
 }
 
-func (rc *RefundController) GetRefundByMerchantId() gin.HandlerFunc {
+func (rc *Controller) GetRefundByMerchantId() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		merchantId := c.Param("merchant_id")
 		if merchantId == "" {
@@ -308,7 +285,7 @@ func (rc *RefundController) GetRefundByMerchantId() gin.HandlerFunc {
 			return
 		}
 
-		refunds, errR := rc.RefundSrvc.GetRefundsByMerchantId(parsedMerchantId)
+		refunds, errR := rc.RefundService.GetRefundsByMerchantId(parsedMerchantId)
 		if errR != nil {
 			dto.Fail(
 				c,

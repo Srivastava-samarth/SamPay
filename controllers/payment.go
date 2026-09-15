@@ -9,49 +9,17 @@ import (
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	"github.com/Srivastava-samarth/sampay/services"
 	"github.com/Srivastava-samarth/sampay/temporal"
 	"github.com/Srivastava-samarth/sampay/temporal/workflows"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go.temporal.io/sdk/client"
-	"gorm.io/gorm"
 )
 
 var logger = utils.NewLogger()
 
-type PaymentController struct {
-	db              *gorm.DB
-	paymentSrvc     *services.PaymentService
-	idempotencySrvc *services.IdempotencyService
-	walletSrvc      *services.WalletService
-	vaultSrvc       *services.VaultService
-	ledgerSrvc      *services.LedgerService
-	TemporalClient  client.Client
-}
-
-func NewPaymentController(
-	db *gorm.DB,
-	paymentSrvc *services.PaymentService,
-	idempotencySrvc *services.IdempotencyService,
-	walletSrvc *services.WalletService,
-	vaultSrvc *services.VaultService,
-	ledgerSrvc *services.LedgerService,
-	temporalClient *client.Client,
-) *PaymentController {
-	return &PaymentController{
-		db:              db,
-		paymentSrvc:     paymentSrvc,
-		idempotencySrvc: idempotencySrvc,
-		walletSrvc:      walletSrvc,
-		vaultSrvc:       vaultSrvc,
-		ledgerSrvc:      ledgerSrvc,
-		TemporalClient:  *temporalClient,
-	}
-}
-
-func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
+func (pc *Controller) CreatePayment() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.CreatePaymentRequest
 		merchantID := c.Param("merchant_id")
@@ -79,7 +47,7 @@ func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
 			return
 		}
 
-		existingIdempotencyKey, errEI := pc.idempotencySrvc.GetIdempotencyByKeyAndMerchantId(parsedMerchantID, idempotencyKey)
+		existingIdempotencyKey, errEI := pc.IdempotencyService.GetIdempotencyByKeyAndMerchantId(parsedMerchantID, idempotencyKey)
 		if errEI != nil {
 			dto.Fail(
 				c,
@@ -223,7 +191,7 @@ func (pc *PaymentController) CreatePayment() gin.HandlerFunc {
 	}
 }
 
-func (pc *PaymentController) SaveIdempotencyResponse(
+func (pc *Controller) SaveIdempotencyResponse(
 	merchantID uuid.UUID,
 	idempotencyKey string,
 	response dto.Response,
@@ -234,7 +202,7 @@ func (pc *PaymentController) SaveIdempotencyResponse(
 		return
 	}
 
-	_, err = pc.idempotencySrvc.CreateIdempotencyKey(
+	_, err = pc.IdempotencyService.CreateIdempotencyKey(
 		merchantID,
 		idempotencyKey,
 		responseBody,
@@ -244,7 +212,7 @@ func (pc *PaymentController) SaveIdempotencyResponse(
 	}
 }
 
-func (pc *PaymentController) TriggerSettlement() gin.HandlerFunc {
+func (pc *Controller) TriggerSettlement() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		workflowOptions := client.StartWorkflowOptions{
 			ID: fmt.Sprintf(
@@ -278,7 +246,7 @@ func (pc *PaymentController) TriggerSettlement() gin.HandlerFunc {
 	}
 }
 
-func (pc *PaymentController) GetPaymentsByMerchantID() gin.HandlerFunc {
+func (pc *Controller) GetPaymentsByMerchantID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		merchantID := c.Param("merchant_id")
 		if merchantID == "" {
@@ -301,7 +269,7 @@ func (pc *PaymentController) GetPaymentsByMerchantID() gin.HandlerFunc {
 			return
 		}
 
-		payments, errGP := pc.paymentSrvc.GetPaymentsByMerchantID(parsedMerchantID)
+		payments, errGP := pc.PaymentService.GetPaymentsByMerchantID(parsedMerchantID)
 		if errGP != nil {
 			dto.Fail(
 				c,
@@ -319,7 +287,7 @@ func (pc *PaymentController) GetPaymentsByMerchantID() gin.HandlerFunc {
 	}
 }
 
-func (pc *PaymentController) GetPaymentByID() gin.HandlerFunc {
+func (pc *Controller) GetPaymentByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		paymentID := c.Param("payment_id")
 		if paymentID == "" {
@@ -342,7 +310,7 @@ func (pc *PaymentController) GetPaymentByID() gin.HandlerFunc {
 			return
 		}
 
-		payment, errGP := pc.paymentSrvc.GetPaymentByID(parsedPaymentID)
+		payment, errGP := pc.PaymentService.GetPaymentByID(parsedPaymentID)
 		if errGP != nil {
 			dto.Fail(
 				c,
