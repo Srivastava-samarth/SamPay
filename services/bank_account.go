@@ -32,6 +32,18 @@ func NewBankService(
 }
 
 func (bs *BankService) CreateBankAccount(bankAccountRequest *dto.CreateBankAccountRequest) (*dto.CreateBankAccountResponse, error) {
+	if bankAccountRequest == nil {
+		return nil, errors.New("request is required")
+	}
+
+	if bankAccountRequest.AccountName == "" {
+		return nil, errors.New("account_name is required")
+	}
+
+	if bankAccountRequest.MerchantID == uuid.Nil {
+		return nil, errors.New("merchant_id is required")
+	}
+
 	_, err := bs.MerchantRepo.GetMerchantByID(bankAccountRequest.MerchantID)
 	if err != nil {
 		return nil, err
@@ -133,6 +145,26 @@ func (bs *BankService) CreateBankAccountAndLink(bankAccountRequest *dto.CreateBa
 }
 
 func (bs *BankService) UpdateBankAccountAndlink(updateBankAccountRequest *dto.UpdateBankAccountRequest) (*models.BankAccount, *models.LinkedBankAccount, error) {
+	if updateBankAccountRequest == nil {
+		return nil, nil, errors.New("request is required")
+	}
+
+	if updateBankAccountRequest.ID == uuid.Nil {
+		return nil, nil, errors.New("id is required")
+	}
+
+	if updateBankAccountRequest.AccountName == "" {
+		return nil, nil, errors.New("account name is required")
+	}
+
+	if updateBankAccountRequest.AccountType == "" {
+		return nil, nil, errors.New("account_type is required")
+	}
+
+	if updateBankAccountRequest.Status == "" {
+		return nil, nil, errors.New("status is required")
+	}
+
 	updatedBankAccount, errUBA := bs.BankRepo.UpdateBankAccount(updateBankAccountRequest.ID, updateBankAccountRequest)
 	if errUBA != nil {
 		return nil, nil, errUBA
@@ -150,6 +182,9 @@ func (bs *BankService) UpdateBankAccountAndlink(updateBankAccountRequest *dto.Up
 }
 
 func (bs *BankService) GetBankAccountsByMerchantID(merchantID uuid.UUID) ([]*models.BankAccount, error) {
+	if merchantID == uuid.Nil {
+		return nil, errors.New("merchant_id is required")
+	}
 	linkedBankAccounts, errLBA := bs.LinkedBankAccountRepo.GetAllBankAccountLinkedByMerchantID(merchantID)
 	if errLBA != nil {
 		return nil, errLBA

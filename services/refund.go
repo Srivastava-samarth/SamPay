@@ -30,6 +30,10 @@ func NewRefundService(
 func (rs *RefundService) ValidateCreateRefundRequest(
 	request *dto.CreateRefundRequest,
 ) error {
+	if request == nil {
+		return errors.New("request is required")
+	}
+
 	if request.PaymentID == uuid.Nil {
 		return errors.New("payment id not provided")
 	}
@@ -96,6 +100,9 @@ func (rs *RefundService) ValidateCreateRefundRequest(
 func (rs *RefundService) GetRefundByReference(
 	refundRef string,
 ) (*models.Refund, error) {
+	if refundRef == "" {
+		return nil, errors.New("refund reference is required")
+	}
 	refund, errR := rs.RefundRepo.GetRefundByReference(refundRef)
 	if errR != nil {
 		return nil, errR
@@ -111,6 +118,9 @@ func (rs *RefundService) GetRefundByReference(
 func (rs *RefundService) GetRefundById(
 	refundID uuid.UUID,
 ) (*models.Refund, error) {
+	if refundID == uuid.Nil {
+		return nil, errors.New("refund id is required")
+	}
 	refund, errR := rs.RefundRepo.GetRefundById(refundID)
 	if errR != nil {
 		return nil, errR
@@ -122,6 +132,9 @@ func (rs *RefundService) GetRefundById(
 func (rs *RefundService) GetRefundsByMerchantId(
 	merchantID uuid.UUID,
 ) ([]*models.Refund, error) {
+	if merchantID == uuid.Nil {
+		return nil, errors.New("merchant id is required")
+	}
 	refunds, errR := rs.RefundRepo.GetRefundsByMerchantId(merchantID)
 	if errR != nil {
 		return nil, errR
