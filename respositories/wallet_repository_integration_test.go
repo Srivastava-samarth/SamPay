@@ -187,7 +187,7 @@ func TestUpdateWalletBalance(t *testing.T) {
 		t.Fatalf("failed to create wallet: %v", err)
 	}
 
-	request := &dto.UpdateWallletBalanceRequest{
+	request := &dto.UpdateWalletBalanceRequest{
 		AvailableBalance: decimal.NewFromInt(8000),
 		ReservedBalance:  decimal.NewFromInt(2000),
 	}
@@ -222,7 +222,7 @@ func TestUpdateWalletBalance(t *testing.T) {
 		)
 	}
 
-	request = &dto.UpdateWallletBalanceRequest{
+	request = &dto.UpdateWalletBalanceRequest{
 		AvailableBalance: decimal.Zero,
 		ReservedBalance:  decimal.Zero,
 	}
