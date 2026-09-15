@@ -11,53 +11,20 @@ import (
 type Registry struct {
 	DB                  *gorm.DB
 	NotificationService *notifications.EmailService
-	ComplianceService   *services.ComplianceService
-	WalletService       *services.WalletService
-	MerchantService     *services.MerchantService
-	AuthService         *services.AuthService
-	UserService         *services.UserService
-	LedgerService       *services.LedgerService
-	PaymentService      *services.PaymentService
-	VaultService        *services.VaultService
-	PayoutService       *services.PayoutService
-	ReportService       *services.ReportService
-	RefundService       *services.RefundService
-	MerchantUserService *services.MerchantUserService
-	MerchantRepo        repositories.MerchantRepository
+	Services            *services.Services
+	Repo                *repositories.Repository
 }
 
 func NewRegistry(
 	db *gorm.DB,
 	notificationService *notifications.EmailService,
-	merchantSrvc *services.MerchantService,
-	complianceSrvc *services.ComplianceService,
-	walletSrvc *services.WalletService,
-	authSrvc *services.AuthService,
-	userSrvc *services.UserService,
-	ledgerSrvc *services.LedgerService,
-	paymentSrvc *services.PaymentService,
-	vaultSrvc *services.VaultService,
-	payoutService *services.PayoutService,
-	reportService *services.ReportService,
-	refundSrvc *services.RefundService,
-	merchantUserService *services.MerchantUserService,
-	merchantRepo repositories.MerchantRepository,
+	services *services.Services,
+	repo *repositories.Repository,
 ) *Registry {
 	return &Registry{
 		DB:                  db,
 		NotificationService: notificationService,
-		MerchantService:     merchantSrvc,
-		ComplianceService:   complianceSrvc,
-		WalletService:       walletSrvc,
-		AuthService:         authSrvc,
-		UserService:         userSrvc,
-		LedgerService:       ledgerSrvc,
-		PaymentService:      paymentSrvc,
-		VaultService:        vaultSrvc,
-		PayoutService:       payoutService,
-		ReportService:       reportService,
-		RefundService:       refundSrvc,
-		MerchantUserService: merchantUserService,
-		MerchantRepo:        merchantRepo,
+		Services:            services,
+		Repo:                repo,
 	}
 }

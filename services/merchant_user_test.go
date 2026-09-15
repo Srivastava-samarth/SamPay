@@ -8,7 +8,6 @@ import (
 )
 
 func TestCreateMerchantUser(t *testing.T) {
-	mus := &MerchantUserService{}
 
 	validMerchantID := uuid.New()
 	validUserID := uuid.New()
@@ -54,7 +53,7 @@ func TestCreateMerchantUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := mus.CreateMerchantUser(tt.request)
+			_, err := testServices.CreateMerchantUser(tt.request)
 
 			if err == nil {
 				t.Fatal("expected error, got nil")

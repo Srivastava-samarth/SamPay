@@ -5,31 +5,11 @@ import (
 
 	"github.com/Srivastava-samarth/sampay/constants"
 	"github.com/Srivastava-samarth/sampay/dto"
-	"github.com/Srivastava-samarth/sampay/services"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
-type WalletController struct {
-	db         *gorm.DB
-	WalletSrvc *services.WalletService
-	LedgerSrvc *services.LedgerService
-}
-
-func NewWalletController(
-	db *gorm.DB,
-	walletSrvc *services.WalletService,
-	ledgerSrvc *services.LedgerService,
-) *WalletController {
-	return &WalletController{
-		db:         db,
-		WalletSrvc: walletSrvc,
-		LedgerSrvc: ledgerSrvc,
-	}
-}
-
-func (wc *WalletController) GetWallet() gin.HandlerFunc {
+func (wc *Controller) GetWallet() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		merchantID := c.Param("merchant_id")
 		if merchantID == "" {
@@ -53,7 +33,7 @@ func (wc *WalletController) GetWallet() gin.HandlerFunc {
 			return
 		}
 
-		wallet, errW := wc.WalletSrvc.GetWalletByMerchantID(parsedMerchantId)
+		wallet, errW := wc.Services.GetWalletByMerchantID(parsedMerchantId)
 		if errW != nil {
 			dto.Fail(
 				c,
@@ -72,7 +52,7 @@ func (wc *WalletController) GetWallet() gin.HandlerFunc {
 	}
 }
 
-func (wc *WalletController) GetWalletTransactions() gin.HandlerFunc {
+func (wc *Controller) GetWalletTransactions() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		merchantID := c.Param("merchant_id")
@@ -99,7 +79,7 @@ func (wc *WalletController) GetWalletTransactions() gin.HandlerFunc {
 			return
 		}
 
-		wallet, err := wc.WalletSrvc.GetWalletByMerchantID(parsedMerchantID)
+		wallet, err := wc.Services.GetWalletByMerchantID(parsedMerchantID)
 		if err != nil {
 			dto.Fail(
 				c,
@@ -130,7 +110,7 @@ func (wc *WalletController) GetWalletTransactions() gin.HandlerFunc {
 			cursor = &parsedCursor
 		}
 
-		transactions, pagination, err := wc.LedgerSrvc.GetTransactions(
+		transactions, pagination, err := wc.Services.GetTransactions(
 			&accountType,
 			wallet.ID,
 			cursor,
@@ -178,7 +158,7 @@ func (wc *WalletController) GetWalletTransactions() gin.HandlerFunc {
 	}
 }
 
-func (wc *WalletController) GetWalletTransaction() gin.HandlerFunc {
+func (wc *Controller) GetWalletTransaction() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		merchantID := c.Param("merchant_id")
 		transactionId := c.Param("transaction_id")
@@ -224,7 +204,7 @@ func (wc *WalletController) GetWalletTransaction() gin.HandlerFunc {
 			return
 		}
 
-		wallet, errW := wc.WalletSrvc.GetWalletByMerchantID(parsedMerchantId)
+		wallet, errW := wc.Services.GetWalletByMerchantID(parsedMerchantId)
 		if errW != nil {
 			dto.Fail(
 				c,
@@ -235,7 +215,7 @@ func (wc *WalletController) GetWalletTransaction() gin.HandlerFunc {
 			return
 		}
 
-		transaction, errT := wc.LedgerSrvc.GetTransaction(wallet.ID, parsedTransactionId)
+		transaction, errT := wc.Services.GetTransaction(wallet.ID, parsedTransactionId)
 		if errT != nil {
 			dto.Fail(
 				c,
@@ -253,7 +233,7 @@ func (wc *WalletController) GetWalletTransaction() gin.HandlerFunc {
 	}
 }
 
-func (wc *WalletController) TopUpWallet() gin.HandlerFunc {
+func (wc *Controller) TopUpWallet() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.TopupWalletBalanceRequest
 		merchantID := c.Param("merchant_id")
@@ -279,7 +259,7 @@ func (wc *WalletController) TopUpWallet() gin.HandlerFunc {
 			return
 		}
 
-		wallet, errW := wc.WalletSrvc.GetWalletByMerchantID(parsedMerchantID)
+		wallet, errW := wc.Services.GetWalletByMerchantID(parsedMerchantID)
 		if errW != nil {
 			dto.Fail(
 				c,
@@ -289,7 +269,7 @@ func (wc *WalletController) TopUpWallet() gin.HandlerFunc {
 			)
 		}
 
-		updatedWallet, errUW := wc.WalletSrvc.TopUpWalletFromPrimaryBank(wc.db, wallet, request.Amount)
+		updatedWallet, errUW := wc.Services.TopUpWalletFromPrimaryBank(wc.DB, wallet, request.Amount)
 		if errUW != nil {
 			dto.Fail(
 				c,

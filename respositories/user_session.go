@@ -5,29 +5,10 @@ import (
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/utils"
-	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
-type UserSessionRepository struct {
-	db *gorm.DB
-}
-
-func NewUserSessionRepository(
-	db *gorm.DB,
-) *UserSessionRepository {
-	return &UserSessionRepository{
-		db: db,
-	}
-}
-
-func (wr *UserSessionRepository) WithTx(tx *gorm.DB) *UserSessionRepository {
-	return &UserSessionRepository{
-		db: tx,
-	}
-}
-
-func (ar *UserSessionRepository) CreateUserSession(oauth *models.UserSession) (*models.UserSession, error) {
+func (ar *Repository) CreateUserSession(oauth *models.UserSession) (*models.UserSession, error) {
 	userSessionRequest := &models.UserSession{
 		ID:               utils.GenerateUUID(),
 		UserID:           oauth.UserID,
@@ -36,15 +17,15 @@ func (ar *UserSessionRepository) CreateUserSession(oauth *models.UserSession) (*
 		CreatedAt:        time.Now(),
 		UpdatedAt:        time.Now(),
 	}
-	if err := ar.db.Create(userSessionRequest).Error; err != nil {
+	if err := ar.DB.Create(userSessionRequest).Error; err != nil {
 		return nil, err
 	}
 	return userSessionRequest, nil
 }
 
-func (ar *UserSessionRepository) GetUserSessionByRefreshTokenHash(refreshTokenHash string) (*models.UserSession, error) {
+func (ar *Repository) GetUserSessionByRefreshTokenHash(refreshTokenHash string) (*models.UserSession, error) {
 	var userSession *models.UserSession
-	err := ar.db.
+	err := ar.DB.
 		Clauses(clause.Locking{
 			Strength: "UPDATE",
 		}).

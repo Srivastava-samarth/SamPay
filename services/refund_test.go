@@ -9,7 +9,6 @@ import (
 )
 
 func TestValidateCreateRefundRequest(t *testing.T) {
-	rs := &RefundService{}
 
 	tests := []struct {
 		name          string
@@ -94,7 +93,7 @@ func TestValidateCreateRefundRequest(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := rs.ValidateCreateRefundRequest(tt.request)
+			err := testServices.ValidateCreateRefundRequest(tt.request)
 
 			if err == nil {
 				t.Fatal("expected error, got nil")
@@ -112,11 +111,10 @@ func TestValidateCreateRefundRequest(t *testing.T) {
 }
 
 func TestGetRefundByReference(t *testing.T) {
-	rs := &RefundService{}
 
 	refundRef := ""
 
-	_, err := rs.GetRefundByReference(refundRef)
+	_, err := testServices.GetRefundByReference(refundRef)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -131,9 +129,8 @@ func TestGetRefundByReference(t *testing.T) {
 }
 
 func TestGetRefundsByMerchantId(t *testing.T) {
-	rs := &RefundService{}
 
-	_, err := rs.GetRefundsByMerchantId(uuid.Nil)
+	_, err := testServices.GetRefundsByMerchantId(uuid.Nil)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -148,9 +145,8 @@ func TestGetRefundsByMerchantId(t *testing.T) {
 }
 
 func TestGetRefundById(t *testing.T) {
-	rs := &RefundService{}
 
-	_, err := rs.GetRefundById(uuid.Nil)
+	_, err := testServices.GetRefundById(uuid.Nil)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")

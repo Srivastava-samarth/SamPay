@@ -1,24 +1,11 @@
 package routes
 
 import (
-	"github.com/Srivastava-samarth/sampay/controllers"
 	"github.com/Srivastava-samarth/sampay/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
-type BankRouter struct {
-	bankCtlr *controllers.BankController
-}
-
-func NewBankRouter(
-	bankAccountController *controllers.BankController,
-) *BankRouter {
-	return &BankRouter{
-		bankCtlr: bankAccountController,
-	}
-}
-
-func (br *BankRouter) BankAccountRoutes(
+func (br *Router) BankAccountRoutes(
 	router *gin.RouterGroup,
 	authMiddleware gin.HandlerFunc,
 ) {
@@ -29,24 +16,24 @@ func (br *BankRouter) BankAccountRoutes(
 		"/:merchant_id/bank_account",
 		middlewares.RequireRole("owner", "super_admin"),
 		middlewares.RequireMerchantAccess("super_admin"),
-		br.bankCtlr.CreateBankAccount(),
+		br.Controller.CreateBankAccount(),
 	)
 	bankAccount.GET(
 		"/:merchant_id/bank_account/:bank_account_id",
 		middlewares.RequireRole("owner", "finance", "super_admin"),
 		middlewares.RequireMerchantAccess("super_admin"),
-		br.bankCtlr.GetBankAccount(),
+		br.Controller.GetBankAccount(),
 	)
 
 	bankAccount.GET(
 		"/:merchant_id/bank_accounts",
 		middlewares.RequireRole("owner", "finance", "super_admin"),
 		middlewares.RequireMerchantAccess("super_admin"),
-		br.bankCtlr.GetBankAccounts(),
+		br.Controller.GetBankAccounts(),
 	)
 	bankAccount.PATCH(
 		"/:merchant_id/bank_account",
 		middlewares.RequireRole("super_admin"),
-		br.bankCtlr.UpdateBankAccount(),
+		br.Controller.UpdateBankAccount(),
 	)
 }

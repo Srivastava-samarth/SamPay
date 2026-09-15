@@ -9,7 +9,6 @@ import (
 )
 
 func TestValidatePayoutRequestWalletToBank(t *testing.T) {
-	ps := &PayoutService{}
 
 	tests := []struct {
 		name           string
@@ -63,7 +62,7 @@ func TestValidatePayoutRequestWalletToBank(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ps.ValidatePayoutRequestWalletToBank(
+			err := testServices.ValidatePayoutRequestWalletToBank(
 				tt.request,
 				tt.senderMerchant,
 			)
@@ -84,7 +83,6 @@ func TestValidatePayoutRequestWalletToBank(t *testing.T) {
 }
 
 func TestValidatePayoutRequestBankToBank(t *testing.T) {
-	ps := &PayoutService{}
 
 	tests := []struct {
 		name           string
@@ -138,7 +136,7 @@ func TestValidatePayoutRequestBankToBank(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ps.ValidatePayoutRequestBankToBank(
+			err := testServices.ValidatePayoutRequestBankToBank(
 				tt.request,
 				tt.senderMerchant,
 			)
@@ -159,9 +157,8 @@ func TestValidatePayoutRequestBankToBank(t *testing.T) {
 }
 
 func TestGetPayoutsByMerchantID_InvalidMerchantID(t *testing.T) {
-	ps := &PayoutService{}
 
-	payouts, err := ps.GetPayoutsByMerchantID(uuid.Nil)
+	payouts, err := testServices.GetPayoutsByMerchantID(uuid.Nil)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -181,9 +178,8 @@ func TestGetPayoutsByMerchantID_InvalidMerchantID(t *testing.T) {
 }
 
 func TestGetPayoutByID_InvalidPayoutID(t *testing.T) {
-	ps := &PayoutService{}
 
-	payout, err := ps.GetPayoutByID(uuid.Nil)
+	payout, err := testServices.GetPayoutByID(uuid.Nil)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")

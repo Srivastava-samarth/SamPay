@@ -8,21 +8,9 @@ import (
 	"gorm.io/gorm"
 )
 
-type IdempotencyRepository struct {
-	db *gorm.DB
-}
-
-func NewIdempotencyRepository(
-	db *gorm.DB,
-) *IdempotencyRepository {
-	return &IdempotencyRepository{
-		db: db,
-	}
-}
-
-func (ir *IdempotencyRepository) GetIdempotencyByKey(merchantID uuid.UUID, key string) (*models.IdempotencyKey, error) {
+func (ir *Repository) GetIdempotencyByKey(merchantID uuid.UUID, key string) (*models.IdempotencyKey, error) {
 	var idempotency *models.IdempotencyKey
-	err := ir.db.Where("merchant_id = ? AND idempotency_key = ?", merchantID, key).First(&idempotency).Error
+	err := ir.DB.Where("merchant_id = ? AND idempotency_key = ?", merchantID, key).First(&idempotency).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -33,8 +21,8 @@ func (ir *IdempotencyRepository) GetIdempotencyByKey(merchantID uuid.UUID, key s
 	return idempotency, nil
 }
 
-func (ir *IdempotencyRepository) CreateIdempotencyKey(idempotencyKey *models.IdempotencyKey) (*models.IdempotencyKey, error) {
-	err := ir.db.Create(idempotencyKey).Error
+func (ir *Repository) CreateIdempotencyKey(idempotencyKey *models.IdempotencyKey) (*models.IdempotencyKey, error) {
+	err := ir.DB.Create(idempotencyKey).Error
 	if err != nil {
 		return nil, err
 	}

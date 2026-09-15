@@ -4,24 +4,11 @@ import (
 	"net/http"
 
 	"github.com/Srivastava-samarth/sampay/dto"
-	"github.com/Srivastava-samarth/sampay/services"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
-type BankController struct {
-	BankSrvc *services.BankService
-}
-
-func NewBankController(
-	bankSrvc *services.BankService,
-) *BankController {
-	return &BankController{
-		BankSrvc: bankSrvc,
-	}
-}
-
-func (bc *BankController) CreateBankAccount() gin.HandlerFunc {
+func (bc *Controller) CreateBankAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.CreateBankAccountRequest
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -34,7 +21,7 @@ func (bc *BankController) CreateBankAccount() gin.HandlerFunc {
 			return
 		}
 
-		bankAccount, linkedBankAccount, err := bc.BankSrvc.CreateBankAccountAndLink(request)
+		bankAccount, linkedBankAccount, err := bc.Services.CreateBankAccountAndLink(request)
 		if err != nil {
 			dto.Fail(
 				c,
@@ -56,7 +43,7 @@ func (bc *BankController) CreateBankAccount() gin.HandlerFunc {
 	}
 }
 
-func (bc *BankController) UpdateBankAccount() gin.HandlerFunc {
+func (bc *Controller) UpdateBankAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.UpdateBankAccountRequest
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -79,7 +66,7 @@ func (bc *BankController) UpdateBankAccount() gin.HandlerFunc {
 			return
 		}
 
-		updatedBankAccount, updateLinkedBankAccount, err := bc.BankSrvc.UpdateBankAccountAndlink(request)
+		updatedBankAccount, updateLinkedBankAccount, err := bc.Services.UpdateBankAccountAndlink(request)
 		if err != nil {
 			dto.Fail(
 				c,
@@ -100,7 +87,7 @@ func (bc *BankController) UpdateBankAccount() gin.HandlerFunc {
 	}
 }
 
-func (bc *BankController) GetBankAccounts() gin.HandlerFunc {
+func (bc *Controller) GetBankAccounts() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		merchantID := c.Param("merchant_id")
 		if merchantID == "" {
@@ -124,7 +111,7 @@ func (bc *BankController) GetBankAccounts() gin.HandlerFunc {
 			return
 		}
 
-		bankAccounts, errBA := bc.BankSrvc.GetBankAccountsByMerchantID(parsedMerchantID)
+		bankAccounts, errBA := bc.Services.GetBankAccountsByMerchantID(parsedMerchantID)
 		if errBA != nil {
 			dto.Fail(
 				c,
@@ -143,7 +130,7 @@ func (bc *BankController) GetBankAccounts() gin.HandlerFunc {
 	}
 }
 
-func (bc *BankController) GetBankAccount() gin.HandlerFunc {
+func (bc *Controller) GetBankAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		bankAccountID := c.Param("bank_account_id")
 		parsedBankAccountID, errP := uuid.Parse(bankAccountID)
@@ -157,7 +144,7 @@ func (bc *BankController) GetBankAccount() gin.HandlerFunc {
 			return
 		}
 
-		bankAccount, errBA := bc.BankSrvc.GetBankAccount(parsedBankAccountID)
+		bankAccount, errBA := bc.Services.GetBankAccount(parsedBankAccountID)
 		if errBA != nil {
 			dto.Fail(
 				c,

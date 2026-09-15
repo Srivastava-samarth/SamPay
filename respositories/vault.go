@@ -13,25 +13,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type VaultRepository struct {
-	db *gorm.DB
-}
-
-func NewVaultRepository(
-	db *gorm.DB,
-) *VaultRepository {
-	return &VaultRepository{
-		db: db,
-	}
-}
-
-func (vr *VaultRepository) WithTx(tx *gorm.DB) *VaultRepository {
-	return &VaultRepository{
-		db: tx,
-	}
-}
-
-func (vr *VaultRepository) CreateVault(
+func (vr *Repository) CreateVault(
 	request *dto.CreateVaultRequest,
 ) (*models.Vault, error) {
 
@@ -44,25 +26,25 @@ func (vr *VaultRepository) CreateVault(
 		UpdatedAt: time.Now(),
 	}
 
-	if err := vr.db.Create(vault).Error; err != nil {
+	if err := vr.DB.Create(vault).Error; err != nil {
 		return nil, err
 	}
 
 	return vault, nil
 }
 
-func (vr *VaultRepository) GetVaults() ([]*models.Vault, error) {
+func (vr *Repository) GetVaults() ([]*models.Vault, error) {
 	var vaults []*models.Vault
-	if err := vr.db.Find(&vaults).Error; err != nil {
+	if err := vr.DB.Find(&vaults).Error; err != nil {
 		return nil, err
 	}
 
 	return vaults, nil
 }
 
-func (vr *VaultRepository) GetVault(vaultId uuid.UUID) (*models.Vault, error) {
+func (vr *Repository) GetVault(vaultId uuid.UUID) (*models.Vault, error) {
 	var vault *models.Vault
-	if err := vr.db.Where(
+	if err := vr.DB.Where(
 		"id = ?",
 		vaultId,
 	).First(&vault).Error; err != nil {
@@ -72,7 +54,7 @@ func (vr *VaultRepository) GetVault(vaultId uuid.UUID) (*models.Vault, error) {
 	return vault, nil
 }
 
-func (vr *VaultRepository) UpdateVaultBalance(balance decimal.Decimal, vaultType string) (*models.Vault, error) {
+func (vr *Repository) UpdateVaultBalance(balance decimal.Decimal, vaultType string) (*models.Vault, error) {
 	if balance.LessThanOrEqual(decimal.Zero) {
 		return nil, errors.New("balance should be greater than zero")
 	}
@@ -82,7 +64,7 @@ func (vr *VaultRepository) UpdateVaultBalance(balance decimal.Decimal, vaultType
 		"balance":    balance,
 	}
 
-	err := vr.db.
+	err := vr.DB.
 		Model(&models.Vault{}).
 		Where("type = ? AND status = ?", vaultType, constants.VaultStatusActive).
 		Updates(updates).Error
@@ -92,7 +74,7 @@ func (vr *VaultRepository) UpdateVaultBalance(balance decimal.Decimal, vaultType
 	}
 
 	var vault *models.Vault
-	errF := vr.db.Where("type = ?", vaultType).First(&vault).Error
+	errF := vr.DB.Where("type = ?", vaultType).First(&vault).Error
 	if errF != nil {
 		return nil, errF
 	}
@@ -101,9 +83,9 @@ func (vr *VaultRepository) UpdateVaultBalance(balance decimal.Decimal, vaultType
 
 }
 
-func (vr *VaultRepository) GetVaultByType(vaultType string) (*models.Vault, error) {
+func (vr *Repository) GetVaultByType(vaultType string) (*models.Vault, error) {
 	var vault *models.Vault
-	if err := vr.db.Where(
+	if err := vr.DB.Where(
 		"type = ? AND status = ?",
 		vaultType, constants.VaultStatusActive,
 	).First(&vault).Error; err != nil {
@@ -116,13 +98,13 @@ func (vr *VaultRepository) GetVaultByType(vaultType string) (*models.Vault, erro
 	return vault, nil
 }
 
-func (vr *VaultRepository) UpdateVaultStatus(status string, vaultID uuid.UUID) (*models.Vault, error) {
+func (vr *Repository) UpdateVaultStatus(status string, vaultID uuid.UUID) (*models.Vault, error) {
 	updates := map[string]interface{}{
 		"updated_at": time.Now(),
 		"status":     status,
 	}
 
-	err := vr.db.
+	err := vr.DB.
 		Model(&models.Vault{}).
 		Where("ID = ?", vaultID).
 		Updates(updates).Error
@@ -132,7 +114,7 @@ func (vr *VaultRepository) UpdateVaultStatus(status string, vaultID uuid.UUID) (
 	}
 
 	var vault *models.Vault
-	errF := vr.db.Where("id = ?", vaultID).First(&vault).Error
+	errF := vr.DB.Where("id = ?", vaultID).First(&vault).Error
 	if errF != nil {
 		return nil, errF
 	}

@@ -7,27 +7,11 @@ import (
 	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 )
 
-type RefundService struct {
-	RefundRepo  *repositories.RefundRepository
-	PaymentRepo *repositories.PaymentRepository
-}
-
-func NewRefundService(
-	refundRepo *repositories.RefundRepository,
-	paymentRepo *repositories.PaymentRepository,
-) *RefundService {
-	return &RefundService{
-		RefundRepo:  refundRepo,
-		PaymentRepo: paymentRepo,
-	}
-}
-
-func (rs *RefundService) ValidateCreateRefundRequest(
+func (rs *Services) ValidateCreateRefundRequest(
 	request *dto.CreateRefundRequest,
 ) error {
 	if request == nil {
@@ -50,7 +34,7 @@ func (rs *RefundService) ValidateCreateRefundRequest(
 		return errors.New("reason is necessary")
 	}
 
-	payment, err := rs.PaymentRepo.GetPaymentByID(request.PaymentID)
+	payment, err := rs.Repo.GetPaymentByID(request.PaymentID)
 	if err != nil {
 		return err
 	}
@@ -70,7 +54,7 @@ func (rs *RefundService) ValidateCreateRefundRequest(
 		return errors.New("refund currency must match payment currency")
 	}
 
-	refunds, err := rs.RefundRepo.GetRefundsByPaymentID(request.PaymentID)
+	refunds, err := rs.Repo.GetRefundsByPaymentID(request.PaymentID)
 	if err != nil {
 		return err
 	}
@@ -97,13 +81,13 @@ func (rs *RefundService) ValidateCreateRefundRequest(
 	return nil
 }
 
-func (rs *RefundService) GetRefundByReference(
+func (rs *Services) GetRefundByReference(
 	refundRef string,
 ) (*models.Refund, error) {
 	if refundRef == "" {
 		return nil, errors.New("refund reference is required")
 	}
-	refund, errR := rs.RefundRepo.GetRefundByReference(refundRef)
+	refund, errR := rs.Repo.GetRefundByReference(refundRef)
 	if errR != nil {
 		return nil, errR
 	}
@@ -115,13 +99,13 @@ func (rs *RefundService) GetRefundByReference(
 	return refund, nil
 }
 
-func (rs *RefundService) GetRefundById(
+func (rs *Services) GetRefundById(
 	refundID uuid.UUID,
 ) (*models.Refund, error) {
 	if refundID == uuid.Nil {
 		return nil, errors.New("refund id is required")
 	}
-	refund, errR := rs.RefundRepo.GetRefundById(refundID)
+	refund, errR := rs.Repo.GetRefundById(refundID)
 	if errR != nil {
 		return nil, errR
 	}
@@ -129,13 +113,13 @@ func (rs *RefundService) GetRefundById(
 	return refund, nil
 }
 
-func (rs *RefundService) GetRefundsByMerchantId(
+func (rs *Services) GetRefundsByMerchantId(
 	merchantID uuid.UUID,
 ) ([]*models.Refund, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant id is required")
 	}
-	refunds, errR := rs.RefundRepo.GetRefundsByMerchantId(merchantID)
+	refunds, errR := rs.Repo.GetRefundsByMerchantId(merchantID)
 	if errR != nil {
 		return nil, errR
 	}

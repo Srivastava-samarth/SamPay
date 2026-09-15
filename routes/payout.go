@@ -1,24 +1,11 @@
 package routes
 
 import (
-	"github.com/Srivastava-samarth/sampay/controllers"
 	"github.com/Srivastava-samarth/sampay/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
-type PayoutRouter struct {
-	payoutCtlr *controllers.PayoutController
-}
-
-func NewPayoutRouter(
-	payoutCtlr *controllers.PayoutController,
-) *PayoutRouter {
-	return &PayoutRouter{
-		payoutCtlr: payoutCtlr,
-	}
-}
-
-func (pr *PayoutRouter) PayoutRoutes(
+func (pr *Router) PayoutRoutes(
 	router *gin.RouterGroup,
 	authMiddleware gin.HandlerFunc,
 ) {
@@ -27,23 +14,23 @@ func (pr *PayoutRouter) PayoutRoutes(
 	payout.POST(
 		"/:merchant_id/payout/wallet-to-bank",
 		middlewares.RequireRole("super_admin", "owner", "finance"),
-		pr.payoutCtlr.WalletToBankAccount(),
+		pr.Controller.WalletToBankAccount(),
 	)
 	payout.POST(
 		"/:merchant_id/payout/bank-to-bank",
 		middlewares.RequireRole("super_admin", "owner", "finance"),
-		pr.payoutCtlr.BankToBankAccount(),
+		pr.Controller.BankToBankAccount(),
 	)
 	payout.GET(
 		"/:merchant_id/payouts",
 		middlewares.RequireRole("super_admin", "owner", "finance"),
 		middlewares.RequireMerchantAccess("super_admin"),
-		pr.payoutCtlr.GetPayoutsByMerchantID(),
+		pr.Controller.GetPayoutsByMerchantID(),
 	)
 	payout.GET(
 		"/:merchant_id/payout/:payout_id",
 		middlewares.RequireRole("super_admin", "owner", "finance"),
 		middlewares.RequireMerchantAccess("super_admin"),
-		pr.payoutCtlr.GetPayoutByID(),
+		pr.Controller.GetPayoutByID(),
 	)
 }

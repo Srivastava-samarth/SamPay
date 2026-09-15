@@ -1,24 +1,11 @@
 package routes
 
 import (
-	"github.com/Srivastava-samarth/sampay/controllers"
 	"github.com/Srivastava-samarth/sampay/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
-type UserRouter struct {
-	UserController *controllers.UserController
-}
-
-func NewUserRouter(
-	userController *controllers.UserController,
-) *UserRouter {
-	return &UserRouter{
-		UserController: userController,
-	}
-}
-
-func (ur *UserRouter) UserRoutes(
+func (ur *Router) UserRoutes(
 	router *gin.RouterGroup,
 	authMiddleware gin.HandlerFunc,
 ) {
@@ -28,29 +15,29 @@ func (ur *UserRouter) UserRoutes(
 		"",
 		middlewares.RequireRole("super_admin", "owner"),
 		middlewares.RequireMerchantAccess("super_admin"),
-		ur.UserController.UserOnboarding(),
+		ur.Controller.UserOnboarding(),
 	)
 	user.GET(
 		"/:user_id",
 		middlewares.RequireRole("super_admin", "owner"),
 		middlewares.RequireMerchantAccess("super_admin"),
-		ur.UserController.GetUserByID(),
+		ur.Controller.GetUserByID(),
 	)
 	user.GET(
 		"/merchant",
 		middlewares.RequireRole("super_admin", "owner"),
 		middlewares.RequireMerchantAccess("super_admin"),
-		ur.UserController.GetUsersByMerchant(),
+		ur.Controller.GetUsersByMerchant(),
 	)
 	user.GET(
 		"",
 		middlewares.RequireMerchantAccess("super_admin"),
-		ur.UserController.GetUsers(),
+		ur.Controller.GetUsers(),
 	)
 	user.PATCH(
 		"/:user_id/status",
 		middlewares.RequireRole("super_admin", "owner"),
 		middlewares.RequireMerchantAccess("super_admin"),
-		ur.UserController.UpdateUserStatus(),
+		ur.Controller.UpdateUserStatus(),
 	)
 }

@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/Srivastava-samarth/sampay/dto"
-	"github.com/Srivastava-samarth/sampay/services"
 	"github.com/Srivastava-samarth/sampay/temporal"
 	"github.com/Srivastava-samarth/sampay/temporal/workflows"
 	"github.com/gin-gonic/gin"
@@ -12,22 +11,7 @@ import (
 	"go.temporal.io/sdk/client"
 )
 
-type UserController struct {
-	TemporalClient client.Client
-	UserService    *services.UserService
-}
-
-func NewUserController(
-	temporalClient client.Client,
-	userSrvc *services.UserService,
-) *UserController {
-	return &UserController{
-		TemporalClient: temporalClient,
-		UserService:    userSrvc,
-	}
-}
-
-func (uc *UserController) UserOnboarding() gin.HandlerFunc {
+func (uc *Controller) UserOnboarding() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request dto.UserOnboardingRequest
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -66,7 +50,7 @@ func (uc *UserController) UserOnboarding() gin.HandlerFunc {
 	}
 }
 
-func (uc *UserController) GetUserByID() gin.HandlerFunc {
+func (uc *Controller) GetUserByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Param("user_id")
 
@@ -80,7 +64,7 @@ func (uc *UserController) GetUserByID() gin.HandlerFunc {
 			)
 			return
 		}
-		user, errM := uc.UserService.GetUser(parsedUserId)
+		user, errM := uc.Services.GetUser(parsedUserId)
 		if errM != nil {
 			dto.Fail(
 				c,
@@ -99,9 +83,9 @@ func (uc *UserController) GetUserByID() gin.HandlerFunc {
 	}
 }
 
-func (uc *UserController) GetUsers() gin.HandlerFunc {
+func (uc *Controller) GetUsers() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		merchants, errM := uc.UserService.GetUsers()
+		merchants, errM := uc.Services.GetUsers()
 		if errM != nil {
 			dto.Fail(
 				c,
@@ -120,7 +104,7 @@ func (uc *UserController) GetUsers() gin.HandlerFunc {
 	}
 }
 
-func (uc *UserController) UpdateUserStatus() gin.HandlerFunc {
+func (uc *Controller) UpdateUserStatus() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.UpdateMerchantStatusRequest
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -144,7 +128,7 @@ func (uc *UserController) UpdateUserStatus() gin.HandlerFunc {
 			)
 		}
 
-		updatedUser, errUU := uc.UserService.UpdateUserStatus(request.Status, parsedUserID)
+		updatedUser, errUU := uc.Services.UpdateUserStatus(request.Status, parsedUserID)
 		if errUU != nil {
 			dto.Fail(
 				c,
@@ -163,7 +147,7 @@ func (uc *UserController) UpdateUserStatus() gin.HandlerFunc {
 	}
 }
 
-func (uc *UserController) GetUsersByMerchant() gin.HandlerFunc {
+func (uc *Controller) GetUsersByMerchant() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		merchantID := c.Param("merchant_id")
 		if merchantID == "" {
@@ -186,7 +170,7 @@ func (uc *UserController) GetUsersByMerchant() gin.HandlerFunc {
 			return
 		}
 
-		users, errU := uc.UserService.GetUsersByMerchant(parsedMerchantID)
+		users, errU := uc.Services.GetUsersByMerchant(parsedMerchantID)
 		if errU != nil {
 			dto.Fail(
 				c,

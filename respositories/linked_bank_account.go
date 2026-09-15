@@ -8,26 +8,9 @@ import (
 	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
-type LinkedBankAccountRepository struct {
-	db *gorm.DB
-}
-
-func NewLinkedBankRepository(db *gorm.DB) *LinkedBankAccountRepository {
-	return &LinkedBankAccountRepository{
-		db: db,
-	}
-}
-
-func (wr *LinkedBankAccountRepository) WithTx(tx *gorm.DB) *LinkedBankAccountRepository {
-	return &LinkedBankAccountRepository{
-		db: tx,
-	}
-}
-
-func (lbr *LinkedBankAccountRepository) CreateLinkedBankAccount(linkedBankAccount *models.LinkedBankAccount) (*models.LinkedBankAccount, error) {
+func (lbr *Repository) CreateLinkedBankAccount(linkedBankAccount *models.LinkedBankAccount) (*models.LinkedBankAccount, error) {
 	parseLinkedBankAccount := &models.LinkedBankAccount{
 		ID:            utils.GenerateUUID(),
 		MerchantID:    linkedBankAccount.MerchantID,
@@ -37,7 +20,7 @@ func (lbr *LinkedBankAccountRepository) CreateLinkedBankAccount(linkedBankAccoun
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 	}
-	err := lbr.db.Create(&parseLinkedBankAccount).Error
+	err := lbr.DB.Create(&parseLinkedBankAccount).Error
 	if err != nil {
 		return nil, err
 	}
@@ -45,10 +28,10 @@ func (lbr *LinkedBankAccountRepository) CreateLinkedBankAccount(linkedBankAccoun
 	return parseLinkedBankAccount, nil
 }
 
-func (lbr *LinkedBankAccountRepository) GetAllBankAccountLinkedByMerchantID(merchantID uuid.UUID) ([]*models.LinkedBankAccount, error) {
+func (lbr *Repository) GetAllBankAccountLinkedByMerchantID(merchantID uuid.UUID) ([]*models.LinkedBankAccount, error) {
 	var linkedBankAccounts []*models.LinkedBankAccount
 
-	err := lbr.db.Where(
+	err := lbr.DB.Where(
 		"merchant_id = ? AND status = ?",
 		merchantID,
 		"active",
@@ -61,7 +44,7 @@ func (lbr *LinkedBankAccountRepository) GetAllBankAccountLinkedByMerchantID(merc
 	return linkedBankAccounts, nil
 }
 
-func (br *LinkedBankAccountRepository) UpdateLinkedBankAccount(bankAccountID uuid.UUID, request *dto.UpdateLinkedBankAccountRequest) (*models.LinkedBankAccount, error) {
+func (br *Repository) UpdateLinkedBankAccount(bankAccountID uuid.UUID, request *dto.UpdateLinkedBankAccountRequest) (*models.LinkedBankAccount, error) {
 	updates := map[string]interface{}{
 		"updated_at": time.Now(),
 	}
@@ -74,7 +57,7 @@ func (br *LinkedBankAccountRepository) UpdateLinkedBankAccount(bankAccountID uui
 		updates["status"] = request.Status
 	}
 
-	err := br.db.
+	err := br.DB.
 		Model(&models.LinkedBankAccount{}).
 		Where("bank_account_id = ?", bankAccountID).
 		Updates(updates).Error
@@ -83,7 +66,7 @@ func (br *LinkedBankAccountRepository) UpdateLinkedBankAccount(bankAccountID uui
 	}
 
 	var updatedLinkedBankAccount models.LinkedBankAccount
-	err = br.db.
+	err = br.DB.
 		Where("bank_account_id = ?", bankAccountID).
 		First(&updatedLinkedBankAccount).Error
 
@@ -94,10 +77,10 @@ func (br *LinkedBankAccountRepository) UpdateLinkedBankAccount(bankAccountID uui
 	return &updatedLinkedBankAccount, nil
 }
 
-func (lbr *LinkedBankAccountRepository) GetPrimaryBankAccountLinkedByMerchantID(merchantID uuid.UUID) (*models.LinkedBankAccount, error) {
+func (lbr *Repository) GetPrimaryBankAccountLinkedByMerchantID(merchantID uuid.UUID) (*models.LinkedBankAccount, error) {
 	var linkedBankAccount *models.LinkedBankAccount
 
-	err := lbr.db.Where(
+	err := lbr.DB.Where(
 		"merchant_id = ? AND status = ? AND type = ?",
 		merchantID,
 		"active",
@@ -111,10 +94,10 @@ func (lbr *LinkedBankAccountRepository) GetPrimaryBankAccountLinkedByMerchantID(
 
 }
 
-func (lbr *LinkedBankAccountRepository) GetBankAccountLinkedByID(ID uuid.UUID) (*models.LinkedBankAccount, error) {
+func (lbr *Repository) GetBankAccountLinkedByID(ID uuid.UUID) (*models.LinkedBankAccount, error) {
 	var linkedBankAccount *models.LinkedBankAccount
 
-	err := lbr.db.Where(
+	err := lbr.DB.Where(
 		"bank_account_id = ? AND status = ?",
 		ID,
 		"active",

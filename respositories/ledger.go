@@ -11,25 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type LedgerRepository struct {
-	db *gorm.DB
-}
-
-func NewLedgerRepository(
-	db *gorm.DB,
-) *LedgerRepository {
-	return &LedgerRepository{
-		db: db,
-	}
-}
-
-func (wr *LedgerRepository) WithTx(tx *gorm.DB) *LedgerRepository {
-	return &LedgerRepository{
-		db: tx,
-	}
-}
-
-func (lr *LedgerRepository) GetWalletTransactions(
+func (lr *Repository) GetWalletTransactions(
 	accountType *string,
 	accountID uuid.UUID,
 	cursor *uuid.UUID,
@@ -38,7 +20,7 @@ func (lr *LedgerRepository) GetWalletTransactions(
 
 	var transactions []dto.LedgerTransactionRow
 
-	query := lr.db.
+	query := lr.DB.
 		Table("ledger_entries AS le").
 		Select(`
             lt.id AS ledger_transaction_id,
@@ -70,7 +52,7 @@ func (lr *LedgerRepository) GetWalletTransactions(
 
 		var cursorCreatedAt time.Time
 
-		err := lr.db.
+		err := lr.DB.
 			Table("ledger_transactions").
 			Select("created_at").
 			Where("id = ?", *cursor).
@@ -111,14 +93,14 @@ func (lr *LedgerRepository) GetWalletTransactions(
 	return transactions, nil
 }
 
-func (lr *LedgerRepository) GetWalletTransactionById(
+func (lr *Repository) GetWalletTransactionById(
 	accountID uuid.UUID,
 	transactionID uuid.UUID,
 ) (*dto.LedgerTransactionRow, error) {
 
 	var transaction dto.LedgerTransactionRow
 
-	err := lr.db.
+	err := lr.DB.
 		Table("ledger_entries AS le").
 		Select(`
             lt.id AS ledger_transaction_id,
@@ -150,7 +132,7 @@ func (lr *LedgerRepository) GetWalletTransactionById(
 	return &transaction, nil
 }
 
-func (lr *LedgerRepository) CreateLedgerEntry(requestEntry *models.LedgerEntry) (*models.LedgerEntry, error) {
+func (lr *Repository) CreateLedgerEntry(requestEntry *models.LedgerEntry) (*models.LedgerEntry, error) {
 	ledgerEntry := &models.LedgerEntry{
 		ID:                  utils.GenerateUUID(),
 		LedgerTransactionID: requestEntry.LedgerTransactionID,
@@ -161,14 +143,14 @@ func (lr *LedgerRepository) CreateLedgerEntry(requestEntry *models.LedgerEntry) 
 		Currency:            requestEntry.Currency,
 		CreatedAt:           time.Now(),
 	}
-	if err := lr.db.Create(ledgerEntry).Error; err != nil {
+	if err := lr.DB.Create(ledgerEntry).Error; err != nil {
 		return nil, err
 	}
 
 	return ledgerEntry, nil
 }
 
-func (lr *LedgerRepository) CreateLedgerTransaction(requestTransaction *models.LedgerTransaction) (*models.LedgerTransaction, error) {
+func (lr *Repository) CreateLedgerTransaction(requestTransaction *models.LedgerTransaction) (*models.LedgerTransaction, error) {
 	ledgerTransaction := &models.LedgerTransaction{
 		ID:               utils.GenerateUUID(),
 		TransactionRef:   utils.GenerateLedgerReference(),
@@ -180,20 +162,20 @@ func (lr *LedgerRepository) CreateLedgerTransaction(requestTransaction *models.L
 		UpdatedAt:        time.Now(),
 	}
 
-	if err := lr.db.Create(ledgerTransaction).Error; err != nil {
+	if err := lr.DB.Create(ledgerTransaction).Error; err != nil {
 		return nil, err
 	}
 
 	return ledgerTransaction, nil
 }
 
-func (lr *LedgerRepository) ExistingLedgerTransactionByReferenceID(
+func (lr *Repository) ExistingLedgerTransactionByReferenceID(
 	referenceID string,
 ) (bool, error) {
 
 	var ledgerTransaction models.LedgerTransaction
 
-	err := lr.db.
+	err := lr.DB.
 		Where("reference_id = ?", referenceID).
 		First(&ledgerTransaction).Error
 
@@ -208,7 +190,7 @@ func (lr *LedgerRepository) ExistingLedgerTransactionByReferenceID(
 	return true, nil
 }
 
-func (lr *LedgerRepository) UpdateLedgerStatus(ID uuid.UUID, status string, settlementStatus string) (*models.LedgerTransaction, error) {
+func (lr *Repository) UpdateLedgerStatus(ID uuid.UUID, status string, settlementStatus string) (*models.LedgerTransaction, error) {
 	updates := map[string]interface{}{
 		"updated_at": time.Now(),
 	}
@@ -230,7 +212,7 @@ func (lr *LedgerRepository) UpdateLedgerStatus(ID uuid.UUID, status string, sett
 		return nil, errors.New("no status change")
 	}
 
-	err := lr.db.
+	err := lr.DB.
 		Model(&models.LedgerTransaction{}).
 		Where("id = ?", ID).
 		Updates(updates).Error
@@ -240,7 +222,7 @@ func (lr *LedgerRepository) UpdateLedgerStatus(ID uuid.UUID, status string, sett
 	}
 
 	var updatedLedgerTransaction *models.LedgerTransaction
-	errU := lr.db.Where("id = ?", ID).First(&updatedLedgerTransaction).Error
+	errU := lr.DB.Where("id = ?", ID).First(&updatedLedgerTransaction).Error
 	if errU != nil {
 		return nil, errU
 	}
@@ -248,9 +230,9 @@ func (lr *LedgerRepository) UpdateLedgerStatus(ID uuid.UUID, status string, sett
 	return updatedLedgerTransaction, nil
 }
 
-func (lr *LedgerRepository) GetLedgerTransactionByID(ID uuid.UUID) (*models.LedgerTransaction, error) {
+func (lr *Repository) GetLedgerTransactionByID(ID uuid.UUID) (*models.LedgerTransaction, error) {
 	var ledgerTransaction *models.LedgerTransaction
-	err := lr.db.Where("id = ?", ID).First(&ledgerTransaction).Error
+	err := lr.DB.Where("id = ?", ID).First(&ledgerTransaction).Error
 	if err != nil {
 		return nil, err
 	}
@@ -258,14 +240,14 @@ func (lr *LedgerRepository) GetLedgerTransactionByID(ID uuid.UUID) (*models.Ledg
 	return ledgerTransaction, nil
 }
 
-func (lr *LedgerRepository) GetTransactionsByCreatedAtRange(
+func (lr *Repository) GetTransactionsByCreatedAtRange(
 	startTimestamp time.Time,
 	endTimestamp time.Time,
 ) ([]*models.LedgerTransaction, error) {
 
 	var transactions []*models.LedgerTransaction
 
-	err := lr.db.
+	err := lr.DB.
 		Where(
 			"created_at >= ? AND created_at < ?",
 			startTimestamp,
@@ -281,13 +263,13 @@ func (lr *LedgerRepository) GetTransactionsByCreatedAtRange(
 	return transactions, nil
 }
 
-func (lr *LedgerRepository) GetEntriesByTransactionIDs(
+func (lr *Repository) GetEntriesByTransactionIDs(
 	transactionIDs []uuid.UUID,
 ) ([]*models.LedgerEntry, error) {
 
 	var entries []*models.LedgerEntry
 
-	err := lr.db.
+	err := lr.DB.
 		Where("ledger_transaction_id IN ?", transactionIDs).
 		Order("created_at ASC").
 		Find(&entries).Error
@@ -299,12 +281,12 @@ func (lr *LedgerRepository) GetEntriesByTransactionIDs(
 	return entries, nil
 }
 
-func (lr *LedgerRepository) GetLedgerTransactionByReferenceID(
+func (lr *Repository) GetLedgerTransactionByReferenceID(
 	referenceID string,
 ) (*models.LedgerTransaction, error) {
 	var ledgerTransaction *models.LedgerTransaction
 
-	err := lr.db.Where("reference_id = ?", referenceID).First(&ledgerTransaction).Error
+	err := lr.DB.Where("reference_id = ?", referenceID).First(&ledgerTransaction).Error
 	if err != nil {
 		return nil, err
 	}

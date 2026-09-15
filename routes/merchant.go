@@ -1,24 +1,11 @@
 package routes
 
 import (
-	"github.com/Srivastava-samarth/sampay/controllers"
 	"github.com/Srivastava-samarth/sampay/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
-type MerchantRouter struct {
-	MerchantController *controllers.MerchantController
-}
-
-func NewMerchantRouter(
-	merchantController *controllers.MerchantController,
-) *MerchantRouter {
-	return &MerchantRouter{
-		MerchantController: merchantController,
-	}
-}
-
-func (mr *MerchantRouter) MerchantRoutes(
+func (mr *Router) MerchantRoutes(
 	router *gin.RouterGroup,
 	authMiddleware gin.HandlerFunc,
 ) {
@@ -28,39 +15,39 @@ func (mr *MerchantRouter) MerchantRoutes(
 	merchant.POST(
 		"",
 		middlewares.RequireRole("super_admin"),
-		mr.MerchantController.CreateMerchant(),
+		mr.Controller.CreateMerchant(),
 	)
 	merchant.GET(
 		"/:merchant_id",
 		middlewares.RequireRole("owner", "finance", "super_admin"),
 		middlewares.RequireMerchantAccess("super_admin"),
-		mr.MerchantController.GetMerchantByID(),
+		mr.Controller.GetMerchantByID(),
 	)
 	merchant.GET(
 		"",
 		middlewares.RequireRole("super_admin"),
-		mr.MerchantController.GetMerchants(),
+		mr.Controller.GetMerchants(),
 	)
 	merchant.PATCH(
 		"/:merchant_id",
 		middlewares.RequireRole("owner", "super_admin"),
 		middlewares.RequireMerchantAccess("super_admin"),
-		mr.MerchantController.UpdateMerchantInfo(),
+		mr.Controller.UpdateMerchantInfo(),
 	)
 	merchant.PATCH(
 		"/:merchant_id/update-kyc",
 		middlewares.RequireRole("super_admin"),
 		middlewares.RequireMerchantAccess("super_admin"),
-		mr.MerchantController.UpdateMerchantKyc(),
+		mr.Controller.UpdateMerchantKyc(),
 	)
 	merchant.PUT(
 		"/:merchant_id/re-attempt-kyc",
 		middlewares.RequireRole("super_admin"),
-		mr.MerchantController.ReattemptOnboardingKyc(),
+		mr.Controller.ReattemptOnboardingKyc(),
 	)
 	merchant.PATCH(
 		"/:merchant_id/status",
 		middlewares.RequireRole("super_admin"),
-		mr.MerchantController.UpdateMerchantStatus(),
+		mr.Controller.UpdateMerchantStatus(),
 	)
 }

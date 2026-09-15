@@ -13,23 +13,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type WalletRepository struct {
-	db *gorm.DB
-}
-
-func NewWalletRepository(db *gorm.DB) *WalletRepository {
-	return &WalletRepository{
-		db: db,
-	}
-}
-
-func (wr *WalletRepository) WithTx(tx *gorm.DB) *WalletRepository {
-	return &WalletRepository{
-		db: tx,
-	}
-}
-
-func (wr *WalletRepository) CreateWalletForMerchant(merchantID uuid.UUID) (*models.Wallets, error) {
+func (wr *Repository) CreateWalletForMerchant(merchantID uuid.UUID) (*models.Wallets, error) {
 	wallet := &models.Wallets{
 		ID:               utils.GenerateUUID(),
 		MerchantID:       merchantID,
@@ -40,16 +24,16 @@ func (wr *WalletRepository) CreateWalletForMerchant(merchantID uuid.UUID) (*mode
 		UpdatedAt:        time.Now(),
 	}
 
-	if err := wr.db.Create(wallet).Error; err != nil {
+	if err := wr.DB.Create(wallet).Error; err != nil {
 		return nil, err
 	}
 
 	return wallet, nil
 }
 
-func (wr *WalletRepository) GetWalletByMerchantId(merchantId uuid.UUID) (*models.Wallets, error) {
+func (wr *Repository) GetWalletByMerchantId(merchantId uuid.UUID) (*models.Wallets, error) {
 	var wallet *models.Wallets
-	err := wr.db.Where("merchant_id = ? AND status = ?", merchantId, "active").First(&wallet).Error
+	err := wr.DB.Where("merchant_id = ? AND status = ?", merchantId, "active").First(&wallet).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -59,8 +43,8 @@ func (wr *WalletRepository) GetWalletByMerchantId(merchantId uuid.UUID) (*models
 	return wallet, nil
 }
 
-func (wr *WalletRepository) UpdateWalletStatus(merchantId uuid.UUID, status string) (*models.Wallets, error) {
-	err := wr.db.
+func (wr *Repository) UpdateWalletStatus(merchantId uuid.UUID, status string) (*models.Wallets, error) {
+	err := wr.DB.
 		Model(&models.Wallets{}).
 		Where("merchant_id = ?", merchantId).
 		Updates(map[string]interface{}{
@@ -72,7 +56,7 @@ func (wr *WalletRepository) UpdateWalletStatus(merchantId uuid.UUID, status stri
 	}
 
 	var wallet *models.Wallets
-	errW := wr.db.Where("merchant_id = ?", merchantId).First(&wallet).Error
+	errW := wr.DB.Where("merchant_id = ?", merchantId).First(&wallet).Error
 	if errW != nil {
 		return nil, errW
 	}
@@ -80,7 +64,7 @@ func (wr *WalletRepository) UpdateWalletStatus(merchantId uuid.UUID, status stri
 	return wallet, nil
 }
 
-func (wr *WalletRepository) UpdateWalletBalance(merchantID uuid.UUID, walletRequest *dto.UpdateWalletBalanceRequest) (*models.Wallets, error) {
+func (wr *Repository) UpdateWalletBalance(merchantID uuid.UUID, walletRequest *dto.UpdateWalletBalanceRequest) (*models.Wallets, error) {
 	updates := map[string]interface{}{
 		"updated_at": time.Now(),
 	}
@@ -93,7 +77,7 @@ func (wr *WalletRepository) UpdateWalletBalance(merchantID uuid.UUID, walletRequ
 		updates["reserved_balance"] = walletRequest.ReservedBalance
 	}
 
-	err := wr.db.
+	err := wr.DB.
 		Model(&models.Wallets{}).
 		Where("merchant_id = ? AND status = ?", merchantID, constants.MerchantStatusActive).
 		Updates(updates).Error
@@ -103,7 +87,7 @@ func (wr *WalletRepository) UpdateWalletBalance(merchantID uuid.UUID, walletRequ
 	}
 
 	var updatedWallet *models.Wallets
-	if err := wr.db.Where("merchant_id = ? AND status = ?", merchantID, "active").First(&updatedWallet).Error; err != nil {
+	if err := wr.DB.Where("merchant_id = ? AND status = ?", merchantID, "active").First(&updatedWallet).Error; err != nil {
 		return nil, err
 	}
 

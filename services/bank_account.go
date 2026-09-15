@@ -6,32 +6,10 @@ import (
 	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
-type BankService struct {
-	DB                    *gorm.DB
-	BankRepo              *repositories.BankRepository
-	MerchantRepo          *repositories.MerchantRepository
-	LinkedBankAccountRepo *repositories.LinkedBankAccountRepository
-}
-
-func NewBankService(
-	db *gorm.DB,
-	BankRepo *repositories.BankRepository,
-	MerchantRepo *repositories.MerchantRepository,
-	LinkedBankAccountRepo *repositories.LinkedBankAccountRepository) *BankService {
-	return &BankService{
-		DB:                    db,
-		MerchantRepo:          MerchantRepo,
-		BankRepo:              BankRepo,
-		LinkedBankAccountRepo: LinkedBankAccountRepo,
-	}
-}
-
-func (bs *BankService) CreateBankAccount(bankAccountRequest *dto.CreateBankAccountRequest) (*dto.CreateBankAccountResponse, error) {
+func (bs *Services) CreateBankAccount(bankAccountRequest *dto.CreateBankAccountRequest) (*dto.CreateBankAccountResponse, error) {
 	if bankAccountRequest == nil {
 		return nil, errors.New("request is required")
 	}
@@ -44,12 +22,12 @@ func (bs *BankService) CreateBankAccount(bankAccountRequest *dto.CreateBankAccou
 		return nil, errors.New("merchant_id is required")
 	}
 
-	_, err := bs.MerchantRepo.GetMerchantByID(bankAccountRequest.MerchantID)
+	_, err := bs.Repo.GetMerchantByID(bankAccountRequest.MerchantID)
 	if err != nil {
 		return nil, err
 	}
 
-	linkedBankAccounts, err := bs.LinkedBankAccountRepo.GetAllBankAccountLinkedByMerchantID(bankAccountRequest.MerchantID)
+	linkedBankAccounts, err := bs.Repo.GetAllBankAccountLinkedByMerchantID(bankAccountRequest.MerchantID)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +47,7 @@ func (bs *BankService) CreateBankAccount(bankAccountRequest *dto.CreateBankAccou
 		AccountType: accountType,
 	}
 
-	bankAccountForMerchant, err := bs.BankRepo.CreateBankAccount(createBankAccountPayload)
+	bankAccountForMerchant, err := bs.Repo.CreateBankAccount(createBankAccountPayload)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +65,7 @@ func (bs *BankService) CreateBankAccount(bankAccountRequest *dto.CreateBankAccou
 	return bankAccountResponse, nil
 }
 
-func (bs *BankService) CreateBankAccountAndLink(bankAccountRequest *dto.CreateBankAccountRequest) (*models.BankAccount, *models.LinkedBankAccount, error) {
+func (bs *Services) CreateBankAccountAndLink(bankAccountRequest *dto.CreateBankAccountRequest) (*models.BankAccount, *models.LinkedBankAccount, error) {
 	tx := bs.DB.Begin()
 
 	if tx.Error != nil {
@@ -101,10 +79,9 @@ func (bs *BankService) CreateBankAccountAndLink(bankAccountRequest *dto.CreateBa
 		}
 	}()
 
-	txBankRepo := bs.BankRepo.WithTx(tx)
-	txLinkedBankAccount := bs.LinkedBankAccountRepo.WithTx(tx)
+	repo := bs.Repo.WithTx(tx)
 
-	linkedBankAccounts, err := txLinkedBankAccount.GetAllBankAccountLinkedByMerchantID(bankAccountRequest.MerchantID)
+	linkedBankAccounts, err := repo.GetAllBankAccountLinkedByMerchantID(bankAccountRequest.MerchantID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -117,7 +94,7 @@ func (bs *BankService) CreateBankAccountAndLink(bankAccountRequest *dto.CreateBa
 		AccountName: bankAccountRequest.AccountName,
 		AccountType: constants.BankAccountTypeSecondary,
 	}
-	bankAccount, errBA := txBankRepo.CreateBankAccount(bankAccountRequestPayload)
+	bankAccount, errBA := repo.CreateBankAccount(bankAccountRequestPayload)
 	if errBA != nil {
 		tx.Rollback()
 		return nil, nil, errBA
@@ -130,7 +107,7 @@ func (bs *BankService) CreateBankAccountAndLink(bankAccountRequest *dto.CreateBa
 		Status:        bankAccount.Status,
 	}
 
-	linkedBankAccount, errLBA := txLinkedBankAccount.CreateLinkedBankAccount(createLinkedBankAccountRequest)
+	linkedBankAccount, errLBA := repo.CreateLinkedBankAccount(createLinkedBankAccountRequest)
 	if errLBA != nil {
 		tx.Rollback()
 		return nil, nil, errLBA
@@ -144,7 +121,7 @@ func (bs *BankService) CreateBankAccountAndLink(bankAccountRequest *dto.CreateBa
 
 }
 
-func (bs *BankService) UpdateBankAccountAndlink(updateBankAccountRequest *dto.UpdateBankAccountRequest) (*models.BankAccount, *models.LinkedBankAccount, error) {
+func (bs *Services) UpdateBankAccountAndlink(updateBankAccountRequest *dto.UpdateBankAccountRequest) (*models.BankAccount, *models.LinkedBankAccount, error) {
 	if updateBankAccountRequest == nil {
 		return nil, nil, errors.New("request is required")
 	}
@@ -165,12 +142,12 @@ func (bs *BankService) UpdateBankAccountAndlink(updateBankAccountRequest *dto.Up
 		return nil, nil, errors.New("status is required")
 	}
 
-	updatedBankAccount, errUBA := bs.BankRepo.UpdateBankAccount(updateBankAccountRequest.ID, updateBankAccountRequest)
+	updatedBankAccount, errUBA := bs.Repo.UpdateBankAccount(updateBankAccountRequest.ID, updateBankAccountRequest)
 	if errUBA != nil {
 		return nil, nil, errUBA
 	}
 
-	updatedLinkedBanAccount, errULBA := bs.LinkedBankAccountRepo.UpdateLinkedBankAccount(updatedBankAccount.ID, &dto.UpdateLinkedBankAccountRequest{
+	updatedLinkedBanAccount, errULBA := bs.Repo.UpdateLinkedBankAccount(updatedBankAccount.ID, &dto.UpdateLinkedBankAccountRequest{
 		Type:   updateBankAccountRequest.AccountType,
 		Status: updateBankAccountRequest.Status,
 	})
@@ -181,11 +158,11 @@ func (bs *BankService) UpdateBankAccountAndlink(updateBankAccountRequest *dto.Up
 	return updatedBankAccount, updatedLinkedBanAccount, nil
 }
 
-func (bs *BankService) GetBankAccountsByMerchantID(merchantID uuid.UUID) ([]*models.BankAccount, error) {
+func (bs *Services) GetBankAccountsByMerchantID(merchantID uuid.UUID) ([]*models.BankAccount, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant_id is required")
 	}
-	linkedBankAccounts, errLBA := bs.LinkedBankAccountRepo.GetAllBankAccountLinkedByMerchantID(merchantID)
+	linkedBankAccounts, errLBA := bs.Repo.GetAllBankAccountLinkedByMerchantID(merchantID)
 	if errLBA != nil {
 		return nil, errLBA
 	}
@@ -195,7 +172,7 @@ func (bs *BankService) GetBankAccountsByMerchantID(merchantID uuid.UUID) ([]*mod
 
 	var bankAccounts []*models.BankAccount
 	for _, linkedBankAccount := range linkedBankAccounts {
-		bankAccount, errBA := bs.BankRepo.GetBankAccountByID(linkedBankAccount.BankAccountID)
+		bankAccount, errBA := bs.Repo.GetBankAccountByID(linkedBankAccount.BankAccountID)
 		if errBA != nil {
 			return nil, errBA
 		}
@@ -206,12 +183,12 @@ func (bs *BankService) GetBankAccountsByMerchantID(merchantID uuid.UUID) ([]*mod
 	return bankAccounts, nil
 }
 
-func (bs *BankService) GetBankAccount(bankAccountID uuid.UUID) (*models.BankAccount, error) {
+func (bs *Services) GetBankAccount(bankAccountID uuid.UUID) (*models.BankAccount, error) {
 	if bankAccountID == uuid.Nil {
 		return nil, errors.New("bank_account_id is empty")
 	}
 
-	bankAccount, errBA := bs.BankRepo.GetBankAccountByID(bankAccountID)
+	bankAccount, errBA := bs.Repo.GetBankAccountByID(bankAccountID)
 	if errBA != nil {
 		return nil, errBA
 	}

@@ -4,29 +4,13 @@ import (
 	"net/http"
 
 	"github.com/Srivastava-samarth/sampay/dto"
-	"github.com/Srivastava-samarth/sampay/services"
 	"github.com/Srivastava-samarth/sampay/temporal"
 	"github.com/Srivastava-samarth/sampay/temporal/workflows"
 	"github.com/gin-gonic/gin"
 	"go.temporal.io/sdk/client"
 )
 
-type AuthController struct {
-	TemporalClient client.Client
-	AuthService    *services.AuthService
-}
-
-func NewAuthController(
-	authService *services.AuthService,
-	temporalClient client.Client,
-) *AuthController {
-	return &AuthController{
-		AuthService:    authService,
-		TemporalClient: temporalClient,
-	}
-}
-
-func (ac *AuthController) Login() gin.HandlerFunc {
+func (ac *Controller) Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var loginRequest *dto.AuthRequest
 		if err := c.ShouldBindJSON(&loginRequest); err != nil {
@@ -39,7 +23,7 @@ func (ac *AuthController) Login() gin.HandlerFunc {
 			return
 		}
 
-		response, err := ac.AuthService.Authentication(loginRequest)
+		response, err := ac.Services.Authentication(loginRequest)
 		if err != nil {
 			dto.Fail(
 				c,
@@ -54,7 +38,7 @@ func (ac *AuthController) Login() gin.HandlerFunc {
 	}
 }
 
-func (ac *AuthController) ForgotPassword() gin.HandlerFunc {
+func (ac *Controller) ForgotPassword() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.ForgotPasswordRequest
 
@@ -98,7 +82,7 @@ func (ac *AuthController) ForgotPassword() gin.HandlerFunc {
 	}
 }
 
-func (ac *AuthController) ResetPassword() gin.HandlerFunc {
+func (ac *Controller) ResetPassword() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.ResetPasswordRequest
 
@@ -112,7 +96,7 @@ func (ac *AuthController) ResetPassword() gin.HandlerFunc {
 			return
 		}
 
-		err := ac.AuthService.ResetPassword(request)
+		err := ac.Services.ResetPassword(request)
 		if err != nil {
 			dto.Fail(
 				c,
@@ -131,7 +115,7 @@ func (ac *AuthController) ResetPassword() gin.HandlerFunc {
 	}
 }
 
-func (ac *AuthController) RefreshToken() gin.HandlerFunc {
+func (ac *Controller) RefreshToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.RefreshTokenRequest
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -144,7 +128,7 @@ func (ac *AuthController) RefreshToken() gin.HandlerFunc {
 			return
 		}
 
-		response, errR := ac.AuthService.RefreshToken(request)
+		response, errR := ac.Services.RefreshToken(request)
 		if errR != nil {
 			dto.Fail(
 				c,

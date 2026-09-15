@@ -10,5 +10,5 @@ func (a *Registry) ForgotPassword(
 	ctx context.Context,
 	request *dto.ForgotPasswordRequest,
 ) error {
-	return a.AuthService.ForgotPasswod(request)
+	return a.Services.ForgotPasswod(request)
 }

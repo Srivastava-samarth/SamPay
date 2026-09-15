@@ -5,30 +5,11 @@ import (
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 )
 
-type PaymentService struct {
-	PaymentRepo  *repositories.PaymentRepository
-	MerchantRepo *repositories.MerchantRepository
-	walletSrvc   *WalletService
-}
-
-func NewPaymentService(
-	paymentRepo *repositories.PaymentRepository,
-	merchantRepo *repositories.MerchantRepository,
-	walletSrvc *WalletService,
-) *PaymentService {
-	return &PaymentService{
-		PaymentRepo:  paymentRepo,
-		MerchantRepo: merchantRepo,
-		walletSrvc:   walletSrvc,
-	}
-}
-
-func (ps *PaymentService) ValidatePaymentRequest(
+func (ps *Services) ValidatePaymentRequest(
 	request *dto.CreatePaymentRequest,
 	senderMerchantID uuid.UUID,
 ) error {
@@ -57,7 +38,7 @@ func (ps *PaymentService) ValidatePaymentRequest(
 		return errors.New("currency should be INR")
 	}
 
-	senderMerchant, err := ps.MerchantRepo.GetMerchantByID(senderMerchantID)
+	senderMerchant, err := ps.Repo.GetMerchantByID(senderMerchantID)
 	if err != nil {
 		return err
 	}
@@ -66,7 +47,7 @@ func (ps *PaymentService) ValidatePaymentRequest(
 		return errors.New("sender does not exist")
 	}
 
-	senderWallet, err := ps.walletSrvc.GetWalletByMerchantID(senderMerchantID)
+	senderWallet, err := ps.GetWalletByMerchantID(senderMerchantID)
 	if err != nil {
 		return err
 	}
@@ -75,7 +56,7 @@ func (ps *PaymentService) ValidatePaymentRequest(
 		return errors.New("sender wallet not found")
 	}
 
-	receiverMerchant, err := ps.MerchantRepo.GetMerchantByID(
+	receiverMerchant, err := ps.Repo.GetMerchantByID(
 		request.ReceiverMerchantID,
 	)
 	if err != nil {
@@ -86,7 +67,7 @@ func (ps *PaymentService) ValidatePaymentRequest(
 		return errors.New("receiver does not exist")
 	}
 
-	receiverWallet, err := ps.walletSrvc.GetWalletByMerchantID(
+	receiverWallet, err := ps.GetWalletByMerchantID(
 		request.ReceiverMerchantID,
 	)
 	if err != nil {
@@ -104,7 +85,7 @@ func (ps *PaymentService) ValidatePaymentRequest(
 	return nil
 }
 
-func (ps *PaymentService) CalculateFees(amount decimal.Decimal) (decimal.Decimal, error) {
+func (ps *Services) CalculateFees(amount decimal.Decimal) (decimal.Decimal, error) {
 	if amount.LessThanOrEqual(decimal.Zero) {
 		return decimal.Zero, errors.New("amount must be greater than 0")
 	}
@@ -115,8 +96,8 @@ func (ps *PaymentService) CalculateFees(amount decimal.Decimal) (decimal.Decimal
 	return fee, nil
 }
 
-func (ps *PaymentService) CheckBalance(merchantID uuid.UUID, amount decimal.Decimal) (bool, error) {
-	wallet, errW := ps.walletSrvc.GetWalletByMerchantID(merchantID)
+func (ps *Services) CheckBalance(merchantID uuid.UUID, amount decimal.Decimal) (bool, error) {
+	wallet, errW := ps.GetWalletByMerchantID(merchantID)
 	if errW != nil {
 		return false, errW
 	}
@@ -127,12 +108,12 @@ func (ps *PaymentService) CheckBalance(merchantID uuid.UUID, amount decimal.Deci
 	return wallet.AvailableBalance.GreaterThanOrEqual(amount), nil
 }
 
-func (ps *PaymentService) GetPaymentsByMerchantID(merchantID uuid.UUID) ([]*models.Payment, error) {
+func (ps *Services) GetPaymentsByMerchantID(merchantID uuid.UUID) ([]*models.Payment, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant_id is required")
 	}
 
-	payments, errP := ps.PaymentRepo.GetPaymentsByMerchantID(merchantID)
+	payments, errP := ps.Repo.GetPaymentsByMerchantID(merchantID)
 	if errP != nil {
 		return nil, errP
 	}
@@ -140,12 +121,12 @@ func (ps *PaymentService) GetPaymentsByMerchantID(merchantID uuid.UUID) ([]*mode
 	return payments, nil
 }
 
-func (ps *PaymentService) GetPaymentByID(paymentID uuid.UUID) (*models.Payment, error) {
+func (ps *Services) GetPaymentByID(paymentID uuid.UUID) (*models.Payment, error) {
 	if paymentID == uuid.Nil {
 		return nil, errors.New("payment_id is required")
 	}
 
-	payment, errP := ps.PaymentRepo.GetPaymentByID(paymentID)
+	payment, errP := ps.Repo.GetPaymentByID(paymentID)
 	if errP != nil {
 		return nil, errP
 	}

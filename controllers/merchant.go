@@ -6,7 +6,6 @@ import (
 	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	services "github.com/Srivastava-samarth/sampay/services"
 	"github.com/Srivastava-samarth/sampay/temporal"
 	"github.com/Srivastava-samarth/sampay/temporal/workflows"
 	"github.com/gin-gonic/gin"
@@ -14,22 +13,7 @@ import (
 	"go.temporal.io/sdk/client"
 )
 
-type MerchantController struct {
-	MerchantService *services.MerchantService
-	TemporalClient  client.Client
-}
-
-func NewMerchantController(
-	merchantSrvc *services.MerchantService,
-	temporalClient client.Client,
-) *MerchantController {
-	return &MerchantController{
-		MerchantService: merchantSrvc,
-		TemporalClient:  temporalClient,
-	}
-}
-
-func (mc *MerchantController) CreateMerchant() gin.HandlerFunc {
+func (mc *Controller) CreateMerchant() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
@@ -45,7 +29,7 @@ func (mc *MerchantController) CreateMerchant() gin.HandlerFunc {
 			return
 		}
 
-		existingMerchant, errEM := mc.MerchantService.GetMerchantByEmail(request.Email)
+		existingMerchant, errEM := mc.Services.GetMerchantByEmail(request.Email)
 		if errEM != nil {
 			dto.Fail(
 				c,
@@ -64,7 +48,7 @@ func (mc *MerchantController) CreateMerchant() gin.HandlerFunc {
 			return
 		}
 
-		if errV := mc.MerchantService.ValidateMerchantOnboardingRequest(request); errV != nil {
+		if errV := mc.Services.ValidateMerchantOnboardingRequest(request); errV != nil {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
@@ -75,7 +59,7 @@ func (mc *MerchantController) CreateMerchant() gin.HandlerFunc {
 		}
 
 		// Create initial merchant here
-		merchant, errM := mc.MerchantService.CreateInitialMerchant(
+		merchant, errM := mc.Services.CreateInitialMerchant(
 			request,
 		)
 
@@ -120,7 +104,7 @@ func (mc *MerchantController) CreateMerchant() gin.HandlerFunc {
 	}
 }
 
-func (mc *MerchantController) GetMerchantByID() gin.HandlerFunc {
+func (mc *Controller) GetMerchantByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		merchantID := c.Param("merchant_id")
 		if merchantID == "" {
@@ -143,7 +127,7 @@ func (mc *MerchantController) GetMerchantByID() gin.HandlerFunc {
 			)
 			return
 		}
-		merchant, errM := mc.MerchantService.GetMerchantByID(pasredMerchantId)
+		merchant, errM := mc.Services.GetMerchantByID(pasredMerchantId)
 		if errM != nil {
 			dto.Fail(
 				c,
@@ -162,9 +146,9 @@ func (mc *MerchantController) GetMerchantByID() gin.HandlerFunc {
 	}
 }
 
-func (mc *MerchantController) GetMerchants() gin.HandlerFunc {
+func (mc *Controller) GetMerchants() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		merchants, errM := mc.MerchantService.GetMerchants()
+		merchants, errM := mc.Services.GetMerchants()
 		if errM != nil {
 			dto.Fail(
 				c,
@@ -183,7 +167,7 @@ func (mc *MerchantController) GetMerchants() gin.HandlerFunc {
 	}
 }
 
-func (mc *MerchantController) ReattemptOnboardingKyc() gin.HandlerFunc {
+func (mc *Controller) ReattemptOnboardingKyc() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.UpdateKYCRequest
 		merchantID := c.Param("merchant_id")
@@ -266,7 +250,7 @@ func (mc *MerchantController) ReattemptOnboardingKyc() gin.HandlerFunc {
 	}
 }
 
-func (mc *MerchantController) UpdateMerchantInfo() gin.HandlerFunc {
+func (mc *Controller) UpdateMerchantInfo() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var updateMerchantPayload *dto.UpdateMerchantRequest
 
@@ -302,7 +286,7 @@ func (mc *MerchantController) UpdateMerchantInfo() gin.HandlerFunc {
 			return
 		}
 
-		merchant, errM := mc.MerchantService.GetMerchantByID(pasredMerchantId)
+		merchant, errM := mc.Services.GetMerchantByID(pasredMerchantId)
 		if errM != nil {
 			dto.Fail(
 				c,
@@ -323,7 +307,7 @@ func (mc *MerchantController) UpdateMerchantInfo() gin.HandlerFunc {
 			return
 		}
 
-		updatedMerchant, errUM := mc.MerchantService.UpdateMerchant(updateMerchantPayload, pasredMerchantId)
+		updatedMerchant, errUM := mc.Services.UpdateMerchant(updateMerchantPayload, pasredMerchantId)
 		if errUM != nil {
 			dto.Fail(
 				c,
@@ -342,7 +326,7 @@ func (mc *MerchantController) UpdateMerchantInfo() gin.HandlerFunc {
 	}
 }
 
-func (mc *MerchantController) UpdateMerchantStatus() gin.HandlerFunc {
+func (mc *Controller) UpdateMerchantStatus() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.UpdateMerchantStatusRequest
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -377,7 +361,7 @@ func (mc *MerchantController) UpdateMerchantStatus() gin.HandlerFunc {
 			return
 		}
 
-		updatedMerchant, errUM := mc.MerchantService.UpdateMerchantStatus(&request.Status, pasredMerchantId)
+		updatedMerchant, errUM := mc.Services.UpdateMerchantStatus(&request.Status, pasredMerchantId)
 		if errUM != nil {
 			dto.Fail(
 				c,
@@ -396,7 +380,7 @@ func (mc *MerchantController) UpdateMerchantStatus() gin.HandlerFunc {
 	}
 }
 
-func (mc *MerchantController) UpdateMerchantKyc() gin.HandlerFunc {
+func (mc *Controller) UpdateMerchantKyc() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var updateMerchantPayload *dto.UpdateMerchantKycRequest
 
@@ -432,7 +416,7 @@ func (mc *MerchantController) UpdateMerchantKyc() gin.HandlerFunc {
 			return
 		}
 
-		updatedMerchant, errUM := mc.MerchantService.UpdateMerchantKycInfo(updateMerchantPayload, pasredMerchantId)
+		updatedMerchant, errUM := mc.Services.UpdateMerchantKycInfo(updateMerchantPayload, pasredMerchantId)
 		if errUM != nil {
 			dto.Fail(
 				c,

@@ -6,38 +6,12 @@ import (
 	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
 )
 
-type VaultService struct {
-	db                    *gorm.DB
-	VaultRepo             *repositories.VaultRepository
-	LinkedBankAccountRepo *repositories.LinkedBankAccountRepository
-	LedgerService         *LedgerService
-	BankService           *BankService
-}
-
-func NewVaultService(
-	db *gorm.DB,
-	vaultRepo *repositories.VaultRepository,
-	linkedBankAccountRepo *repositories.LinkedBankAccountRepository,
-	ledgerService *LedgerService,
-	bankService *BankService,
-) *VaultService {
-	return &VaultService{
-		db:                    db,
-		VaultRepo:             vaultRepo,
-		LinkedBankAccountRepo: linkedBankAccountRepo,
-		LedgerService:         ledgerService,
-		BankService:           bankService,
-	}
-}
-
-func (vs *VaultService) CreateVault(request *dto.CreateVaultRequest) (*models.Vault, error) {
+func (vs *Services) CreateVault(request *dto.CreateVaultRequest) (*models.Vault, error) {
 	if request == nil {
 		return nil, errors.New("request payload can't be empty")
 	}
@@ -54,7 +28,7 @@ func (vs *VaultService) CreateVault(request *dto.CreateVaultRequest) (*models.Va
 		return nil, errors.New("balance must be greater than 0")
 	}
 
-	existingVault, errEV := vs.VaultRepo.GetVaultByType(request.Type)
+	existingVault, errEV := vs.Repo.GetVaultByType(request.Type)
 	if errEV != nil {
 		return nil, errEV
 	}
@@ -63,7 +37,7 @@ func (vs *VaultService) CreateVault(request *dto.CreateVaultRequest) (*models.Va
 		return nil, errors.New("vault already exist")
 	}
 
-	vault, errV := vs.VaultRepo.CreateVault(request)
+	vault, errV := vs.Repo.CreateVault(request)
 	if errV != nil {
 		return nil, errV
 	}
@@ -71,8 +45,8 @@ func (vs *VaultService) CreateVault(request *dto.CreateVaultRequest) (*models.Va
 	return vault, nil
 }
 
-func (vs *VaultService) GetVaults() ([]*models.Vault, error) {
-	vaults, errV := vs.VaultRepo.GetVaults()
+func (vs *Services) GetVaults() ([]*models.Vault, error) {
+	vaults, errV := vs.Repo.GetVaults()
 	if errV != nil {
 		return nil, errV
 	}
@@ -80,24 +54,24 @@ func (vs *VaultService) GetVaults() ([]*models.Vault, error) {
 	return vaults, nil
 }
 
-func (vs *VaultService) GetVaultByID(vaultId uuid.UUID) (*models.Vault, error) {
+func (vs *Services) GetVaultByID(vaultId uuid.UUID) (*models.Vault, error) {
 	if vaultId == uuid.Nil {
 		return nil, errors.New("vault_id is required")
 	}
 
-	vault, errV := vs.VaultRepo.GetVault(vaultId)
+	vault, errV := vs.Repo.GetVault(vaultId)
 	if errV != nil {
 		return nil, errV
 	}
 	return vault, nil
 }
 
-func (vs *VaultService) UpdateVaultBalance(merchantID uuid.UUID, balance decimal.Decimal, vaultType string) (*models.Vault, error) {
+func (vs *Services) UpdateVaultBalance(merchantID uuid.UUID, balance decimal.Decimal, vaultType string) (*models.Vault, error) {
 	if balance.LessThanOrEqual(decimal.Zero) {
 		return nil, errors.New("balance must be greater than zero")
 	}
 
-	linkedBankAccount, errBA := vs.LinkedBankAccountRepo.GetPrimaryBankAccountLinkedByMerchantID(merchantID)
+	linkedBankAccount, errBA := vs.Repo.GetPrimaryBankAccountLinkedByMerchantID(merchantID)
 	if errBA != nil {
 		return nil, errBA
 	}
@@ -106,7 +80,7 @@ func (vs *VaultService) UpdateVaultBalance(merchantID uuid.UUID, balance decimal
 		return nil, errors.New("primary bank account not found")
 	}
 
-	bankAccount, errBA := vs.BankService.GetBankAccount(linkedBankAccount.BankAccountID)
+	bankAccount, errBA := vs.GetBankAccount(linkedBankAccount.BankAccountID)
 	if errBA != nil {
 		return nil, errBA
 	}
@@ -119,7 +93,7 @@ func (vs *VaultService) UpdateVaultBalance(merchantID uuid.UUID, balance decimal
 		return nil, errors.New("insufficient balance in bank account")
 	}
 
-	updatedBankAccount, _, errUB := vs.BankService.UpdateBankAccountAndlink(&dto.UpdateBankAccountRequest{
+	updatedBankAccount, _, errUB := vs.UpdateBankAccountAndlink(&dto.UpdateBankAccountRequest{
 		ID:      bankAccount.ID,
 		Balance: bankAccount.Balance.Sub(balance),
 	})
@@ -127,7 +101,7 @@ func (vs *VaultService) UpdateVaultBalance(merchantID uuid.UUID, balance decimal
 		return nil, errUB
 	}
 
-	vault, errV := vs.VaultRepo.GetVaultByType(vaultType)
+	vault, errV := vs.Repo.GetVaultByType(vaultType)
 	if errV != nil {
 		return nil, errV
 	}
@@ -137,13 +111,13 @@ func (vs *VaultService) UpdateVaultBalance(merchantID uuid.UUID, balance decimal
 	}
 
 	updatedBalance := vault.Balance.Add(balance)
-	updatedVault, errUV := vs.VaultRepo.UpdateVaultBalance(updatedBalance, vaultType)
+	updatedVault, errUV := vs.Repo.UpdateVaultBalance(updatedBalance, vaultType)
 	if errUV != nil {
 		return nil, errUV
 	}
 
-	_, err := vs.LedgerService.PostTransaction(
-		vs.db,
+	_, err := vs.PostTransaction(
+		vs.DB,
 		&dto.PostLedgerTransactionRequest{
 			ReferenceID:      "internal-vault-topup-" + uuid.New().String(),
 			Type:             constants.LedgerAccountTypeBankAccount,
@@ -175,7 +149,7 @@ func (vs *VaultService) UpdateVaultBalance(merchantID uuid.UUID, balance decimal
 	return updatedVault, errUV
 }
 
-func (vs *VaultService) UpdateVaultStatus(status string, vaultID uuid.UUID) (*models.Vault, error) {
+func (vs *Services) UpdateVaultStatus(status string, vaultID uuid.UUID) (*models.Vault, error) {
 	if !utils.IsValidVaultStatus(status) {
 		return nil, errors.New("status is not a valid status")
 	}
@@ -184,7 +158,7 @@ func (vs *VaultService) UpdateVaultStatus(status string, vaultID uuid.UUID) (*mo
 		return nil, errors.New("vault_id is required")
 	}
 
-	existingVault, errEV := vs.VaultRepo.GetVault(vaultID)
+	existingVault, errEV := vs.Repo.GetVault(vaultID)
 	if errEV != nil {
 		return nil, errEV
 	}
@@ -197,7 +171,7 @@ func (vs *VaultService) UpdateVaultStatus(status string, vaultID uuid.UUID) (*mo
 		return existingVault, nil
 	}
 
-	updatedVault, errUV := vs.VaultRepo.UpdateVaultStatus(status, vaultID)
+	updatedVault, errUV := vs.Repo.UpdateVaultStatus(status, vaultID)
 	if errUV != nil {
 		return nil, errUV
 	}
