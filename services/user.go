@@ -5,32 +5,16 @@ import (
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/google/uuid"
 )
-
-type UserService struct {
-	UserRepo         *repositories.UserRepository
-	MerchantUserRepo *repositories.MerchantUserRepository
-}
-
-func NewUserService(
-	userRepo *repositories.UserRepository,
-	merchantUserRepo *repositories.MerchantUserRepository,
-) *UserService {
-	return &UserService{
-		UserRepo:         userRepo,
-		MerchantUserRepo: merchantUserRepo,
-	}
-}
 
 type CreatedUserResult struct {
 	User              *dto.CreateUserResponse
 	TemporaryPassword string
 }
 
-func (us *UserService) CreateUser(userRequest *dto.CreateUserRequest) (*CreatedUserResult, error) {
+func (us *Services) CreateUser(userRequest *dto.CreateUserRequest) (*CreatedUserResult, error) {
 	if userRequest == nil {
 		return nil, errors.New("request is required")
 	}
@@ -64,7 +48,7 @@ func (us *UserService) CreateUser(userRequest *dto.CreateUserRequest) (*CreatedU
 		PasswordHash: passwordHash,
 	}
 
-	user, err := us.UserRepo.CreateUser(createUserRequestPayload)
+	user, err := us.Repo.CreateUser(createUserRequestPayload)
 	if err != nil {
 		return nil, err
 	}
@@ -84,11 +68,11 @@ func (us *UserService) CreateUser(userRequest *dto.CreateUserRequest) (*CreatedU
 	return userResponse, nil
 }
 
-func (us *UserService) GetUser(userId uuid.UUID) (*models.User, error) {
+func (us *Services) GetUser(userId uuid.UUID) (*models.User, error) {
 	if userId == uuid.Nil {
 		return nil, errors.New("user_id is required")
 	}
-	user, errU := us.UserRepo.GetUserByID(userId)
+	user, errU := us.Repo.GetUserByID(userId)
 	if errU != nil {
 		return nil, errU
 	}
@@ -96,15 +80,15 @@ func (us *UserService) GetUser(userId uuid.UUID) (*models.User, error) {
 	return user, nil
 }
 
-func (us *UserService) GetUsers() ([]*models.User, error) {
-	users, errU := us.UserRepo.GetUsers()
+func (us *Services) GetUsers() ([]*models.User, error) {
+	users, errU := us.Repo.GetUsers()
 	if errU != nil {
 		return nil, errU
 	}
 	return users, nil
 }
 
-func (us *UserService) UpdateUser(
+func (us *Services) UpdateUser(
 	request *dto.UpdateUserRequest,
 	userID uuid.UUID,
 ) (*models.User, error) {
@@ -131,10 +115,10 @@ func (us *UserService) UpdateUser(
 		MustChangePassword: request.MustChangePassword,
 	}
 
-	return us.UserRepo.UpdateUser(userID, updatedUserPayload)
+	return us.Repo.UpdateUser(userID, updatedUserPayload)
 }
 
-func (us *UserService) UpdateUserStatus(status string, userID uuid.UUID) (*models.User, error) {
+func (us *Services) UpdateUserStatus(status string, userID uuid.UUID) (*models.User, error) {
 	if userID == uuid.Nil {
 		return nil, errors.New("user_id is required")
 	}
@@ -147,7 +131,7 @@ func (us *UserService) UpdateUserStatus(status string, userID uuid.UUID) (*model
 		return nil, errors.New("invalid user status")
 	}
 
-	user, errU := us.UserRepo.GetUserByID(userID)
+	user, errU := us.Repo.GetUserByID(userID)
 	if errU != nil {
 		return nil, errU
 	}
@@ -156,7 +140,7 @@ func (us *UserService) UpdateUserStatus(status string, userID uuid.UUID) (*model
 		return user, nil
 	}
 
-	updatedUser, errUU := us.UserRepo.UpdateUserStatus(status, userID)
+	updatedUser, errUU := us.Repo.UpdateUserStatus(status, userID)
 	if errUU != nil {
 		return nil, errUU
 	}
@@ -164,18 +148,18 @@ func (us *UserService) UpdateUserStatus(status string, userID uuid.UUID) (*model
 	return updatedUser, nil
 }
 
-func (us *UserService) GetUsersByMerchant(merchantID uuid.UUID) ([]*models.User, error) {
+func (us *Services) GetUsersByMerchant(merchantID uuid.UUID) ([]*models.User, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant_id is required")
 	}
-	merchantUsers, errMU := us.MerchantUserRepo.GetMerchantUsersByMerchantID(merchantID)
+	merchantUsers, errMU := us.Repo.GetMerchantUsersByMerchantID(merchantID)
 	if errMU != nil {
 		return nil, errMU
 	}
 
 	var users []*models.User
 	for _, merchantUser := range merchantUsers {
-		user, errU := us.UserRepo.GetUserByID(merchantUser.UserID)
+		user, errU := us.Repo.GetUserByID(merchantUser.UserID)
 		if errU != nil {
 			return nil, errU
 		}

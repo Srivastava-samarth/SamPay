@@ -10,7 +10,6 @@ import (
 	"go.temporal.io/sdk/client"
 )
 
-
 func (ac *Controller) Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var loginRequest *dto.AuthRequest
@@ -24,7 +23,7 @@ func (ac *Controller) Login() gin.HandlerFunc {
 			return
 		}
 
-		response, err := ac.AuthService.Authentication(loginRequest)
+		response, err := ac.Services.Authentication(loginRequest)
 		if err != nil {
 			dto.Fail(
 				c,
@@ -97,7 +96,7 @@ func (ac *Controller) ResetPassword() gin.HandlerFunc {
 			return
 		}
 
-		err := ac.AuthService.ResetPassword(request)
+		err := ac.Services.ResetPassword(request)
 		if err != nil {
 			dto.Fail(
 				c,
@@ -129,7 +128,7 @@ func (ac *Controller) RefreshToken() gin.HandlerFunc {
 			return
 		}
 
-		response, errR := ac.AuthService.RefreshToken(request)
+		response, errR := ac.Services.RefreshToken(request)
 		if errR != nil {
 			dto.Fail(
 				c,

@@ -31,7 +31,7 @@ func (a *Registry) ValidatePayoutWalletToBankRequest(
 	request *dto.CreateWalletToBankRequest,
 	merchantID uuid.UUID,
 ) error {
-	return a.PayoutService.ValidatePayoutRequestWalletToBank(request, merchantID)
+	return a.Services.ValidatePayoutRequestWalletToBank(request, merchantID)
 }
 
 func (a *Registry) ValidatePayoutBankToBankRequest(
@@ -39,7 +39,7 @@ func (a *Registry) ValidatePayoutBankToBankRequest(
 	request *dto.CreateBankToBankRequest,
 	merchantID uuid.UUID,
 ) error {
-	return a.PayoutService.ValidatePayoutRequestBankToBank(request, merchantID)
+	return a.Services.ValidatePayoutRequestBankToBank(request, merchantID)
 }
 
 func (a *Registry) CreatePayoutWalletToBank(
@@ -48,7 +48,7 @@ func (a *Registry) CreatePayoutWalletToBank(
 	merchantID uuid.UUID,
 	status string,
 ) (*models.Payout, error) {
-	return a.PayoutService.PayoutRepo.CreatePayoutWalletToBank(merchantID, request, status)
+	return a.Repo.CreatePayoutWalletToBank(merchantID, request, status)
 }
 
 func (a *Registry) CreatePayoutBankToBank(
@@ -57,7 +57,7 @@ func (a *Registry) CreatePayoutBankToBank(
 	merchantID uuid.UUID,
 	status string,
 ) (*models.Payout, error) {
-	return a.PayoutService.PayoutRepo.CreatePayoutBankToBank(merchantID, request, status)
+	return a.Repo.CreatePayoutBankToBank(merchantID, request, status)
 }
 
 func (a *Registry) UpdatePayoutStatus(
@@ -65,7 +65,7 @@ func (a *Registry) UpdatePayoutStatus(
 	status string,
 	paymentRef string,
 ) (*models.Payout, error) {
-	return a.PayoutService.PayoutRepo.UpdatePayoutStatus(paymentRef, status)
+	return a.Repo.UpdatePayoutStatus(paymentRef, status)
 }
 
 func (a *Registry) ExecutePayoutWalletToBank(
@@ -83,10 +83,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			totalAmount := payoutRequest.Amount.Add(fees)
 
 			// Transaction-aware repositories
-			walletRepo := a.WalletService.WalletRepo.WithTx(tx)
-			vaultRepo := a.VaultService.VaultRepo.WithTx(tx)
-			payoutRepo := a.PayoutService.PayoutRepo.WithTx(tx)
-			bankAccountRepo := a.PayoutService.BankAccountRepo.WithTx(tx)
+			repo := a.Repo.WithTx(tx)
 
 			// ---------------------------------------------------------
 			// 1. Mark payment as PROCESSING
@@ -94,7 +91,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 
 			payoutStatus := constants.TransactionStatusProcessing
 
-			payout, err := payoutRepo.UpdatePayoutStatus(
+			payout, err := repo.UpdatePayoutStatus(
 				request.PayoutReference,
 				payoutStatus,
 			)
@@ -109,7 +106,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// 2. Check balance
 			// ---------------------------------------------------------
 
-			isBalanceSufficient, err := a.PaymentService.CheckBalance(
+			isBalanceSufficient, err := a.Services.CheckBalance(
 				merchantID,
 				totalAmount,
 			)
@@ -131,7 +128,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// 3. Get sender wallet
 			// ---------------------------------------------------------
 
-			senderWallet, err := walletRepo.GetWalletByMerchantId(
+			senderWallet, err := repo.GetWalletByMerchantId(
 				merchantID,
 			)
 			if err != nil {
@@ -153,7 +150,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 				totalAmount,
 			)
 
-			updatedSenderWallet, err := walletRepo.UpdateWalletBalance(
+			updatedSenderWallet, err := repo.UpdateWalletBalance(
 				merchantID,
 				&dto.UpdateWalletBalanceRequest{
 					ReservedBalance:  reservedWalletAmount,
@@ -171,7 +168,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// 6. Get Payout Vault
 			// ---------------------------------------------------------
 
-			payoutVault, err := vaultRepo.GetVaultByType(
+			payoutVault, err := repo.GetVaultByType(
 				constants.PayoutVault,
 			)
 			if err != nil {
@@ -185,7 +182,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// 7. Wallet A -> Payout Vault
 			// ---------------------------------------------------------
 
-			_, err = vaultRepo.UpdateVaultBalance(
+			_, err = repo.UpdateVaultBalance(
 				payoutVault.Balance.Add(totalAmount),
 				constants.PayoutVault,
 			)
@@ -197,7 +194,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			}
 
 			// Release sender reservation after movement
-			_, err = walletRepo.UpdateWalletBalance(
+			_, err = repo.UpdateWalletBalance(
 				merchantID,
 				&dto.UpdateWalletBalanceRequest{
 					ReservedBalance: updatedSenderWallet.ReservedBalance.Sub(
@@ -216,7 +213,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// 8. Ledger: Wallet A -> Payout Vault
 			// ---------------------------------------------------------
 
-			ledgerTransaction, err := a.LedgerService.PostTransaction(
+			ledgerTransaction, err := a.Services.PostTransaction(
 				tx,
 				&dto.PostLedgerTransactionRequest{
 					ReferenceID:      payout.PayoutReference,
@@ -253,7 +250,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// 9. Get Receiver Wallet
 			// ---------------------------------------------------------
 
-			receiverBankAccount, err := bankAccountRepo.GetBankAccountByID(
+			receiverBankAccount, err := repo.GetBankAccountByID(
 				payoutRequest.DestinationBankAccountID,
 			)
 			if err != nil {
@@ -267,7 +264,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// 10. Payout Vault -> Receiver bank account
 			// ---------------------------------------------------------
 
-			_, err = bankAccountRepo.UpdateBankAccount(
+			_, err = repo.UpdateBankAccount(
 				receiverBankAccount.ID,
 				&dto.UpdateBankAccountRequest{
 					Balance: receiverBankAccount.Balance.Add(
@@ -286,7 +283,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 				Add(totalAmount).
 				Sub(payoutRequest.Amount)
 
-			updatedPayoutVault, err := vaultRepo.UpdateVaultBalance(
+			updatedPayoutVault, err := repo.UpdateVaultBalance(
 				updatedPayoutVaultBalance,
 				constants.PayoutVault,
 			)
@@ -300,7 +297,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// ---------------------------------------------------------
 			// 11. Ledger: Payment Vault -> Receiver Wallet
 			// ---------------------------------------------------------
-			_, err = a.LedgerService.CreateLedgerEntries(
+			_, err = a.Services.CreateLedgerEntries(
 				tx,
 				[]*models.LedgerEntry{
 					{
@@ -336,7 +333,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 				fees,
 			)
 
-			_, err = vaultRepo.UpdateVaultBalance(
+			_, err = repo.UpdateVaultBalance(
 				payoutVaultBalanceAfterFees,
 				constants.PayoutVault,
 			)
@@ -351,7 +348,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// 13. Get Company Vault
 			// ---------------------------------------------------------
 
-			companyVault, err := vaultRepo.GetVaultByType(
+			companyVault, err := repo.GetVaultByType(
 				constants.CompanyVault,
 			)
 			if err != nil {
@@ -365,7 +362,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// 14. Add fees to Company Vault
 			// ---------------------------------------------------------
 
-			updatedCompanyVault, err := vaultRepo.UpdateVaultBalance(
+			updatedCompanyVault, err := repo.UpdateVaultBalance(
 				companyVault.Balance.Add(fees),
 				constants.CompanyVault,
 			)
@@ -380,7 +377,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// 15. Ledger: Payment Vault -> Company Vault
 			// ---------------------------------------------------------
 
-			_, err = a.LedgerService.CreateLedgerEntries(
+			_, err = a.Services.CreateLedgerEntries(
 				tx,
 				[]*models.LedgerEntry{
 					{
@@ -412,7 +409,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// 16. Mark payment COMPLETED
 			// ---------------------------------------------------------
 
-			updatedPayout, err := payoutRepo.UpdatePayoutStatus(
+			updatedPayout, err := repo.UpdatePayoutStatus(
 				payout.PayoutReference,
 				constants.TransactionStatusCompleted,
 			)
@@ -451,12 +448,11 @@ func (a *Registry) ExecutePayoutBankToBank(
 			totalAmount := payoutRequest.Amount.Add(fees)
 
 			// Transaction-aware repositories
-			payoutRepo := a.PayoutService.PayoutRepo.WithTx(tx)
-			bankAccountRepo := a.WalletService.BankRepo.WithTx(tx)
+			repo := a.Repo.WithTx(tx)
 
 			payoutStatus := constants.TransactionStatusProcessing
 
-			payout, err := payoutRepo.UpdatePayoutStatus(
+			payout, err := repo.UpdatePayoutStatus(
 				request.PayoutReference,
 				payoutStatus,
 			)
@@ -467,7 +463,7 @@ func (a *Registry) ExecutePayoutBankToBank(
 				)
 			}
 
-			isBalanceSufficient, err := a.PayoutService.CheckBankBalance(
+			isBalanceSufficient, err := a.Services.CheckBankBalance(
 				request.Request.SourceBankAccountID,
 				totalAmount,
 			)
@@ -485,7 +481,7 @@ func (a *Registry) ExecutePayoutBankToBank(
 				)
 			}
 
-			senderBankAccount, err := bankAccountRepo.GetBankAccountByID(request.Request.SourceBankAccountID)
+			senderBankAccount, err := repo.GetBankAccountByID(request.Request.SourceBankAccountID)
 			if err != nil {
 				return fmt.Errorf(
 					"get sender wallet: %w",
@@ -493,7 +489,7 @@ func (a *Registry) ExecutePayoutBankToBank(
 				)
 			}
 
-			updatedSenderBankAccount, err := bankAccountRepo.UpdateBankAccount(
+			updatedSenderBankAccount, err := repo.UpdateBankAccount(
 				senderBankAccount.ID,
 				&dto.UpdateBankAccountRequest{
 					Balance: senderBankAccount.Balance.Sub(totalAmount),
@@ -506,7 +502,7 @@ func (a *Registry) ExecutePayoutBankToBank(
 				)
 			}
 
-			receiverBankAccount, errRBA := bankAccountRepo.GetBankAccountByID(request.Request.DestinationBankAccountID)
+			receiverBankAccount, errRBA := repo.GetBankAccountByID(request.Request.DestinationBankAccountID)
 			if errRBA != nil {
 				return fmt.Errorf(
 					"getting receiver bank account: %w",
@@ -514,7 +510,7 @@ func (a *Registry) ExecutePayoutBankToBank(
 				)
 			}
 
-			updateReceiverBankAccount, errURBA := bankAccountRepo.UpdateBankAccount(
+			updateReceiverBankAccount, errURBA := repo.UpdateBankAccount(
 				receiverBankAccount.ID,
 				&dto.UpdateBankAccountRequest{
 					Balance: receiverBankAccount.Balance.Add(totalAmount),
@@ -527,7 +523,7 @@ func (a *Registry) ExecutePayoutBankToBank(
 				)
 			}
 
-			_, errLT := a.LedgerService.PostTransaction(
+			_, errLT := a.Services.PostTransaction(
 				tx,
 				&dto.PostLedgerTransactionRequest{
 					ReferenceID:      payout.PayoutReference,
@@ -560,7 +556,7 @@ func (a *Registry) ExecutePayoutBankToBank(
 				)
 			}
 
-			updatedPayout, err := payoutRepo.UpdatePayoutStatus(
+			updatedPayout, err := repo.UpdatePayoutStatus(
 				payout.PayoutReference,
 				constants.TransactionStatusCompleted,
 			)

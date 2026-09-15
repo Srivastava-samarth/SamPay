@@ -1,24 +1,11 @@
 package routes
 
 import (
-	"github.com/Srivastava-samarth/sampay/controllers"
 	"github.com/Srivastava-samarth/sampay/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
-type VaultRouter struct {
-	vaultCtlr *controllers.VaultController
-}
-
-func NewVaultRouter(
-	vaultCtlr *controllers.VaultController,
-) *VaultRouter {
-	return &VaultRouter{
-		vaultCtlr: vaultCtlr,
-	}
-}
-
-func (vr *VaultRouter) VaultRoutes(
+func (vr *Router) VaultRoutes(
 	router *gin.RouterGroup,
 	authMiddleware gin.HandlerFunc,
 ) {
@@ -27,26 +14,26 @@ func (vr *VaultRouter) VaultRoutes(
 	vault.POST(
 		"",
 		middlewares.RequireRole("super_admin"),
-		vr.vaultCtlr.CreateVault(),
+		vr.Controller.CreateVault(),
 	)
 	vault.GET(
 		"",
 		middlewares.RequireRole("super_admin"),
-		vr.vaultCtlr.GetVaults(),
+		vr.Controller.GetVaults(),
 	)
 	vault.GET(
 		"/:vault_id",
 		middlewares.RequireRole("super_admin"),
-		vr.vaultCtlr.GetVault(),
+		vr.Controller.GetVault(),
 	)
 	vault.PATCH(
 		"/balance",
 		middlewares.RequireRole("super_admin"),
-		vr.vaultCtlr.UpdateVaultBalance(),
+		vr.Controller.UpdateVaultBalance(),
 	)
 	vault.PATCH(
 		"/:vault_id/status",
 		middlewares.RequireRole("super_admin"),
-		vr.vaultCtlr.UpdateVaultStatus(),
+		vr.Controller.UpdateVaultStatus(),
 	)
 }

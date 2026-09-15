@@ -12,25 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type PaymentRepository struct {
-	DB *gorm.DB
-}
-
-func NewPaymentRepository(
-	db *gorm.DB,
-) *PaymentRepository {
-	return &PaymentRepository{
-		DB: db,
-	}
-}
-
-func (pr *PaymentRepository) WithTx(tx *gorm.DB) *PaymentRepository {
-	return &PaymentRepository{
-		DB: tx,
-	}
-}
-
-func (pr *PaymentRepository) CreatePayment(merchantID uuid.UUID, request *dto.CreatePaymentRequest, status *string) (*models.Payment, error) {
+func (pr *Repository) CreatePayment(merchantID uuid.UUID, request *dto.CreatePaymentRequest, status *string) (*models.Payment, error) {
 	settlementStatus := constants.LedgerSettlementPending
 	createPaymentPayload := &models.Payment{
 		ID:                 utils.GenerateUUID(),
@@ -55,7 +37,7 @@ func (pr *PaymentRepository) CreatePayment(merchantID uuid.UUID, request *dto.Cr
 	return createPaymentPayload, nil
 }
 
-func (pr *PaymentRepository) UpdatePaymentStatus(PaymentReference string, status *string) (*models.Payment, error) {
+func (pr *Repository) UpdatePaymentStatus(PaymentReference string, status *string) (*models.Payment, error) {
 	var payment *models.Payment
 	err := pr.DB.Where("payment_reference = ?", PaymentReference).First(&payment).Error
 	if err != nil {
@@ -90,7 +72,7 @@ func (pr *PaymentRepository) UpdatePaymentStatus(PaymentReference string, status
 
 }
 
-func (pr *PaymentRepository) UpdateSettlementStatusByID(
+func (pr *Repository) UpdateSettlementStatusByID(
 	paymentID uuid.UUID,
 	settlementStatus *string,
 ) (*models.Payment, error) {
@@ -118,7 +100,7 @@ func (pr *PaymentRepository) UpdateSettlementStatusByID(
 	return payment, nil
 }
 
-func (pr *PaymentRepository) GetPaymentByID(paymentID uuid.UUID) (*models.Payment, error) {
+func (pr *Repository) GetPaymentByID(paymentID uuid.UUID) (*models.Payment, error) {
 	var payment *models.Payment
 	err := pr.DB.Where("id = ?", paymentID).First(&payment).Error
 	if err != nil {
@@ -131,7 +113,7 @@ func (pr *PaymentRepository) GetPaymentByID(paymentID uuid.UUID) (*models.Paymen
 	return payment, nil
 }
 
-func (pr *PaymentRepository) GetPaymentsBySettlementStatus(status string) ([]*models.Payment, error) {
+func (pr *Repository) GetPaymentsBySettlementStatus(status string) ([]*models.Payment, error) {
 	var payments []*models.Payment
 	err := pr.DB.Where("settlement_status = ? AND status = ?", status, constants.TransactionStatusCompleted).Find(&payments).Error
 	if err != nil {
@@ -144,7 +126,7 @@ func (pr *PaymentRepository) GetPaymentsBySettlementStatus(status string) ([]*mo
 	return payments, nil
 }
 
-func (pr *PaymentRepository) GetPaymentsByMerchantID(merchantID uuid.UUID) ([]*models.Payment, error) {
+func (pr *Repository) GetPaymentsByMerchantID(merchantID uuid.UUID) ([]*models.Payment, error) {
 	var payments []*models.Payment
 	err := pr.DB.Where("sender_merchant_id = ?", merchantID).Find(&payments).Error
 	if err != nil {

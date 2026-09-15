@@ -9,26 +9,9 @@ import (
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
 )
 
-type BankRepository struct {
-	db *gorm.DB
-}
-
-func NewBankRepository(db *gorm.DB) *BankRepository {
-	return &BankRepository{
-		db: db,
-	}
-}
-
-func (wr *BankRepository) WithTx(tx *gorm.DB) *BankRepository {
-	return &BankRepository{
-		db: tx,
-	}
-}
-
-func (br *BankRepository) CreateBankAccount(
+func (br *Repository) CreateBankAccount(
 	bankAccount *models.BankAccount,
 ) (*models.BankAccount, error) {
 
@@ -45,25 +28,25 @@ func (br *BankRepository) CreateBankAccount(
 		UpdatedAt:     time.Now(),
 	}
 
-	if err := br.db.Create(newBankAccount).Error; err != nil {
+	if err := br.DB.Create(newBankAccount).Error; err != nil {
 		return nil, err
 	}
 
 	return newBankAccount, nil
 }
 
-func (br *BankRepository) GetBankAccountByID(ID uuid.UUID) (*models.BankAccount, error) {
+func (br *Repository) GetBankAccountByID(ID uuid.UUID) (*models.BankAccount, error) {
 	var bankAccount models.BankAccount
-	err := br.db.Where("id = ?", ID).First(&bankAccount).Error
+	err := br.DB.Where("id = ?", ID).First(&bankAccount).Error
 	if err != nil {
 		return nil, err
 	}
 	return &bankAccount, nil
 }
 
-func (br *BankRepository) UpdateBankAccount(bankAccountID uuid.UUID, request *dto.UpdateBankAccountRequest) (*models.BankAccount, error) {
+func (br *Repository) UpdateBankAccount(bankAccountID uuid.UUID, request *dto.UpdateBankAccountRequest) (*models.BankAccount, error) {
 	var oldBankAccountEntry *models.BankAccount
-	if err := br.db.Where("id = ? AND status = ?", bankAccountID, "active").First(&oldBankAccountEntry).Error; err != nil {
+	if err := br.DB.Where("id = ? AND status = ?", bankAccountID, "active").First(&oldBankAccountEntry).Error; err != nil {
 		return nil, err
 	}
 
@@ -95,7 +78,7 @@ func (br *BankRepository) UpdateBankAccount(bankAccountID uuid.UUID, request *dt
 		return nil, errors.New("no updates to be done")
 	}
 
-	err := br.db.
+	err := br.DB.
 		Model(&models.BankAccount{}).
 		Where("id = ? AND status = ?", bankAccountID, "active").
 		Updates(updates).Error
@@ -105,7 +88,7 @@ func (br *BankRepository) UpdateBankAccount(bankAccountID uuid.UUID, request *dt
 	}
 
 	var updatedBankAccount *models.BankAccount
-	if err := br.db.Where("id = ? AND status = ?", bankAccountID, "active").First(&updatedBankAccount).Error; err != nil {
+	if err := br.DB.Where("id = ? AND status = ?", bankAccountID, "active").First(&updatedBankAccount).Error; err != nil {
 		return nil, err
 	}
 

@@ -9,7 +9,6 @@ import (
 )
 
 func TestUpdateUser(t *testing.T) {
-	us := &UserService{}
 
 	tests := []struct {
 		name          string
@@ -60,7 +59,7 @@ func TestUpdateUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := us.UpdateUser(tt.request, uuid.New())
+			_, err := testServices.UpdateUser(tt.request, uuid.New())
 
 			if err == nil {
 				t.Fatal("expected error, got nil")
@@ -78,7 +77,6 @@ func TestUpdateUser(t *testing.T) {
 }
 
 func TestUpdateUserStatus(t *testing.T) {
-	us := &UserService{}
 
 	tests := []struct {
 		name          string
@@ -108,7 +106,7 @@ func TestUpdateUserStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := us.UpdateUserStatus(tt.status, tt.userID)
+			_, err := testServices.UpdateUserStatus(tt.status, tt.userID)
 
 			if err == nil {
 				t.Fatal("expected error, got nil")
@@ -126,9 +124,8 @@ func TestUpdateUserStatus(t *testing.T) {
 }
 
 func TestGetUsersByMerchant(t *testing.T) {
-	us := &UserService{}
 
-	_, err := us.GetUsersByMerchant(uuid.Nil)
+	_, err := testServices.GetUsersByMerchant(uuid.Nil)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -144,9 +141,8 @@ func TestGetUsersByMerchant(t *testing.T) {
 }
 
 func TestGetUser(t *testing.T) {
-	us := &UserService{}
 
-	_, err := us.GetUser(uuid.Nil)
+	_, err := testServices.GetUser(uuid.Nil)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")

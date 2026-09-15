@@ -47,7 +47,7 @@ func (pc *Controller) CreatePayment() gin.HandlerFunc {
 			return
 		}
 
-		existingIdempotencyKey, errEI := pc.IdempotencyService.GetIdempotencyByKeyAndMerchantId(parsedMerchantID, idempotencyKey)
+		existingIdempotencyKey, errEI := pc.Services.GetIdempotencyByKeyAndMerchantId(parsedMerchantID, idempotencyKey)
 		if errEI != nil {
 			dto.Fail(
 				c,
@@ -202,7 +202,7 @@ func (pc *Controller) SaveIdempotencyResponse(
 		return
 	}
 
-	_, err = pc.IdempotencyService.CreateIdempotencyKey(
+	_, err = pc.Services.CreateIdempotencyKey(
 		merchantID,
 		idempotencyKey,
 		responseBody,
@@ -269,7 +269,7 @@ func (pc *Controller) GetPaymentsByMerchantID() gin.HandlerFunc {
 			return
 		}
 
-		payments, errGP := pc.PaymentService.GetPaymentsByMerchantID(parsedMerchantID)
+		payments, errGP := pc.Services.GetPaymentsByMerchantID(parsedMerchantID)
 		if errGP != nil {
 			dto.Fail(
 				c,
@@ -310,7 +310,7 @@ func (pc *Controller) GetPaymentByID() gin.HandlerFunc {
 			return
 		}
 
-		payment, errGP := pc.PaymentService.GetPaymentByID(parsedPaymentID)
+		payment, errGP := pc.Services.GetPaymentByID(parsedPaymentID)
 		if errGP != nil {
 			dto.Fail(
 				c,

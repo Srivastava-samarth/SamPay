@@ -42,7 +42,7 @@ func (rc *Controller) CreateRefund() gin.HandlerFunc {
 			return
 		}
 
-		existingIdempotencyKey, errEI := rc.IdempotencyService.GetIdempotencyByKeyAndMerchantId(parsedMerchantID, idempotencyKey)
+		existingIdempotencyKey, errEI := rc.Services.GetIdempotencyByKeyAndMerchantId(parsedMerchantID, idempotencyKey)
 		if errEI != nil {
 			dto.Fail(
 				c,
@@ -199,7 +199,7 @@ func (rc *Controller) GetRefundByReference() gin.HandlerFunc {
 			return
 		}
 
-		refund, errR := rc.RefundService.GetRefundByReference(refundRef)
+		refund, errR := rc.Services.GetRefundByReference(refundRef)
 		if errR != nil {
 			dto.Fail(
 				c,
@@ -242,7 +242,7 @@ func (rc *Controller) GetRefundById() gin.HandlerFunc {
 			return
 		}
 
-		refund, errR := rc.RefundService.GetRefundById(parsedRefundId)
+		refund, errR := rc.Services.GetRefundById(parsedRefundId)
 		if errR != nil {
 			dto.Fail(
 				c,
@@ -285,7 +285,7 @@ func (rc *Controller) GetRefundByMerchantId() gin.HandlerFunc {
 			return
 		}
 
-		refunds, errR := rc.RefundService.GetRefundsByMerchantId(parsedMerchantId)
+		refunds, errR := rc.Services.GetRefundsByMerchantId(parsedMerchantId)
 		if errR != nil {
 			dto.Fail(
 				c,

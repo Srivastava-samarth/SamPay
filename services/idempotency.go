@@ -5,24 +5,11 @@ import (
 	"strings"
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
-	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/google/uuid"
 )
 
-type IdempotencyService struct {
-	IdempotencyRepo *repositories.IdempotencyRepository
-}
-
-func NewIdempotencyService(
-	idempotencyRepo *repositories.IdempotencyRepository,
-) *IdempotencyService {
-	return &IdempotencyService{
-		IdempotencyRepo: idempotencyRepo,
-	}
-}
-
-func (is *IdempotencyService) GetIdempotencyByKeyAndMerchantId(merchantID uuid.UUID, key string) (*models.IdempotencyKey, error) {
+func (is *Services) GetIdempotencyByKeyAndMerchantId(merchantID uuid.UUID, key string) (*models.IdempotencyKey, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchantID is required")
 	}
@@ -31,7 +18,7 @@ func (is *IdempotencyService) GetIdempotencyByKeyAndMerchantId(merchantID uuid.U
 		return nil, errors.New("key is required")
 	}
 
-	idempotency, errI := is.IdempotencyRepo.GetIdempotencyByKey(merchantID, key)
+	idempotency, errI := is.Repo.GetIdempotencyByKey(merchantID, key)
 	if errI != nil {
 		return nil, errI
 	}
@@ -39,7 +26,7 @@ func (is *IdempotencyService) GetIdempotencyByKeyAndMerchantId(merchantID uuid.U
 	return idempotency, nil
 }
 
-func (is *IdempotencyService) CreateIdempotencyKey(merchantID uuid.UUID, key string, responseBody []byte) (*models.IdempotencyKey, error) {
+func (is *Services) CreateIdempotencyKey(merchantID uuid.UUID, key string, responseBody []byte) (*models.IdempotencyKey, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchantID is required")
 	}
@@ -56,7 +43,7 @@ func (is *IdempotencyService) CreateIdempotencyKey(merchantID uuid.UUID, key str
 		ResponseBody:   responseBody,
 	}
 
-	idempotency, errI := is.IdempotencyRepo.CreateIdempotencyKey(idempotencyKey)
+	idempotency, errI := is.Repo.CreateIdempotencyKey(idempotencyKey)
 	if errI != nil {
 		return nil, errI
 	}

@@ -21,7 +21,7 @@ func (vc *Controller) CreateVault() gin.HandlerFunc {
 			return
 		}
 
-		vault, errV := vc.VaultService.CreateVault(vaultRequest)
+		vault, errV := vc.Services.CreateVault(vaultRequest)
 		if errV != nil {
 			dto.Fail(
 				c,
@@ -54,7 +54,7 @@ func (vc *Controller) GetVault() gin.HandlerFunc {
 			return
 		}
 
-		vault, errV := vc.VaultService.GetVaultByID(parsedVaultId)
+		vault, errV := vc.Services.GetVaultByID(parsedVaultId)
 		if errV != nil {
 			dto.Fail(
 				c,
@@ -75,7 +75,7 @@ func (vc *Controller) GetVault() gin.HandlerFunc {
 
 func (vc *Controller) GetVaults() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		vaults, errV := vc.VaultService.GetVaults()
+		vaults, errV := vc.Services.GetVaults()
 		if errV != nil {
 			dto.Fail(
 				c,
@@ -118,7 +118,7 @@ func (vc *Controller) UpdateVaultBalance() gin.HandlerFunc {
 			return
 		}
 
-		vault, errV := vc.VaultService.UpdateVaultBalance(merchantID.(uuid.UUID), request.Balance, request.Type)
+		vault, errV := vc.Services.UpdateVaultBalance(merchantID.(uuid.UUID), request.Balance, request.Type)
 		if errV != nil {
 			dto.Fail(
 				c,
@@ -163,7 +163,7 @@ func (vc *Controller) UpdateVaultStatus() gin.HandlerFunc {
 			return
 		}
 
-		updatedVault, errUV := vc.VaultService.UpdateVaultStatus(request.Status, parsedVaultID)
+		updatedVault, errUV := vc.Services.UpdateVaultStatus(request.Status, parsedVaultID)
 		if errUV != nil {
 			dto.Fail(
 				c,

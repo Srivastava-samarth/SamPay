@@ -32,20 +32,7 @@ func main() {
 		logger.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	merchantRepo := repositories.NewMerchantRepository(db)
-	walletRepo := repositories.NewWalletRepository(db)
-	bankRepo := repositories.NewBankRepository(db)
-	userRepo := repositories.NewUserRepository(db)
-	userSessionRepo := repositories.NewUserSessionRepository(db)
-	passwordResetRepo := repositories.NewPasswordResetTokenRepository(db)
-	merchantUserRepo := repositories.NewMerchantUserRepository(db)
-	linkedBankAccountRepo := repositories.NewLinkedBankRepository(db)
-	ledgerRepo := repositories.NewLedgerRepository(db)
-	vaultRepo := repositories.NewVaultRepository(db)
-	paymentRepo := repositories.NewPaymentRepository(db)
-	idempotencyRepo := repositories.NewIdempotencyRepository(db)
-	payoutRepo := repositories.NewPayoutRepository(db)
-	refundRepo := repositories.NewRefundRepository(db)
+	repo := repositories.NewRepository(db)
 
 	notificationService, err :=
 		notifications.NewEmailService(cfg.SMTP)
@@ -60,216 +47,16 @@ func main() {
 	}
 	defer temporalClient.Close()
 
-	ledgerService := services.NewLedgerService(
-		ledgerRepo,
-		db,
-	)
-
-	walletService := services.NewWalletService(
-		db,
-		walletRepo,
-		bankRepo,
-		linkedBankAccountRepo,
-		ledgerService,
-	)
-
-	bankService := services.NewBankService(
-		db,
-		bankRepo,
-		merchantRepo,
-		linkedBankAccountRepo,
-	)
-
-	userService := services.NewUserService(
-		userRepo,
-		merchantUserRepo,
-	)
-
-	merchantUserService := services.NewMerchantUserService(
-		merchantUserRepo,
-	)
-
-	linkedBankAccountService :=
-		services.NewLinkedBankAccountService(
-			linkedBankAccountRepo,
-		)
-
-	complianceService := services.NewComplianceService(
-		userRepo,
-	)
-
-	merchantService := services.NewMerchantService(
-		db,
-		merchantRepo,
-		bankService,
-		complianceService,
-		merchantUserService,
-		linkedBankAccountService,
-		userService,
-		walletService,
-		notificationService,
-		ledgerService,
-	)
-
 	jwtService := middlewares.NewJwt(&cfg.JWT)
 
-	authService := services.NewAuthService(
-		db,
-		userRepo,
-		userSessionRepo,
-		merchantUserRepo,
-		jwtService,
-		notificationService,
-		passwordResetRepo,
-	)
+	services := services.NewServices(db, repo, jwtService, notificationService)
 
-	vaultService := services.NewVaultService(
-		db,
-		vaultRepo,
-		linkedBankAccountRepo,
-		ledgerService,
-		bankService,
-	)
-
-	paymentService := services.NewPaymentService(
-		paymentRepo,
-		merchantRepo,
-		walletService,
-	)
-
-	payoutService := services.NewPayoutService(
-		payoutRepo,
-		walletRepo,
-		bankRepo,
-		linkedBankAccountRepo,
-	)
-
-	idempotencyService := services.NewIdempotencyService(
-		idempotencyRepo,
-	)
-
-	refundService := services.NewRefundService(
-		refundRepo,
-		paymentRepo,
-	)
-
-	// --------------------------------------------------
-	// Controllers
-	// --------------------------------------------------
-
-	merchantController := controllers.NewMerchantController(
-		merchantService,
-		temporalClient,
-	)
-
-	merchantRouter := routes.NewMerchantRouter(
-		merchantController,
-	)
-
-	authController := controllers.NewAuthController(
-		authService,
-		temporalClient,
-	)
-
-	userController := controllers.NewUserController(
-		temporalClient,
-		userService,
-	)
-
-	authRouter := routes.NewAuthRouter(
-		authController,
-	)
-
-	userRouter := routes.NewUserRouter(
-		userController,
-	)
-
-	walletController := controllers.NewWalletController(
-		db,
-		walletService,
-		ledgerService,
-	)
-
-	walletRouter := routes.NewWalletRouter(
-		walletController,
-	)
-
-	vaultController := controllers.NewVaultController(
-		vaultService,
-	)
-
-	vaultRouter := routes.NewVaultRouter(
-		vaultController,
-	)
-
-	paymentController := controllers.NewPaymentController(
-		db,
-		paymentService,
-		idempotencyService,
-		walletService,
-		vaultService,
-		ledgerService,
-		&temporalClient,
-	)
-
-	paymentRouter := routes.NewPaymentRouter(
-		paymentController,
-	)
-
-	PayoutController := controllers.NewPayoutController(
-		payoutService,
-		idempotencyService,
-		paymentController,
-		paymentService,
-		temporalClient,
-	)
-
-	payoutRouter := routes.NewPayoutRouter(
-		PayoutController,
-	)
-
-	reportService := services.NewReportService()
-
-	reconController := controllers.NewReconController(
-		temporalClient,
-	)
-
-	reconRouter := routes.NewReconRouter(reconController)
-	refundController := controllers.NewRefundController(
-		refundService,
-		idempotencyService,
-		paymentController,
-		temporalClient,
-	)
-
-	refundRouter := routes.NewRefundRouter(
-		refundController,
-	)
-
-	bankCtlr := controllers.NewBankController(
-		bankService,
-	)
-
-	bankRouter := routes.NewBankRouter(
-		bankCtlr,
-	)
-
+	controllers := controllers.NewController(db, temporalClient, services)
 	activityRegistry := activities.NewRegistry(
 		db,
 		notificationService,
-		merchantService,
-		complianceService,
-		walletService,
-		authService,
-		userService,
-		ledgerService,
-		paymentService,
-		vaultService,
-		payoutService,
-		reportService,
-		refundService,
-		merchantUserService,
-		*merchantRepo,
+		services,
+		repo,
 	)
 
 	workers := temporal.StartWorkers(
@@ -289,16 +76,18 @@ func main() {
 
 	api := router.Group("/api/v1")
 
-	merchantRouter.MerchantRoutes(api, jwtService.Authenticate())
-	authRouter.AuthRoutes(api)
-	userRouter.UserRoutes(api, jwtService.Authenticate())
-	bankRouter.BankAccountRoutes(api, jwtService.Authenticate())
-	walletRouter.WalletRoutes(api, jwtService.Authenticate())
-	vaultRouter.VaultRoutes(api, jwtService.Authenticate())
-	paymentRouter.PaymentRoutes(api, jwtService.Authenticate())
-	payoutRouter.PayoutRoutes(api, jwtService.Authenticate())
-	reconRouter.ReconRoutes(api, jwtService.Authenticate())
-	refundRouter.RefundRoutes(api, jwtService.Authenticate())
+	mainRouter := routes.NewRouter(controllers)
+
+	mainRouter.MerchantRoutes(api, jwtService.Authenticate())
+	mainRouter.AuthRoutes(api)
+	mainRouter.UserRoutes(api, jwtService.Authenticate())
+	mainRouter.BankAccountRoutes(api, jwtService.Authenticate())
+	mainRouter.WalletRoutes(api, jwtService.Authenticate())
+	mainRouter.VaultRoutes(api, jwtService.Authenticate())
+	mainRouter.PaymentRoutes(api, jwtService.Authenticate())
+	mainRouter.PayoutRoutes(api, jwtService.Authenticate())
+	mainRouter.ReconRoutes(api, jwtService.Authenticate())
+	mainRouter.RefundRoutes(api, jwtService.Authenticate())
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

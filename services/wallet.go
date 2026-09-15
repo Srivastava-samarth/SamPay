@@ -6,44 +6,18 @@ import (
 	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
-type WalletService struct {
-	db             *gorm.DB
-	WalletRepo     *repositories.WalletRepository
-	BankRepo       *repositories.BankRepository
-	LinkedBankRepo *repositories.LinkedBankAccountRepository
-	LedgerService  *LedgerService
-}
-
-func NewWalletService(
-	db *gorm.DB,
-	WalletRepo *repositories.WalletRepository,
-	BankRepo *repositories.BankRepository,
-	LinkedBankRepo *repositories.LinkedBankAccountRepository,
-	LedgerService *LedgerService,
-
-) *WalletService {
-	return &WalletService{
-		db:             db,
-		WalletRepo:     WalletRepo,
-		BankRepo:       BankRepo,
-		LinkedBankRepo: LinkedBankRepo,
-		LedgerService:  LedgerService,
-	}
-}
-
-func (ws *WalletService) CreateWalletForMerchant(merchantID uuid.UUID) (*models.Wallets, error) {
+func (ws *Services) CreateWalletForMerchant(merchantID uuid.UUID) (*models.Wallets, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant id is required")
 	}
 
-	existingWallet, errEW := ws.WalletRepo.GetWalletByMerchantId(merchantID)
+	existingWallet, errEW := ws.Repo.GetWalletByMerchantId(merchantID)
 	if errEW != nil {
 		return nil, errEW
 	}
@@ -52,30 +26,30 @@ func (ws *WalletService) CreateWalletForMerchant(merchantID uuid.UUID) (*models.
 		return nil, errors.New("wallet already exists for this merchant")
 	}
 
-	wallet, walletErr := ws.WalletRepo.CreateWalletForMerchant(merchantID)
+	wallet, walletErr := ws.Repo.CreateWalletForMerchant(merchantID)
 	if walletErr != nil {
 		return nil, walletErr
 	}
 	return wallet, nil
 }
 
-func (ws *WalletService) GetWalletByMerchantID(merchantID uuid.UUID) (*models.Wallets, error) {
+func (ws *Services) GetWalletByMerchantID(merchantID uuid.UUID) (*models.Wallets, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant id is required")
 	}
 
-	wallet, errW := ws.WalletRepo.GetWalletByMerchantId(merchantID)
+	wallet, errW := ws.Repo.GetWalletByMerchantId(merchantID)
 	if errW != nil {
 		return nil, errW
 	}
 	return wallet, nil
 }
 
-func (ws *WalletService) UpdateWalletStatus(merchantId uuid.UUID, status string) (*models.Wallets, error) {
+func (ws *Services) UpdateWalletStatus(merchantId uuid.UUID, status string) (*models.Wallets, error) {
 	if merchantId == uuid.Nil {
 		return nil, errors.New("merchant id is required")
 	}
-	updatedWallet, errUW := ws.WalletRepo.UpdateWalletStatus(merchantId, status)
+	updatedWallet, errUW := ws.Repo.UpdateWalletStatus(merchantId, status)
 	if errUW != nil {
 		return nil, errUW
 	}
@@ -83,7 +57,7 @@ func (ws *WalletService) UpdateWalletStatus(merchantId uuid.UUID, status string)
 	return updatedWallet, nil
 }
 
-func (ws *WalletService) TopUpWalletFromPrimaryBank(
+func (ws *Services) TopUpWalletFromPrimaryBank(
 	tx *gorm.DB,
 	wallet *models.Wallets,
 	amount decimal.Decimal,
@@ -98,11 +72,9 @@ func (ws *WalletService) TopUpWalletFromPrimaryBank(
 	}
 
 	// Use transaction-aware repositories.
-	linkedBankRepo := ws.LinkedBankRepo.WithTx(tx)
-	bankRepo := ws.BankRepo.WithTx(tx)
-	walletRepo := ws.WalletRepo.WithTx(tx)
+	repo := ws.Repo.WithTx(tx)
 
-	linkedBankAccount, err := linkedBankRepo.
+	linkedBankAccount, err := repo.
 		GetPrimaryBankAccountLinkedByMerchantID(wallet.MerchantID)
 	if err != nil {
 		return nil, err
@@ -112,7 +84,7 @@ func (ws *WalletService) TopUpWalletFromPrimaryBank(
 		return nil, errors.New("no primary linked bank account found")
 	}
 
-	bankAccount, err := bankRepo.
+	bankAccount, err := repo.
 		GetBankAccountByID(linkedBankAccount.BankAccountID)
 	if err != nil {
 		return nil, err
@@ -133,7 +105,7 @@ func (ws *WalletService) TopUpWalletFromPrimaryBank(
 		)
 	}
 
-	updatedBankAccount, err := bankRepo.UpdateBankAccount(
+	updatedBankAccount, err := repo.UpdateBankAccount(
 		linkedBankAccount.BankAccountID,
 		&dto.UpdateBankAccountRequest{
 			Balance: remainingBankBalance,
@@ -143,7 +115,7 @@ func (ws *WalletService) TopUpWalletFromPrimaryBank(
 		return nil, err
 	}
 
-	updatedWallet, err := walletRepo.UpdateWalletBalance(
+	updatedWallet, err := repo.UpdateWalletBalance(
 		wallet.MerchantID,
 		&dto.UpdateWalletBalanceRequest{
 			AvailableBalance: wallet.AvailableBalance.Add(amount),
@@ -178,7 +150,7 @@ func (ws *WalletService) TopUpWalletFromPrimaryBank(
 		},
 	}
 
-	_, err = ws.LedgerService.PostTransaction(
+	_, err = ws.PostTransaction(
 		tx,
 		ledgerRequest,
 		ledgerEntries,

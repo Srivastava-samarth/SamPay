@@ -8,13 +8,7 @@ import (
 	"github.com/Srivastava-samarth/sampay/dto"
 )
 
-type ReportService struct{}
-
-func NewReportService() *ReportService {
-	return &ReportService{}
-}
-
-func (rs *ReportService) GenerateReconReport(
+func (rs *Services) GenerateReconReport(
 	result *dto.ReconResult,
 ) (*dto.ReconReport, error) {
 	if result == nil {
@@ -45,7 +39,7 @@ func (rs *ReportService) GenerateReconReport(
 	}, nil
 }
 
-func (*ReportService) GenerateReconEmailBody(
+func (*Services) GenerateReconEmailBody(
 	report *dto.ReconReport,
 ) (string, error) {
 	if report == nil {

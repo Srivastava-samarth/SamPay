@@ -11,25 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type PayoutRepository struct {
-	DB *gorm.DB
-}
-
-func NewPayoutRepository(
-	db *gorm.DB,
-) *PayoutRepository {
-	return &PayoutRepository{
-		DB: db,
-	}
-}
-
-func (pr *PayoutRepository) WithTx(tx *gorm.DB) *PayoutRepository {
-	return &PayoutRepository{
-		DB: tx,
-	}
-}
-
-func (pr *PayoutRepository) CreatePayoutWalletToBank(merchantID uuid.UUID, request *dto.CreateWalletToBankRequest, status string) (*models.Payout, error) {
+func (pr *Repository) CreatePayoutWalletToBank(merchantID uuid.UUID, request *dto.CreateWalletToBankRequest, status string) (*models.Payout, error) {
 	createPayoutPayload := &models.Payout{
 		ID:                       utils.GenerateUUID(),
 		MerchantID:               merchantID,
@@ -54,7 +36,7 @@ func (pr *PayoutRepository) CreatePayoutWalletToBank(merchantID uuid.UUID, reque
 	return createPayoutPayload, nil
 }
 
-func (pr *PayoutRepository) CreatePayoutBankToBank(merchantID uuid.UUID, request *dto.CreateBankToBankRequest, status string) (*models.Payout, error) {
+func (pr *Repository) CreatePayoutBankToBank(merchantID uuid.UUID, request *dto.CreateBankToBankRequest, status string) (*models.Payout, error) {
 	createPayoutPayload := &models.Payout{
 		ID:                       utils.GenerateUUID(),
 		MerchantID:               merchantID,
@@ -79,7 +61,7 @@ func (pr *PayoutRepository) CreatePayoutBankToBank(merchantID uuid.UUID, request
 	return createPayoutPayload, nil
 }
 
-func (pr *PayoutRepository) UpdatePayoutStatus(PayoutReference string, status string) (*models.Payout, error) {
+func (pr *Repository) UpdatePayoutStatus(PayoutReference string, status string) (*models.Payout, error) {
 	var payout *models.Payout
 	err := pr.DB.Where("payout_reference = ?", PayoutReference).First(&payout).Error
 	if err != nil {
@@ -114,7 +96,7 @@ func (pr *PayoutRepository) UpdatePayoutStatus(PayoutReference string, status st
 
 }
 
-func (pr *PayoutRepository) GetPayoutsByMerchantID(merchantID uuid.UUID) ([]*models.Payout, error) {
+func (pr *Repository) GetPayoutsByMerchantID(merchantID uuid.UUID) ([]*models.Payout, error) {
 	var payouts []*models.Payout
 	err := pr.DB.
 		Where("merchant_id = ?", merchantID).
@@ -131,7 +113,7 @@ func (pr *PayoutRepository) GetPayoutsByMerchantID(merchantID uuid.UUID) ([]*mod
 	return payouts, nil
 }
 
-func (pr *PayoutRepository) GetPayoutByID(payoutID uuid.UUID) (*models.Payout, error) {
+func (pr *Repository) GetPayoutByID(payoutID uuid.UUID) (*models.Payout, error) {
 	var payout *models.Payout
 	err := pr.DB.
 		Where("id = ?", payoutID).

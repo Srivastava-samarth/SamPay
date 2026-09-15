@@ -26,7 +26,7 @@ func (a *Registry) PerformComplianceCheck(
 			Country:     request.Individual.Country,
 		}
 
-		return a.ComplianceService.PerformIndividualComplianceCheck(
+		return a.Services.PerformIndividualComplianceCheck(
 			individualComplianceRequest,
 			merchantID,
 		)
@@ -39,7 +39,7 @@ func (a *Registry) PerformComplianceCheck(
 		IncorporationCountry: request.Company.IncorporationCountry,
 		TaxID:                request.Company.TaxID,
 	}
-	return a.ComplianceService.PerformCorporateComplianceCheck(
+	return a.Services.PerformCorporateComplianceCheck(
 		companyComplianceRequest,
 		merchantID,
 	)
@@ -51,7 +51,7 @@ func (a *Registry) ProvisionMerchant(
 	merchantID uuid.UUID,
 ) (*services.MerchantProvisioningResult, error) {
 
-	return a.MerchantService.ProvisionMerchant(
+	return a.Services.ProvisionMerchant(
 		request,
 		merchantID,
 	)
@@ -87,7 +87,7 @@ func (a *Registry) UpdateMerchantCompliance(
 	merchantID uuid.UUID,
 	complianceResponse *dto.ComplianceCheckResponse,
 ) (*models.Merchant, error) {
-	return a.MerchantService.UpdateMerchantCompliance(
+	return a.Services.UpdateMerchantCompliance(
 		merchantID,
 		complianceResponse,
 	)

@@ -11,25 +11,9 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserRepository struct {
-	db *gorm.DB
-}
-
-func NewUserRepository(db *gorm.DB) *UserRepository {
-	return &UserRepository{
-		db: db,
-	}
-}
-
-func (wr *UserRepository) WithTx(tx *gorm.DB) *UserRepository {
-	return &UserRepository{
-		db: tx,
-	}
-}
-
-func (ur *UserRepository) GetBlockedUserByEmail(email string) (bool, error) {
+func (ur *Repository) GetBlockedUserByEmail(email string) (bool, error) {
 	var user models.User
-	err := ur.db.Where("email = ? AND status = ?", email, constants.MerchantStatusSuspended).First(&user).Error
+	err := ur.DB.Where("email = ? AND status = ?", email, constants.MerchantStatusSuspended).First(&user).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return false, nil
@@ -39,7 +23,7 @@ func (ur *UserRepository) GetBlockedUserByEmail(email string) (bool, error) {
 	return true, nil
 }
 
-func (ur *UserRepository) CreateUser(request *models.User) (*models.User, error) {
+func (ur *Repository) CreateUser(request *models.User) (*models.User, error) {
 	user := &models.User{
 		ID:                 utils.GenerateUUID(),
 		Email:              request.Email,
@@ -51,23 +35,23 @@ func (ur *UserRepository) CreateUser(request *models.User) (*models.User, error)
 		CreatedAt:          time.Now(),
 		UpdatedAt:          time.Now(),
 	}
-	err := ur.db.Create(user).Error
+	err := ur.DB.Create(user).Error
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
-func (ur *UserRepository) GetUserByEmail(email string) (*models.User, error) {
+func (ur *Repository) GetUserByEmail(email string) (*models.User, error) {
 	var user *models.User
-	err := ur.db.Where("email= ?", email).First(&user).Error
+	err := ur.DB.Where("email= ?", email).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
-func (ur *UserRepository) UpdateUser(userID uuid.UUID, request *dto.UpdateUserRequest) (*models.User, error) {
+func (ur *Repository) UpdateUser(userID uuid.UUID, request *dto.UpdateUserRequest) (*models.User, error) {
 	updates := map[string]interface{}{
 		"updated_at": time.Now(),
 	}
@@ -88,7 +72,7 @@ func (ur *UserRepository) UpdateUser(userID uuid.UUID, request *dto.UpdateUserRe
 		updates["must_change_password"] = request.MustChangePassword
 	}
 
-	err := ur.db.
+	err := ur.DB.
 		Model(&models.User{}).
 		Where("id = ?", userID).
 		Updates(updates).Error
@@ -98,7 +82,7 @@ func (ur *UserRepository) UpdateUser(userID uuid.UUID, request *dto.UpdateUserRe
 	}
 
 	var updatedUser models.User
-	err = ur.db.
+	err = ur.DB.
 		Where("id = ?", userID).
 		First(&updatedUser).Error
 
@@ -108,31 +92,32 @@ func (ur *UserRepository) UpdateUser(userID uuid.UUID, request *dto.UpdateUserRe
 
 	return &updatedUser, nil
 }
-func (ur *UserRepository) GetUserByID(userId uuid.UUID) (*models.User, error) {
+
+func (ur *Repository) GetUserByID(userId uuid.UUID) (*models.User, error) {
 	var user *models.User
-	err := ur.db.Where("id= ?", userId).First(&user).Error
+	err := ur.DB.Where("id= ?", userId).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
-func (ur *UserRepository) GetUsers() ([]*models.User, error) {
+func (ur *Repository) GetUsers() ([]*models.User, error) {
 	var users []*models.User
 
-	if err := ur.db.Find(&users).Error; err != nil {
+	if err := ur.DB.Find(&users).Error; err != nil {
 		return nil, err
 	}
 	return users, nil
 }
 
-func (ur *UserRepository) UpdateUserStatus(status string, userID uuid.UUID) (*models.User, error) {
+func (ur *Repository) UpdateUserStatus(status string, userID uuid.UUID) (*models.User, error) {
 	updates := map[string]interface{}{
 		"status":     status,
 		"updated_at": time.Now(),
 	}
 
-	err := ur.db.
+	err := ur.DB.
 		Model(&models.User{}).
 		Where("id = ?", userID).
 		Updates(updates).Error
@@ -142,7 +127,7 @@ func (ur *UserRepository) UpdateUserStatus(status string, userID uuid.UUID) (*mo
 	}
 
 	var user *models.User
-	errU := ur.db.Where("id = ?", userID).First(&user).Error
+	errU := ur.DB.Where("id = ?", userID).First(&user).Error
 	if errU != nil {
 		return nil, errU
 	}

@@ -7,8 +7,6 @@ import (
 	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	"github.com/Srivastava-samarth/sampay/notifications"
-	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -19,51 +17,12 @@ type MerchantProvisioningResult struct {
 	TemporaryPassword string
 }
 
-type MerchantService struct {
-	DB                       *gorm.DB
-	MerchantRepo             *repositories.MerchantRepository
-	BankService              *BankService
-	ComplianceService        *ComplianceService
-	MerchantUserService      *MerchantUserService
-	LinkedBankAccountService *LinkedBankAccountService
-	UserService              *UserService
-	WalletService            *WalletService
-	NotificationService      *notifications.EmailService
-	LedgerService            *LedgerService
-}
-
-func NewMerchantService(
-	db *gorm.DB,
-	merchantRepo *repositories.MerchantRepository,
-	bankSrvc *BankService,
-	complianceSrvc *ComplianceService,
-	merchantUserSrvc *MerchantUserService,
-	linkedBankAccountSrvc *LinkedBankAccountService,
-	userSrvc *UserService,
-	walletSrvc *WalletService,
-	notificationService *notifications.EmailService,
-	ledgerSrvc *LedgerService,
-) *MerchantService {
-	return &MerchantService{
-		DB:                       db,
-		MerchantRepo:             merchantRepo,
-		BankService:              bankSrvc,
-		ComplianceService:        complianceSrvc,
-		MerchantUserService:      merchantUserSrvc,
-		LinkedBankAccountService: linkedBankAccountSrvc,
-		UserService:              userSrvc,
-		WalletService:            walletSrvc,
-		NotificationService:      notificationService,
-		LedgerService:            ledgerSrvc,
-	}
-}
-
-func (ms *MerchantService) GetMerchantByID(merchantID uuid.UUID) (*models.Merchant, error) {
+func (ms *Services) GetMerchantByID(merchantID uuid.UUID) (*models.Merchant, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant_id is required")
 	}
 
-	merchant, err := ms.MerchantRepo.GetMerchantByID(merchantID)
+	merchant, err := ms.Repo.GetMerchantByID(merchantID)
 	if err != nil {
 		return nil, err
 	}
@@ -73,15 +32,15 @@ func (ms *MerchantService) GetMerchantByID(merchantID uuid.UUID) (*models.Mercha
 	return merchant, nil
 }
 
-func (ms *MerchantService) GetMerchants() ([]*models.Merchant, error) {
-	merchants, errM := ms.MerchantRepo.GetMerchants()
+func (ms *Services) GetMerchants() ([]*models.Merchant, error) {
+	merchants, errM := ms.Repo.GetMerchants()
 	if errM != nil {
 		return nil, errM
 	}
 	return merchants, nil
 }
 
-func (ms *MerchantService) CreateInitialMerchant(merchantRequest *dto.CreateMerchantOnboardingRequest) (*dto.CreateMerchantOnboardingResponse, error) {
+func (ms *Services) CreateInitialMerchant(merchantRequest *dto.CreateMerchantOnboardingRequest) (*dto.CreateMerchantOnboardingResponse, error) {
 	if merchantRequest == nil {
 		return nil, errors.New("request can't be empty")
 	}
@@ -113,7 +72,7 @@ func (ms *MerchantService) CreateInitialMerchant(merchantRequest *dto.CreateMerc
 		UpdatedAt:        time.Now(),
 	}
 
-	initialMerchant, err := ms.MerchantRepo.CreateMerchant(initialMerchantRequest)
+	initialMerchant, err := ms.Repo.CreateMerchant(initialMerchantRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +92,7 @@ func (ms *MerchantService) CreateInitialMerchant(merchantRequest *dto.CreateMerc
 	return response, nil
 }
 
-func (ms *MerchantService) ProvisionMerchant(
+func (ms *Services) ProvisionMerchant(
 	merchantRequest *dto.CreateMerchantOnboardingRequest,
 	merchantID uuid.UUID,
 ) (*MerchantProvisioningResult, error) {
@@ -151,34 +110,18 @@ func (ms *MerchantService) ProvisionMerchant(
 		}
 	}()
 
-	// 1. Create Wallet
-	txWalletService := NewWalletService(
-		ms.DB,
-		ms.WalletService.WalletRepo.WithTx(tx),
-		ms.BankService.BankRepo.WithTx(tx),
-		ms.LinkedBankAccountService.LinkedBankAccountRepo.WithTx(tx),
-		ms.LedgerService,
-	)
-	_, err := txWalletService.CreateWalletForMerchant(merchantID)
+	_, err := ms.CreateWalletForMerchant(merchantID)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
-
-	// 2. Create Bank Account
-	txBankService := NewBankService(
-		ms.DB,
-		ms.BankService.BankRepo.WithTx(tx),
-		ms.BankService.MerchantRepo.WithTx(tx),
-		ms.BankService.LinkedBankAccountRepo.WithTx(tx),
-	)
 
 	bankAccountRequest := &dto.CreateBankAccountRequest{
 		AccountName: merchantRequest.MerchantName,
 		MerchantID:  merchantID,
 	}
 
-	merchantBankAccount, err := txBankService.CreateBankAccount(
+	merchantBankAccount, err := ms.CreateBankAccount(
 		bankAccountRequest,
 	)
 	if err != nil {
@@ -194,11 +137,7 @@ func (ms *MerchantService) ProvisionMerchant(
 		Status:        merchantBankAccount.Status,
 	}
 
-	txLinkedBankAccountService := NewLinkedBankAccountService(
-		ms.LinkedBankAccountService.LinkedBankAccountRepo.WithTx(tx),
-	)
-
-	_, err = txLinkedBankAccountService.CreateLinkedBankAccount(
+	_, err = ms.CreateLinkedBankAccount(
 		linkedBankAccountRequest,
 	)
 	if err != nil {
@@ -229,7 +168,7 @@ func (ms *MerchantService) ProvisionMerchant(
 		LastName:  lastName,
 	}
 
-	user, err := ms.UserService.CreateUser(
+	user, err := ms.CreateUser(
 		userRequest,
 	)
 	if err != nil {
@@ -243,11 +182,7 @@ func (ms *MerchantService) ProvisionMerchant(
 		UserID:     user.User.ID,
 		Role:       "owner",
 	}
-
-	txMerchantUserService := NewMerchantUserService(
-		ms.MerchantUserService.MerchantUserRepo.WithTx(tx),
-	)
-	_, err = txMerchantUserService.CreateMerchantUser(
+	_, err = ms.CreateMerchantUser(
 		merchantUserRequest,
 	)
 	if err != nil {
@@ -255,8 +190,8 @@ func (ms *MerchantService) ProvisionMerchant(
 		return nil, err
 	}
 
-	txMerchantRepo := ms.MerchantRepo.WithTx(tx)
-	_, errM := txMerchantRepo.UpdateMerchantStatus(
+	repo := ms.Repo.WithTx(tx)
+	_, errM := repo.UpdateMerchantStatus(
 		merchantID,
 		constants.MerchantStatusActive,
 	)
@@ -278,7 +213,7 @@ func (ms *MerchantService) ProvisionMerchant(
 	return provisionMerchantResult, nil
 }
 
-func (ms *MerchantService) UpdateMerchantCompliance(merchantID uuid.UUID, complianceResponse *dto.ComplianceCheckResponse) (*models.Merchant, error) {
+func (ms *Services) UpdateMerchantCompliance(merchantID uuid.UUID, complianceResponse *dto.ComplianceCheckResponse) (*models.Merchant, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant_id is required")
 	}
@@ -287,14 +222,14 @@ func (ms *MerchantService) UpdateMerchantCompliance(merchantID uuid.UUID, compli
 		return nil, errors.New("compliance response is required")
 	}
 
-	updatedMerchant, err := ms.MerchantRepo.UpdateMerchantCompliance(merchantID, complianceResponse)
+	updatedMerchant, err := ms.Repo.UpdateMerchantCompliance(merchantID, complianceResponse)
 	if err != nil {
 		return nil, err
 	}
 	return updatedMerchant, nil
 }
 
-func (ms *MerchantService) ValidateMerchantOnboardingRequest(r *dto.CreateMerchantOnboardingRequest) error {
+func (ms *Services) ValidateMerchantOnboardingRequest(r *dto.CreateMerchantOnboardingRequest) error {
 	switch r.MerchantType {
 	case "individual":
 		if r.Individual == nil {
@@ -310,7 +245,7 @@ func (ms *MerchantService) ValidateMerchantOnboardingRequest(r *dto.CreateMercha
 	return nil
 }
 
-func (ms *MerchantService) UpdateMerchant(
+func (ms *Services) UpdateMerchant(
 	request *dto.UpdateMerchantRequest,
 	merchantID uuid.UUID,
 ) (*models.Merchant, error) {
@@ -322,7 +257,7 @@ func (ms *MerchantService) UpdateMerchant(
 		return nil, errors.New("merchant_id is required")
 	}
 
-	updatedMerchant, errUM := ms.MerchantRepo.UpdateMerchant(request, merchantID)
+	updatedMerchant, errUM := ms.Repo.UpdateMerchant(request, merchantID)
 	if errUM != nil {
 		return nil, errUM
 	}
@@ -330,7 +265,7 @@ func (ms *MerchantService) UpdateMerchant(
 	return updatedMerchant, nil
 }
 
-func (ms *MerchantService) UpdateMerchantStatus(
+func (ms *Services) UpdateMerchantStatus(
 	status *string,
 	merchantID uuid.UUID,
 ) (*models.Merchant, error) {
@@ -349,11 +284,9 @@ func (ms *MerchantService) UpdateMerchantStatus(
 	}
 
 	err := ms.DB.Transaction(func(tx *gorm.DB) error {
-		merchantRepo := ms.MerchantRepo.WithTx(tx)
-		merchantUserRepo := ms.MerchantUserService.MerchantUserRepo.WithTx(tx)
-		userRepo := ms.UserService.UserRepo.WithTx(tx)
+		repo := ms.Repo.WithTx(tx)
 
-		oldMerchant, err := merchantRepo.GetMerchantByID(merchantID)
+		oldMerchant, err := repo.GetMerchantByID(merchantID)
 		if err != nil {
 			return err
 		}
@@ -363,7 +296,7 @@ func (ms *MerchantService) UpdateMerchantStatus(
 			return nil
 		}
 
-		merchant, err := merchantRepo.UpdateMerchantStatus(
+		merchant, err := repo.UpdateMerchantStatus(
 			merchantID,
 			*status,
 		)
@@ -374,7 +307,7 @@ func (ms *MerchantService) UpdateMerchantStatus(
 		newMerchant = merchant
 
 		merchantUsers, err :=
-			merchantUserRepo.GetMerchantUsersByMerchantID(merchantID)
+			repo.GetMerchantUsersByMerchantID(merchantID)
 
 		if err != nil {
 			return err
@@ -385,7 +318,7 @@ func (ms *MerchantService) UpdateMerchantStatus(
 		}
 
 		for _, merchantUser := range merchantUsers {
-			_, err := userRepo.UpdateUserStatus(
+			_, err := repo.UpdateUserStatus(
 				*status,
 				merchantUser.UserID,
 			)
@@ -404,7 +337,7 @@ func (ms *MerchantService) UpdateMerchantStatus(
 	return newMerchant, nil
 }
 
-func (ms *MerchantService) UpdateMerchantKycInfo(
+func (ms *Services) UpdateMerchantKycInfo(
 	request *dto.UpdateMerchantKycRequest,
 	merchantID uuid.UUID,
 ) (*models.Merchant, error) {
@@ -417,7 +350,7 @@ func (ms *MerchantService) UpdateMerchantKycInfo(
 		return nil, errors.New("request can't be empty")
 	}
 
-	merchant, err := ms.MerchantRepo.GetMerchantByID(merchantID)
+	merchant, err := ms.Repo.GetMerchantByID(merchantID)
 	if err != nil {
 		return nil, err
 	}
@@ -445,7 +378,7 @@ func (ms *MerchantService) UpdateMerchantKycInfo(
 				Country:     request.IndividualUpdate.Country,
 			}
 
-		complianceResult, err = ms.ComplianceService.
+		complianceResult, err = ms.
 			PerformIndividualComplianceCheck(
 				complianceIndividualRequest,
 				merchantID,
@@ -466,7 +399,7 @@ func (ms *MerchantService) UpdateMerchantKycInfo(
 				TaxID:                request.CompanyUpdate.TaxID,
 			}
 
-		complianceResult, err = ms.ComplianceService.
+		complianceResult, err = ms.
 			PerformCorporateComplianceCheck(
 				complianceCorporateRequest,
 				merchantID,
@@ -481,14 +414,10 @@ func (ms *MerchantService) UpdateMerchantKycInfo(
 
 	err = ms.DB.Transaction(func(tx *gorm.DB) error {
 
-		merchantRepo := ms.MerchantRepo.WithTx(tx)
-		merchantUserRepo := ms.MerchantUserService.
-			MerchantUserRepo.WithTx(tx)
-		userRepo := ms.UserService.
-			UserRepo.WithTx(tx)
+		repo := ms.Repo.WithTx(tx)
 
 		updatedComplianceMerchant, err :=
-			merchantRepo.UpdateMerchantCompliance(
+			repo.UpdateMerchantCompliance(
 				merchantID,
 				complianceResult,
 			)
@@ -515,7 +444,7 @@ func (ms *MerchantService) UpdateMerchantKycInfo(
 		}
 
 		updatedMerchant, err =
-			merchantRepo.UpdateMerchantStatus(
+			repo.UpdateMerchantStatus(
 				merchantID,
 				merchantStatus,
 			)
@@ -525,7 +454,7 @@ func (ms *MerchantService) UpdateMerchantKycInfo(
 		}
 
 		merchantUsers, err :=
-			merchantUserRepo.GetMerchantUsersByMerchantID(
+			repo.GetMerchantUsersByMerchantID(
 				merchantID,
 			)
 
@@ -540,7 +469,7 @@ func (ms *MerchantService) UpdateMerchantKycInfo(
 		for _, merchantUser := range merchantUsers {
 
 			if _, err :=
-				userRepo.UpdateUserStatus(
+				repo.UpdateUserStatus(
 					merchantStatus,
 					merchantUser.UserID,
 				); err != nil {
@@ -558,12 +487,12 @@ func (ms *MerchantService) UpdateMerchantKycInfo(
 	return updatedMerchant, nil
 }
 
-func (ms *MerchantService) GetMerchantByEmail(email string) (*models.Merchant, error) {
+func (ms *Services) GetMerchantByEmail(email string) (*models.Merchant, error) {
 	if email == "" {
 		return nil, errors.New("email is required")
 	}
 
-	merchant, errM := ms.MerchantRepo.GetMerchantByEmail(email)
+	merchant, errM := ms.Repo.GetMerchantByEmail(email)
 	if errM != nil {
 		return nil, errM
 	}

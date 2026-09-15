@@ -10,7 +10,6 @@ import (
 )
 
 func TestGetTransactions(t *testing.T) {
-	ls := &LedgerService{}
 
 	validAccountType := "wallet"
 	validAccountID := uuid.New()
@@ -69,7 +68,7 @@ func TestGetTransactions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := ls.GetTransactions(
+			_, _, err := testServices.GetTransactions(
 				tt.accountType,
 				tt.accountID,
 				tt.cursor,
@@ -92,7 +91,6 @@ func TestGetTransactions(t *testing.T) {
 }
 
 func TestGetTransaction(t *testing.T) {
-	ls := &LedgerService{}
 
 	validWalletID := uuid.New()
 	validTransactionID := uuid.New()
@@ -119,7 +117,7 @@ func TestGetTransaction(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := ls.GetTransaction(
+			_, err := testServices.GetTransaction(
 				tt.walletID,
 				tt.transactionID,
 			)
@@ -140,7 +138,6 @@ func TestGetTransaction(t *testing.T) {
 }
 
 func TestCreateLedgerEntries(t *testing.T) {
-	ls := &LedgerService{}
 
 	validTransactionID := uuid.New()
 
@@ -185,7 +182,7 @@ func TestCreateLedgerEntries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := ls.CreateLedgerEntries(
+			_, err := testServices.CreateLedgerEntries(
 				tt.tx,
 				tt.entries,
 			)
@@ -206,9 +203,8 @@ func TestCreateLedgerEntries(t *testing.T) {
 }
 
 func TestCreateLedgerTransaction(t *testing.T) {
-	ls := &LedgerService{}
 
-	_, err := ls.CreateLedgerTransaction(nil)
+	_, err := testServices.CreateLedgerTransaction(nil)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -224,7 +220,6 @@ func TestCreateLedgerTransaction(t *testing.T) {
 }
 
 func TestPostTransaction(t *testing.T) {
-	ls := &LedgerService{}
 
 	validTx := &gorm.DB{}
 
@@ -296,7 +291,7 @@ func TestPostTransaction(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := ls.PostTransaction(
+			_, err := testServices.PostTransaction(
 				tt.tx,
 				tt.request,
 				tt.entries,
@@ -318,7 +313,6 @@ func TestPostTransaction(t *testing.T) {
 }
 
 func TestGetLedgerTransactionByReferenceID(t *testing.T) {
-	ls := &LedgerService{}
 
 	emptyReferenceID := ""
 
@@ -336,7 +330,7 @@ func TestGetLedgerTransactionByReferenceID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := ls.GetLedgerTransactionByReferenceID(
+			_, err := testServices.GetLedgerTransactionByReferenceID(
 				tt.referenceID,
 			)
 

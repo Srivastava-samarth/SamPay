@@ -8,9 +8,8 @@ import (
 )
 
 func TestGetMerchantByID(t *testing.T) {
-	ms := &MerchantService{}
 
-	_, err := ms.GetMerchantByID(uuid.Nil)
+	_, err := testServices.GetMerchantByID(uuid.Nil)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -22,7 +21,6 @@ func TestGetMerchantByID(t *testing.T) {
 }
 
 func TestCreateInitialMerchant(t *testing.T) {
-	ms := &MerchantService{}
 
 	validRequest := &dto.CreateMerchantOnboardingRequest{
 		MerchantName: "Test Merchant",
@@ -81,7 +79,7 @@ func TestCreateInitialMerchant(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := ms.CreateInitialMerchant(tt.request)
+			_, err := testServices.CreateInitialMerchant(tt.request)
 
 			if err == nil {
 				t.Fatal("expected error, got nil")
@@ -99,7 +97,6 @@ func TestCreateInitialMerchant(t *testing.T) {
 }
 
 func TestUpdateMerchantCompliance(t *testing.T) {
-	ms := &MerchantService{}
 
 	tests := []struct {
 		name          string
@@ -123,7 +120,7 @@ func TestUpdateMerchantCompliance(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := ms.UpdateMerchantCompliance(
+			_, err := testServices.UpdateMerchantCompliance(
 				tt.merchantID,
 				tt.response,
 			)
@@ -144,7 +141,6 @@ func TestUpdateMerchantCompliance(t *testing.T) {
 }
 
 func TestValidateMerchantOnboardingRequest(t *testing.T) {
-	ms := &MerchantService{}
 
 	tests := []struct {
 		name          string
@@ -169,7 +165,7 @@ func TestValidateMerchantOnboardingRequest(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ms.ValidateMerchantOnboardingRequest(tt.request)
+			err := testServices.ValidateMerchantOnboardingRequest(tt.request)
 
 			if err == nil {
 				t.Fatal("expected error, got nil")
@@ -187,7 +183,6 @@ func TestValidateMerchantOnboardingRequest(t *testing.T) {
 }
 
 func TestUpdateMerchant(t *testing.T) {
-	ms := &MerchantService{}
 
 	validRequest := &dto.UpdateMerchantRequest{}
 
@@ -213,7 +208,7 @@ func TestUpdateMerchant(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := ms.UpdateMerchant(
+			_, err := testServices.UpdateMerchant(
 				tt.request,
 				tt.merchantID,
 			)
@@ -234,7 +229,6 @@ func TestUpdateMerchant(t *testing.T) {
 }
 
 func TestUpdateMerchantStatus(t *testing.T) {
-	ms := &MerchantService{}
 
 	validStatus := "active"
 	invalidStatus := "invalid_status"
@@ -267,7 +261,7 @@ func TestUpdateMerchantStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := ms.UpdateMerchantStatus(
+			_, err := testServices.UpdateMerchantStatus(
 				tt.status,
 				tt.merchantID,
 			)
@@ -288,7 +282,6 @@ func TestUpdateMerchantStatus(t *testing.T) {
 }
 
 func TestUpdateMerchantKycInfo(t *testing.T) {
-	ms := &MerchantService{}
 
 	validRequest := &dto.UpdateMerchantKycRequest{}
 
@@ -314,7 +307,7 @@ func TestUpdateMerchantKycInfo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := ms.UpdateMerchantKycInfo(
+			_, err := testServices.UpdateMerchantKycInfo(
 				tt.request,
 				tt.merchantID,
 			)
@@ -335,7 +328,6 @@ func TestUpdateMerchantKycInfo(t *testing.T) {
 }
 
 func TestGetMerchantByEmail(t *testing.T) {
-	ms := &MerchantService{}
 
 	tests := []struct {
 		name          string
@@ -351,7 +343,7 @@ func TestGetMerchantByEmail(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := ms.GetMerchantByEmail(tt.email)
+			_, err := testServices.GetMerchantByEmail(tt.email)
 
 			if err == nil {
 				t.Fatal("expected error, got nil")

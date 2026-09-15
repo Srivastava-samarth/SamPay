@@ -8,7 +8,6 @@ import (
 )
 
 func TestCreateBankAccount(t *testing.T) {
-	bs := &BankService{}
 
 	tests := []struct {
 		name    string
@@ -40,7 +39,7 @@ func TestCreateBankAccount(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := bs.CreateBankAccount(tt.request)
+			_, err := testServices.CreateBankAccount(tt.request)
 
 			if err == nil {
 				t.Fatal("expected error, got nil")
@@ -58,7 +57,6 @@ func TestCreateBankAccount(t *testing.T) {
 }
 
 func TestUpdateBankAccountAndlink(t *testing.T) {
-	bs := &BankService{}
 
 	validRequest := &dto.UpdateBankAccountRequest{
 		ID:          uuid.New(),
@@ -117,7 +115,7 @@ func TestUpdateBankAccountAndlink(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := bs.UpdateBankAccountAndlink(tt.request)
+			_, _, err := testServices.UpdateBankAccountAndlink(tt.request)
 
 			if err == nil {
 				t.Fatal("expected error, got nil")
@@ -135,9 +133,8 @@ func TestUpdateBankAccountAndlink(t *testing.T) {
 }
 
 func TestGetBankAccountsByMerchantID(t *testing.T) {
-	bs := &BankService{}
 
-	_, err := bs.GetBankAccountsByMerchantID(uuid.Nil)
+	_, err := testServices.GetBankAccountsByMerchantID(uuid.Nil)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -153,9 +150,8 @@ func TestGetBankAccountsByMerchantID(t *testing.T) {
 }
 
 func TestGetBankAccount(t *testing.T) {
-	bs := &BankService{}
 
-	_, err := bs.GetBankAccount(uuid.Nil)
+	_, err := testServices.GetBankAccount(uuid.Nil)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")

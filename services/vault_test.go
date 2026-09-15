@@ -10,7 +10,6 @@ import (
 )
 
 func TestCreateVault(t *testing.T) {
-	vs := &VaultService{}
 
 	tests := []struct {
 		name          string
@@ -59,7 +58,7 @@ func TestCreateVault(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := vs.CreateVault(tt.request)
+			_, err := testServices.CreateVault(tt.request)
 
 			if err == nil {
 				t.Fatal("expected error, got nil")
@@ -77,9 +76,8 @@ func TestCreateVault(t *testing.T) {
 }
 
 func TestGetVaultByID(t *testing.T) {
-	vs := &VaultService{}
 
-	_, err := vs.GetVaultByID(uuid.Nil)
+	_, err := testServices.GetVaultByID(uuid.Nil)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -95,7 +93,6 @@ func TestGetVaultByID(t *testing.T) {
 }
 
 func TestUpdateVaultBalance(t *testing.T) {
-	vs := &VaultService{}
 
 	tests := []struct {
 		name          string
@@ -116,7 +113,7 @@ func TestUpdateVaultBalance(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := vs.UpdateVaultBalance(
+			_, err := testServices.UpdateVaultBalance(
 				uuid.New(),
 				tt.balance,
 				constants.PaymentVault,

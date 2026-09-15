@@ -5,23 +5,10 @@ import (
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/google/uuid"
 )
 
-type MerchantUserService struct {
-	MerchantUserRepo *repositories.MerchantUserRepository
-}
-
-func NewMerchantUserService(
-	MerchantUserRepo *repositories.MerchantUserRepository,
-) *MerchantUserService {
-	return &MerchantUserService{
-		MerchantUserRepo: MerchantUserRepo,
-	}
-}
-
-func (mus *MerchantUserService) CreateMerchantUser(merchantUserRequest *dto.CreateMerchantUserRequest) (*dto.CreateMerchantUserResponse, error) {
+func (mus *Services) CreateMerchantUser(merchantUserRequest *dto.CreateMerchantUserRequest) (*dto.CreateMerchantUserResponse, error) {
 	if merchantUserRequest == nil {
 		return nil, errors.New("request is required")
 	}
@@ -44,7 +31,7 @@ func (mus *MerchantUserService) CreateMerchantUser(merchantUserRequest *dto.Crea
 		Role:       merchantUserRequest.Role,
 	}
 
-	merchantUser, errMU := mus.MerchantUserRepo.CreateMerchantUser(createMerchantUserPayload)
+	merchantUser, errMU := mus.Repo.CreateMerchantUser(createMerchantUserPayload)
 	if errMU != nil {
 		return nil, errMU
 	}

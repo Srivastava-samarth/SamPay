@@ -29,7 +29,7 @@ func (mc *Controller) CreateMerchant() gin.HandlerFunc {
 			return
 		}
 
-		existingMerchant, errEM := mc.MerchantService.GetMerchantByEmail(request.Email)
+		existingMerchant, errEM := mc.Services.GetMerchantByEmail(request.Email)
 		if errEM != nil {
 			dto.Fail(
 				c,
@@ -48,7 +48,7 @@ func (mc *Controller) CreateMerchant() gin.HandlerFunc {
 			return
 		}
 
-		if errV := mc.MerchantService.ValidateMerchantOnboardingRequest(request); errV != nil {
+		if errV := mc.Services.ValidateMerchantOnboardingRequest(request); errV != nil {
 			dto.Fail(
 				c,
 				http.StatusBadRequest,
@@ -59,7 +59,7 @@ func (mc *Controller) CreateMerchant() gin.HandlerFunc {
 		}
 
 		// Create initial merchant here
-		merchant, errM := mc.MerchantService.CreateInitialMerchant(
+		merchant, errM := mc.Services.CreateInitialMerchant(
 			request,
 		)
 
@@ -127,7 +127,7 @@ func (mc *Controller) GetMerchantByID() gin.HandlerFunc {
 			)
 			return
 		}
-		merchant, errM := mc.MerchantService.GetMerchantByID(pasredMerchantId)
+		merchant, errM := mc.Services.GetMerchantByID(pasredMerchantId)
 		if errM != nil {
 			dto.Fail(
 				c,
@@ -148,7 +148,7 @@ func (mc *Controller) GetMerchantByID() gin.HandlerFunc {
 
 func (mc *Controller) GetMerchants() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		merchants, errM := mc.MerchantService.GetMerchants()
+		merchants, errM := mc.Services.GetMerchants()
 		if errM != nil {
 			dto.Fail(
 				c,
@@ -286,7 +286,7 @@ func (mc *Controller) UpdateMerchantInfo() gin.HandlerFunc {
 			return
 		}
 
-		merchant, errM := mc.MerchantService.GetMerchantByID(pasredMerchantId)
+		merchant, errM := mc.Services.GetMerchantByID(pasredMerchantId)
 		if errM != nil {
 			dto.Fail(
 				c,
@@ -307,7 +307,7 @@ func (mc *Controller) UpdateMerchantInfo() gin.HandlerFunc {
 			return
 		}
 
-		updatedMerchant, errUM := mc.MerchantService.UpdateMerchant(updateMerchantPayload, pasredMerchantId)
+		updatedMerchant, errUM := mc.Services.UpdateMerchant(updateMerchantPayload, pasredMerchantId)
 		if errUM != nil {
 			dto.Fail(
 				c,
@@ -361,7 +361,7 @@ func (mc *Controller) UpdateMerchantStatus() gin.HandlerFunc {
 			return
 		}
 
-		updatedMerchant, errUM := mc.MerchantService.UpdateMerchantStatus(&request.Status, pasredMerchantId)
+		updatedMerchant, errUM := mc.Services.UpdateMerchantStatus(&request.Status, pasredMerchantId)
 		if errUM != nil {
 			dto.Fail(
 				c,
@@ -416,7 +416,7 @@ func (mc *Controller) UpdateMerchantKyc() gin.HandlerFunc {
 			return
 		}
 
-		updatedMerchant, errUM := mc.MerchantService.UpdateMerchantKycInfo(updateMerchantPayload, pasredMerchantId)
+		updatedMerchant, errUM := mc.Services.UpdateMerchantKycInfo(updateMerchantPayload, pasredMerchantId)
 		if errUM != nil {
 			dto.Fail(
 				c,
