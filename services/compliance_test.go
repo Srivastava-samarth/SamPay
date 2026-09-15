@@ -8,7 +8,6 @@ import (
 )
 
 func TestPerformIndividualComplianceCheck(t *testing.T) {
-	cs := &ComplianceService{}
 
 	merchantID := uuid.New()
 	tests := []struct {
@@ -34,7 +33,7 @@ func TestPerformIndividualComplianceCheck(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			response, err := cs.PerformIndividualComplianceCheck(
+			response, err := testServices.PerformIndividualComplianceCheck(
 				tt.request,
 				merchantID,
 			)
@@ -83,7 +82,6 @@ func TestPerformIndividualComplianceCheck(t *testing.T) {
 }
 
 func TestPerformCorporateComplianceCheck(t *testing.T) {
-	cs := &ComplianceService{}
 
 	merchantID := uuid.New()
 
@@ -111,7 +109,7 @@ func TestPerformCorporateComplianceCheck(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := cs.PerformCorporateComplianceCheck(
+			_, err := testServices.PerformCorporateComplianceCheck(
 				tt.request,
 				merchantID,
 			)
@@ -132,7 +130,6 @@ func TestPerformCorporateComplianceCheck(t *testing.T) {
 }
 
 func TestValidateIndividualMerchantRequest(t *testing.T) {
-	cs := &ComplianceService{}
 
 	tests := []struct {
 		name    string
@@ -242,7 +239,7 @@ func TestValidateIndividualMerchantRequest(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := cs.ValidateIndividualMerchantRequest(tt.request)
+			err := testServices.ValidateIndividualMerchantRequest(tt.request)
 
 			if err == nil {
 				t.Fatal("expected error, got nil")
@@ -260,7 +257,6 @@ func TestValidateIndividualMerchantRequest(t *testing.T) {
 }
 
 func TestValidateCorporateMerchantRequest(t *testing.T) {
-	cs := &ComplianceService{}
 
 	tests := []struct {
 		name    string
@@ -294,7 +290,7 @@ func TestValidateCorporateMerchantRequest(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := cs.ValidateCorporateMerchantRequest(tt.request)
+			err := testServices.ValidateCorporateMerchantRequest(tt.request)
 
 			if err == nil {
 				t.Fatal("expected error, got nil")

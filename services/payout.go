@@ -5,35 +5,13 @@ import (
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 )
 
 const MinimumBankBalance = 1000
 
-type PayoutService struct {
-	PayoutRepo            *repositories.PayoutRepository
-	WalletRepo            *repositories.WalletRepository
-	BankAccountRepo       *repositories.BankRepository
-	LinkedBankAccountRepo *repositories.LinkedBankAccountRepository
-}
-
-func NewPayoutService(
-	payoutRepo *repositories.PayoutRepository,
-	walletRepo *repositories.WalletRepository,
-	bankAccountRepo *repositories.BankRepository,
-	linkedBankAccountRepo *repositories.LinkedBankAccountRepository,
-) *PayoutService {
-	return &PayoutService{
-		PayoutRepo:            payoutRepo,
-		WalletRepo:            walletRepo,
-		BankAccountRepo:       bankAccountRepo,
-		LinkedBankAccountRepo: linkedBankAccountRepo,
-	}
-}
-
-func (ps *PayoutService) ValidatePayoutRequestWalletToBank(request *dto.CreateWalletToBankRequest, senderMerchantID uuid.UUID) error {
+func (ps *Services) ValidatePayoutRequestWalletToBank(request *dto.CreateWalletToBankRequest, senderMerchantID uuid.UUID) error {
 	if request == nil {
 		return errors.New("payment request is required")
 	}
@@ -50,7 +28,7 @@ func (ps *PayoutService) ValidatePayoutRequestWalletToBank(request *dto.CreateWa
 		return errors.New("currency should be INR")
 	}
 
-	senderWallet, errSW := ps.WalletRepo.GetWalletByMerchantId(senderMerchantID)
+	senderWallet, errSW := ps.Repo.GetWalletByMerchantId(senderMerchantID)
 	if errSW != nil {
 		return errSW
 	}
@@ -59,7 +37,7 @@ func (ps *PayoutService) ValidatePayoutRequestWalletToBank(request *dto.CreateWa
 		return errors.New("sender_wallet_id issue")
 	}
 
-	destinationBankAccount, errDBA := ps.BankAccountRepo.GetBankAccountByID(request.DestinationBankAccountID)
+	destinationBankAccount, errDBA := ps.Repo.GetBankAccountByID(request.DestinationBankAccountID)
 	if errDBA != nil {
 		return errDBA
 	}
@@ -70,7 +48,7 @@ func (ps *PayoutService) ValidatePayoutRequestWalletToBank(request *dto.CreateWa
 	return nil
 }
 
-func (ps *PayoutService) ValidatePayoutRequestBankToBank(request *dto.CreateBankToBankRequest, senderMerchantID uuid.UUID) error {
+func (ps *Services) ValidatePayoutRequestBankToBank(request *dto.CreateBankToBankRequest, senderMerchantID uuid.UUID) error {
 	if request == nil {
 		return errors.New("payment request is required")
 	}
@@ -87,12 +65,12 @@ func (ps *PayoutService) ValidatePayoutRequestBankToBank(request *dto.CreateBank
 		return errors.New("currency should be INR")
 	}
 
-	senderBankAccount, errSBA := ps.BankAccountRepo.GetBankAccountByID(request.SourceBankAccountID)
+	senderBankAccount, errSBA := ps.Repo.GetBankAccountByID(request.SourceBankAccountID)
 	if errSBA != nil {
 		return errSBA
 	}
 
-	linkedSenderBankAccount, errLSBA := ps.LinkedBankAccountRepo.GetBankAccountLinkedByID(senderBankAccount.ID)
+	linkedSenderBankAccount, errLSBA := ps.Repo.GetBankAccountLinkedByID(senderBankAccount.ID)
 	if errLSBA != nil {
 		return errLSBA
 	}
@@ -101,7 +79,7 @@ func (ps *PayoutService) ValidatePayoutRequestBankToBank(request *dto.CreateBank
 		return errors.New("merchant id doesn't match")
 	}
 
-	destinationBankAccount, errDBA := ps.BankAccountRepo.GetBankAccountByID(request.DestinationBankAccountID)
+	destinationBankAccount, errDBA := ps.Repo.GetBankAccountByID(request.DestinationBankAccountID)
 	if errDBA != nil {
 		return errDBA
 	}
@@ -116,12 +94,12 @@ func (ps *PayoutService) ValidatePayoutRequestBankToBank(request *dto.CreateBank
 	return nil
 }
 
-func (ps *PayoutService) CheckBankBalance(
+func (ps *Services) CheckBankBalance(
 	ID uuid.UUID,
 	amount decimal.Decimal,
 ) (bool, error) {
 
-	bankAccount, errBA := ps.BankAccountRepo.GetBankAccountByID(ID)
+	bankAccount, errBA := ps.Repo.GetBankAccountByID(ID)
 
 	if errBA != nil {
 		return false, errBA
@@ -138,14 +116,14 @@ func (ps *PayoutService) CheckBankBalance(
 	), nil
 }
 
-func (ps *PayoutService) GetPayoutsByMerchantID(
+func (ps *Services) GetPayoutsByMerchantID(
 	merchantID uuid.UUID,
 ) ([]*models.Payout, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant_id is required")
 	}
 
-	payouts, errP := ps.PayoutRepo.GetPayoutsByMerchantID(merchantID)
+	payouts, errP := ps.Repo.GetPayoutsByMerchantID(merchantID)
 	if errP != nil {
 		return nil, errP
 	}
@@ -153,14 +131,14 @@ func (ps *PayoutService) GetPayoutsByMerchantID(
 	return payouts, nil
 }
 
-func (ps *PayoutService) GetPayoutByID(
+func (ps *Services) GetPayoutByID(
 	payoutID uuid.UUID,
 ) (*models.Payout, error) {
 	if payoutID == uuid.Nil {
 		return nil, errors.New("payout_id is required")
 	}
 
-	payout, errP := ps.PayoutRepo.GetPayoutByID(payoutID)
+	payout, errP := ps.Repo.GetPayoutByID(payoutID)
 	if errP != nil {
 		return nil, errP
 	}

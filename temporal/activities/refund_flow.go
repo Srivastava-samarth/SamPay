@@ -17,7 +17,7 @@ func (a *Registry) ValidateRefundRequest(
 	ctx context.Context,
 	request *dto.CreateRefundRequest,
 ) error {
-	return a.RefundService.ValidateCreateRefundRequest(request)
+	return a.Services.ValidateCreateRefundRequest(request)
 }
 
 func (a *Registry) UpdateRefundStatus(
@@ -25,21 +25,21 @@ func (a *Registry) UpdateRefundStatus(
 	refundRef string,
 	status string,
 ) (*models.Refund, error) {
-	return a.RefundService.RefundRepo.UpdateRefundStatus(refundRef, status)
+	return a.Repo.UpdateRefundStatus(refundRef, status)
 }
 
 func (a *Registry) GetRefundByPaymentID(
 	ctx context.Context,
 	paymentID uuid.UUID,
 ) ([]*models.Refund, error) {
-	return a.RefundService.RefundRepo.GetRefundsByPaymentID(paymentID)
+	return a.Repo.GetRefundsByPaymentID(paymentID)
 }
 
 func (a *Registry) GetPaymentByID(
 	ctx context.Context,
 	paymentID uuid.UUID,
 ) (*models.Payment, error) {
-	return a.PaymentService.PaymentRepo.GetPaymentByID(paymentID)
+	return a.Repo.GetPaymentByID(paymentID)
 }
 
 func (a *Registry) CreateRefund(
@@ -66,7 +66,7 @@ func (a *Registry) CreateRefund(
 		return nil, errors.New("refund amount exceeds refundable amount")
 	}
 
-	return a.RefundService.RefundRepo.CreateRefund(request)
+	return a.Repo.CreateRefund(request)
 }
 
 func (a *Registry) RefundFromMerchantWallet(
@@ -88,13 +88,9 @@ func (a *Registry) RefundFromMerchantWallet(
 			Amount := refund.Amount
 
 			// Transaction-aware repositories
-			walletRepo := a.WalletService.WalletRepo.WithTx(tx)
-			vaultRepo := a.VaultService.VaultRepo.WithTx(tx)
-			refundRepo := a.RefundService.RefundRepo.WithTx(tx)
-			ledgerRepo := a.LedgerService.LedgerRepo.WithTx(tx)
-
+			repo := a.Repo.WithTx(tx)
 			refundReceiverMerchantID := refund.MerchantID
-			refundSenderWallet, errRSW := walletRepo.GetWalletByMerchantId(refundSenderMerchantID)
+			refundSenderWallet, errRSW := repo.GetWalletByMerchantId(refundSenderMerchantID)
 			if errRSW != nil {
 				return errRSW
 			}
@@ -103,7 +99,7 @@ func (a *Registry) RefundFromMerchantWallet(
 				return errors.New("refund sender wallet not found")
 			}
 
-			refundReceiverWallet, errRRW := walletRepo.GetWalletByMerchantId(refundReceiverMerchantID)
+			refundReceiverWallet, errRRW := repo.GetWalletByMerchantId(refundReceiverMerchantID)
 			if errRRW != nil {
 				return errRRW
 			}
@@ -113,7 +109,7 @@ func (a *Registry) RefundFromMerchantWallet(
 			}
 
 			if refundSenderWallet.AvailableBalance.LessThan(Amount) {
-				topupSenderWallet, errTSW := a.WalletService.TopUpWalletFromPrimaryBank(tx, refundSenderWallet, Amount)
+				topupSenderWallet, errTSW := a.Services.TopUpWalletFromPrimaryBank(tx, refundSenderWallet, Amount)
 				if errTSW != nil {
 					return errTSW
 				}
@@ -123,7 +119,7 @@ func (a *Registry) RefundFromMerchantWallet(
 
 			updateSenderAvailableAmount := refundSenderWallet.AvailableBalance.Sub(Amount)
 			updatedSenderReservedAmount := refundSenderWallet.ReservedBalance.Add(Amount)
-			updatedRefundSenderWallet, errURSW := walletRepo.UpdateWalletBalance(refundSenderMerchantID, &dto.UpdateWalletBalanceRequest{
+			updatedRefundSenderWallet, errURSW := repo.UpdateWalletBalance(refundSenderMerchantID, &dto.UpdateWalletBalanceRequest{
 				AvailableBalance: updateSenderAvailableAmount,
 				ReservedBalance:  updatedSenderReservedAmount,
 			})
@@ -132,7 +128,7 @@ func (a *Registry) RefundFromMerchantWallet(
 				return errURSW
 			}
 
-			paymentVault, errPV := vaultRepo.GetVaultByType(constants.PaymentVault)
+			paymentVault, errPV := repo.GetVaultByType(constants.PaymentVault)
 			if errPV != nil {
 				return errPV
 			}
@@ -146,12 +142,12 @@ func (a *Registry) RefundFromMerchantWallet(
 			}
 
 			updatedVaultBalance := paymentVault.Balance.Add(Amount)
-			updatedPaymentVault, errUPV := vaultRepo.UpdateVaultBalance(updatedVaultBalance, constants.PaymentVault)
+			updatedPaymentVault, errUPV := repo.UpdateVaultBalance(updatedVaultBalance, constants.PaymentVault)
 			if errUPV != nil {
 				return errUPV
 			}
 
-			updatedRefundSenderWalletAfterBalance, errRSWAB := walletRepo.UpdateWalletBalance(refundSenderMerchantID, &dto.UpdateWalletBalanceRequest{
+			updatedRefundSenderWalletAfterBalance, errRSWAB := repo.UpdateWalletBalance(refundSenderMerchantID, &dto.UpdateWalletBalanceRequest{
 				ReservedBalance: updatedRefundSenderWallet.ReservedBalance.Sub(Amount),
 			})
 
@@ -159,7 +155,7 @@ func (a *Registry) RefundFromMerchantWallet(
 				return errRSWAB
 			}
 
-			ledgerTransaction, err := a.LedgerService.PostTransaction(
+			ledgerTransaction, err := a.Services.PostTransaction(
 				tx,
 				&dto.PostLedgerTransactionRequest{
 					ReferenceID:      refund.RefundReference,
@@ -193,12 +189,12 @@ func (a *Registry) RefundFromMerchantWallet(
 			}
 
 			updateBalance := updatedPaymentVault.Balance.Sub(Amount)
-			updatePaymentVaultAfterBalanceMove, errUPVAB := vaultRepo.UpdateVaultBalance(updateBalance, constants.PaymentVault)
+			updatePaymentVaultAfterBalanceMove, errUPVAB := repo.UpdateVaultBalance(updateBalance, constants.PaymentVault)
 			if errUPVAB != nil {
 				return errUPVAB
 			}
 
-			updatedRefundReceiverWallet, errURRW := walletRepo.UpdateWalletBalance(refundReceiverMerchantID, &dto.UpdateWalletBalanceRequest{
+			updatedRefundReceiverWallet, errURRW := repo.UpdateWalletBalance(refundReceiverMerchantID, &dto.UpdateWalletBalanceRequest{
 				AvailableBalance: refundReceiverWallet.AvailableBalance.Add(Amount),
 			})
 
@@ -206,7 +202,7 @@ func (a *Registry) RefundFromMerchantWallet(
 				return errURRW
 			}
 
-			_, err = a.LedgerService.CreateLedgerEntries(
+			_, err = a.Services.CreateLedgerEntries(
 				tx,
 				[]*models.LedgerEntry{
 					{
@@ -234,12 +230,12 @@ func (a *Registry) RefundFromMerchantWallet(
 				)
 			}
 
-			_, errULT := ledgerRepo.UpdateLedgerStatus(ledgerTransaction.ID, constants.TransactionStatusCompleted, constants.LedgerSettlementSettled)
+			_, errULT := repo.UpdateLedgerStatus(ledgerTransaction.ID, constants.TransactionStatusCompleted, constants.LedgerSettlementSettled)
 			if errULT != nil {
 				return errULT
 			}
 
-			updateRefund, errUR := refundRepo.UpdateRefundStatus(refund.RefundReference, constants.TransactionStatusRefunded)
+			updateRefund, errUR := repo.UpdateRefundStatus(refund.RefundReference, constants.TransactionStatusRefunded)
 			if errUR != nil {
 				return errUR
 			}
@@ -277,13 +273,10 @@ func (a *Registry) RefundFromPaymentVault(
 			Amount := refund.Amount
 
 			// Transaction-aware repositories
-			walletRepo := a.WalletService.WalletRepo.WithTx(tx)
-			vaultRepo := a.VaultService.VaultRepo.WithTx(tx)
-			refundRepo := a.RefundService.RefundRepo.WithTx(tx)
-			ledgerRepo := a.LedgerService.LedgerRepo.WithTx(tx)
+			repo := a.Repo.WithTx(tx)
 
 			refundReceiverMerchantID := payment.SenderMerchantID
-			refundReceiverWallet, errRRW := walletRepo.GetWalletByMerchantId(refundReceiverMerchantID)
+			refundReceiverWallet, errRRW := repo.GetWalletByMerchantId(refundReceiverMerchantID)
 			if errRRW != nil {
 				return errRRW
 			}
@@ -292,7 +285,7 @@ func (a *Registry) RefundFromPaymentVault(
 				return errors.New("refund receiver wallet not found")
 			}
 
-			paymentVault, errPV := vaultRepo.GetVaultByType(constants.PaymentVault)
+			paymentVault, errPV := repo.GetVaultByType(constants.PaymentVault)
 			if errPV != nil {
 				return errPV
 			}
@@ -306,12 +299,12 @@ func (a *Registry) RefundFromPaymentVault(
 			}
 
 			updatedVaultBalance := paymentVault.Balance.Sub(Amount)
-			updatedPaymentVault, errUPV := vaultRepo.UpdateVaultBalance(updatedVaultBalance, constants.PaymentVault)
+			updatedPaymentVault, errUPV := repo.UpdateVaultBalance(updatedVaultBalance, constants.PaymentVault)
 			if errUPV != nil {
 				return errUPV
 			}
 
-			updatedReceiverWallet, errURW := walletRepo.UpdateWalletBalance(refundReceiverMerchantID, &dto.UpdateWalletBalanceRequest{
+			updatedReceiverWallet, errURW := repo.UpdateWalletBalance(refundReceiverMerchantID, &dto.UpdateWalletBalanceRequest{
 				AvailableBalance: refundReceiverWallet.AvailableBalance.Add(Amount),
 			})
 
@@ -319,7 +312,7 @@ func (a *Registry) RefundFromPaymentVault(
 				return errURW
 			}
 
-			ledgerTransaction, err := a.LedgerService.PostTransaction(
+			ledgerTransaction, err := a.Services.PostTransaction(
 				tx,
 				&dto.PostLedgerTransactionRequest{
 					ReferenceID:      refund.RefundReference,
@@ -352,12 +345,12 @@ func (a *Registry) RefundFromPaymentVault(
 				)
 			}
 
-			_, errULT := ledgerRepo.UpdateLedgerStatus(ledgerTransaction.ID, constants.TransactionStatusCompleted, constants.LedgerSettlementSettled)
+			_, errULT := repo.UpdateLedgerStatus(ledgerTransaction.ID, constants.TransactionStatusCompleted, constants.LedgerSettlementSettled)
 			if errULT != nil {
 				return errULT
 			}
 
-			updateRefund, errUR := refundRepo.UpdateRefundStatus(refund.RefundReference, constants.TransactionStatusRefunded)
+			updateRefund, errUR := repo.UpdateRefundStatus(refund.RefundReference, constants.TransactionStatusRefunded)
 			if errUR != nil {
 				return errUR
 			}

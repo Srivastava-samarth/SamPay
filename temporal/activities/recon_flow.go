@@ -56,7 +56,7 @@ func (a *Registry) GetLedgerTransactionsForRecon(
 		return nil, errors.New("recon time range is required")
 	}
 
-	transactions, err := a.LedgerService.LedgerRepo.
+	transactions, err := a.Repo.
 		GetTransactionsByCreatedAtRange(
 			timeRange.StartTimestamp,
 			timeRange.EndTimestamp,
@@ -77,7 +77,7 @@ func (a *Registry) GetLedgerEntriesForRecon(
 		return []*models.LedgerEntry{}, nil
 	}
 
-	entries, err := a.LedgerService.LedgerRepo.
+	entries, err := a.Repo.
 		GetEntriesByTransactionIDs(transactionIDs)
 
 	if err != nil {
@@ -175,14 +175,14 @@ func (a *Registry) GenerateReconReport(
 	ctx context.Context,
 	result *dto.ReconResult,
 ) (*dto.ReconReport, error) {
-	return a.ReportService.GenerateReconReport(result)
+	return a.Services.GenerateReconReport(result)
 }
 
 func (a *Registry) GenerateReportEmail(
 	ctx context.Context,
 	report *dto.ReconReport,
 ) (string, error) {
-	return a.ReportService.GenerateReconEmailBody(report)
+	return a.Services.GenerateReconEmailBody(report)
 }
 
 func (a *Registry) SendReconEmail(

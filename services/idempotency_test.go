@@ -7,7 +7,6 @@ import (
 )
 
 func TestGetIdempotencyByKeyAndMerchantId(t *testing.T) {
-	is := &IdempotencyService{}
 
 	validMerchantID := uuid.New()
 	validKey := "payment-123"
@@ -34,7 +33,7 @@ func TestGetIdempotencyByKeyAndMerchantId(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := is.GetIdempotencyByKeyAndMerchantId(
+			_, err := testServices.GetIdempotencyByKeyAndMerchantId(
 				tt.merchantID,
 				tt.key,
 			)
@@ -55,7 +54,6 @@ func TestGetIdempotencyByKeyAndMerchantId(t *testing.T) {
 }
 
 func TestCreateIdempotencyKey(t *testing.T) {
-	is := &IdempotencyService{}
 
 	validMerchantID := uuid.New()
 	validKey := "payment-123"
@@ -89,7 +87,7 @@ func TestCreateIdempotencyKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := is.CreateIdempotencyKey(
+			_, err := testServices.CreateIdempotencyKey(
 				tt.merchantID,
 				tt.key,
 				tt.responseBody,

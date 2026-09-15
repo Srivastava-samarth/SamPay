@@ -5,27 +5,11 @@ import (
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-type LedgerService struct {
-	LedgerRepo *repositories.LedgerRepository
-	db         *gorm.DB
-}
-
-func NewLedgerService(
-	ledgerRepo *repositories.LedgerRepository,
-	db *gorm.DB,
-) *LedgerService {
-	return &LedgerService{
-		LedgerRepo: ledgerRepo,
-		db:         db,
-	}
-}
-
-func (ls *LedgerService) GetTransactions(
+func (ls *Services) GetTransactions(
 	accountType *string,
 	accountID uuid.UUID,
 	cursor *uuid.UUID,
@@ -48,7 +32,7 @@ func (ls *LedgerService) GetTransactions(
 		return nil, nil, errors.New("invalid pagination direction")
 	}
 
-	transactions, err := ls.LedgerRepo.GetWalletTransactions(
+	transactions, err := ls.Repo.GetWalletTransactions(
 		accountType,
 		accountID,
 		cursor,
@@ -91,7 +75,7 @@ func reverseTransactions(
 	}
 }
 
-func (ls *LedgerService) GetTransaction(
+func (ls *Services) GetTransaction(
 	walletId uuid.UUID,
 	transactionId uuid.UUID,
 ) (*dto.LedgerTransactionRow, error) {
@@ -103,7 +87,7 @@ func (ls *LedgerService) GetTransaction(
 		return nil, errors.New("TransactionId missing")
 	}
 
-	transaction, errT := ls.LedgerRepo.GetWalletTransactionById(walletId, transactionId)
+	transaction, errT := ls.Repo.GetWalletTransactionById(walletId, transactionId)
 	if errT != nil {
 		return nil, errT
 	}
@@ -111,7 +95,7 @@ func (ls *LedgerService) GetTransaction(
 	return transaction, nil
 }
 
-func (ls *LedgerService) CreateLedgerEntries(
+func (ls *Services) CreateLedgerEntries(
 	tx *gorm.DB,
 	entries []*models.LedgerEntry,
 ) (int, error) {
@@ -124,7 +108,7 @@ func (ls *LedgerService) CreateLedgerEntries(
 		return 0, errors.New("transaction cannot be nil")
 	}
 
-	txLedgerRepo := ls.LedgerRepo.WithTx(tx)
+	repo := ls.Repo.WithTx(tx)
 
 	for _, entry := range entries {
 		if entry == nil {
@@ -137,7 +121,7 @@ func (ls *LedgerService) CreateLedgerEntries(
 	}
 
 	for _, entry := range entries {
-		if _, err := txLedgerRepo.CreateLedgerEntry(entry); err != nil {
+		if _, err := repo.CreateLedgerEntry(entry); err != nil {
 			return 0, err
 		}
 	}
@@ -145,14 +129,14 @@ func (ls *LedgerService) CreateLedgerEntries(
 	return len(entries), nil
 }
 
-func (ls *LedgerService) CreateLedgerTransaction(
+func (ls *Services) CreateLedgerTransaction(
 	transaction *models.LedgerTransaction,
 ) (*models.LedgerTransaction, error) {
 	if transaction == nil {
 		return nil, errors.New("transaction not found")
 	}
 
-	ledgerTransaction, errLT := ls.LedgerRepo.CreateLedgerTransaction(transaction)
+	ledgerTransaction, errLT := ls.Repo.CreateLedgerTransaction(transaction)
 	if errLT != nil {
 		return nil, errLT
 	}
@@ -160,7 +144,7 @@ func (ls *LedgerService) CreateLedgerTransaction(
 	return ledgerTransaction, nil
 }
 
-func (ls *LedgerService) PostTransaction(
+func (ls *Services) PostTransaction(
 	tx *gorm.DB,
 	request *dto.PostLedgerTransactionRequest,
 	entries []*models.LedgerEntry,
@@ -192,9 +176,9 @@ func (ls *LedgerService) PostTransaction(
 		}
 	}
 
-	txLedgerRepo := ls.LedgerRepo.WithTx(tx)
+	repo := ls.Repo.WithTx(tx)
 
-	exists, err := txLedgerRepo.
+	exists, err := repo.
 		ExistingLedgerTransactionByReferenceID(request.ReferenceID)
 
 	if err != nil {
@@ -214,7 +198,7 @@ func (ls *LedgerService) PostTransaction(
 		SettlementStatus: request.SettlementStatus,
 	}
 
-	ledgerTransaction, err := txLedgerRepo.CreateLedgerTransaction(
+	ledgerTransaction, err := repo.CreateLedgerTransaction(
 		ledgerTransactionPayload,
 	)
 	if err != nil {
@@ -225,7 +209,7 @@ func (ls *LedgerService) PostTransaction(
 
 		entry.LedgerTransactionID = ledgerTransaction.ID
 
-		_, err = txLedgerRepo.CreateLedgerEntry(entry)
+		_, err = repo.CreateLedgerEntry(entry)
 		if err != nil {
 			return nil, err
 		}
@@ -234,12 +218,12 @@ func (ls *LedgerService) PostTransaction(
 	return ledgerTransaction, nil
 }
 
-func (ls *LedgerService) GetLedgerTransactionByReferenceID(referenceID string) (*models.LedgerTransaction, error) {
+func (ls *Services) GetLedgerTransactionByReferenceID(referenceID string) (*models.LedgerTransaction, error) {
 	if referenceID == "" {
 		return nil, errors.New("reference id is required")
 	}
 
-	ledgerTransaction, errLT := ls.LedgerRepo.GetLedgerTransactionByReferenceID(referenceID)
+	ledgerTransaction, errLT := ls.Repo.GetLedgerTransactionByReferenceID(referenceID)
 	if errLT != nil {
 		return nil, errLT
 	}

@@ -13,14 +13,14 @@ func (a *Registry) CreateUser(
 	ctx context.Context,
 	request *dto.CreateUserRequest,
 ) (*services.CreatedUserResult, error) {
-	return a.UserService.CreateUser(request)
+	return a.Services.CreateUser(request)
 }
 
 func (a *Registry) CreateMerchantUser(
 	ctx context.Context,
 	request *dto.CreateMerchantUserRequest,
 ) (*dto.CreateMerchantUserResponse, error) {
-	return a.MerchantUserService.CreateMerchantUser(
+	return a.Services.CreateMerchantUser(
 		request,
 	)
 }
@@ -28,7 +28,7 @@ func (a *Registry) CreateMerchantUser(
 func (a *Registry) GetMerchantById(
 	merchantID uuid.UUID,
 ) (*models.Merchant, error) {
-	return a.MerchantRepo.GetMerchantByID(merchantID)
+	return a.Repo.GetMerchantByID(merchantID)
 }
 
 func (a *Registry) SendUserWelcomeEmail(

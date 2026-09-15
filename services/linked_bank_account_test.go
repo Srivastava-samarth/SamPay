@@ -8,7 +8,6 @@ import (
 )
 
 func TestCreateLinkedBankAccount(t *testing.T) {
-	lbs := &LinkedBankAccountService{}
 
 	validRequest := &dto.CreateLinkedBankAccountRequest{
 		MerchantID:    uuid.New(),
@@ -67,7 +66,7 @@ func TestCreateLinkedBankAccount(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := lbs.CreateLinkedBankAccount(tt.request)
+			_, err := testServices.CreateLinkedBankAccount(tt.request)
 
 			if err == nil {
 				t.Fatal("expected error, got nil")

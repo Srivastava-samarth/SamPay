@@ -9,7 +9,6 @@ import (
 )
 
 func TestPaymentService_CalculateFees(t *testing.T) {
-	ps := &PaymentService{}
 
 	tests := []struct {
 		name        string
@@ -41,7 +40,7 @@ func TestPaymentService_CalculateFees(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fee, err := ps.CalculateFees(tt.amount)
+			fee, err := testServices.CalculateFees(tt.amount)
 
 			if tt.wantErr {
 				if err == nil {
@@ -66,7 +65,6 @@ func TestPaymentService_CalculateFees(t *testing.T) {
 }
 
 func TestPaymentService_ValidatePaymentRequest_InvalidInput(t *testing.T) {
-	ps := &PaymentService{}
 
 	validSenderID := uuid.New()
 	validReceiverID := uuid.New()
@@ -147,7 +145,7 @@ func TestPaymentService_ValidatePaymentRequest_InvalidInput(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ps.ValidatePaymentRequest(tt.request, tt.senderID)
+			err := testServices.ValidatePaymentRequest(tt.request, tt.senderID)
 
 			if err == nil {
 				t.Fatal("expected error, got nil")
@@ -165,11 +163,10 @@ func TestPaymentService_ValidatePaymentRequest_InvalidInput(t *testing.T) {
 }
 
 func TestGetPaymentsByMerchantID_InvalidMerchantID(t *testing.T) {
-	ps := &PaymentService{}
 
 	merchantID := uuid.Nil
 
-	payments, err := ps.GetPaymentsByMerchantID(merchantID)
+	payments, err := testServices.GetPaymentsByMerchantID(merchantID)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -185,11 +182,10 @@ func TestGetPaymentsByMerchantID_InvalidMerchantID(t *testing.T) {
 }
 
 func TestGetPaymentByID_InvalidPaymentID(t *testing.T) {
-	ps := &PaymentService{}
 
 	paymentID := uuid.Nil
 
-	payment, err := ps.GetPaymentByID(paymentID)
+	payment, err := testServices.GetPaymentByID(paymentID)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")

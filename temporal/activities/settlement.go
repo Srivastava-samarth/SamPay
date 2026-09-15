@@ -15,7 +15,7 @@ import (
 func (a *Registry) GetUnsettledPayment(
 	ctx context.Context,
 ) ([]*models.Payment, error) {
-	return a.PaymentService.PaymentRepo.GetPaymentsBySettlementStatus(constants.LedgerSettlementPending)
+	return a.Repo.GetPaymentsBySettlementStatus(constants.LedgerSettlementPending)
 }
 
 func (a *Registry) ExecuteSettlementByMerchant(
@@ -28,22 +28,19 @@ func (a *Registry) ExecuteSettlementByMerchant(
 		return nil
 	}
 	return a.DB.Transaction(func(tx *gorm.DB) error {
-		walletRepo := a.WalletService.WalletRepo.WithTx(tx)
-		paymentRepo := a.PaymentService.PaymentRepo.WithTx(tx)
-		vaultRepo := a.VaultService.VaultRepo.WithTx(tx)
-		ledgerRepo := a.LedgerService.LedgerRepo.WithTx(tx)
+		repo := a.Repo.WithTx(tx)
 
-		paymentVault, errPV := vaultRepo.GetVaultByType(constants.PaymentVault)
+		paymentVault, errPV := repo.GetVaultByType(constants.PaymentVault)
 		if errPV != nil {
 			return errPV
 		}
 
-		wallet, errW := walletRepo.GetWalletByMerchantId(merchantID)
+		wallet, errW := repo.GetWalletByMerchantId(merchantID)
 		if errW != nil {
 			return errW
 		}
 
-		ledgerTransaction, errLT := ledgerRepo.GetLedgerTransactionByReferenceID(*payment.PaymentReference)
+		ledgerTransaction, errLT := repo.GetLedgerTransactionByReferenceID(*payment.PaymentReference)
 		if errLT != nil {
 			return errLT
 		}
@@ -52,12 +49,12 @@ func (a *Registry) ExecuteSettlementByMerchant(
 			return errors.New("insufficient balance of payment vault")
 		}
 
-		_, errUPV := vaultRepo.UpdateVaultBalance(paymentVault.Balance.Sub(payment.Amount), constants.PaymentVault)
+		_, errUPV := repo.UpdateVaultBalance(paymentVault.Balance.Sub(payment.Amount), constants.PaymentVault)
 		if errUPV != nil {
 			return errUPV
 		}
 
-		updatedWallet, errUW := walletRepo.UpdateWalletBalance(merchantID, &dto.UpdateWalletBalanceRequest{
+		updatedWallet, errUW := repo.UpdateWalletBalance(merchantID, &dto.UpdateWalletBalanceRequest{
 			AvailableBalance: wallet.AvailableBalance.Add(payment.Amount),
 		})
 
@@ -65,7 +62,7 @@ func (a *Registry) ExecuteSettlementByMerchant(
 			return errUW
 		}
 
-		_, err := a.LedgerService.CreateLedgerEntries(
+		_, err := a.Services.CreateLedgerEntries(
 			tx,
 			[]*models.LedgerEntry{
 				{
@@ -94,7 +91,7 @@ func (a *Registry) ExecuteSettlementByMerchant(
 		}
 
 		settlementStatus := constants.LedgerSettlementSettled
-		_, errUSS := paymentRepo.UpdateSettlementStatusByID(
+		_, errUSS := repo.UpdateSettlementStatusByID(
 			payment.ID,
 			&settlementStatus,
 		)

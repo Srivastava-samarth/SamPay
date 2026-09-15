@@ -33,7 +33,7 @@ func (wc *Controller) GetWallet() gin.HandlerFunc {
 			return
 		}
 
-		wallet, errW := wc.WalletService.GetWalletByMerchantID(parsedMerchantId)
+		wallet, errW := wc.Services.GetWalletByMerchantID(parsedMerchantId)
 		if errW != nil {
 			dto.Fail(
 				c,
@@ -79,7 +79,7 @@ func (wc *Controller) GetWalletTransactions() gin.HandlerFunc {
 			return
 		}
 
-		wallet, err := wc.WalletService.GetWalletByMerchantID(parsedMerchantID)
+		wallet, err := wc.Services.GetWalletByMerchantID(parsedMerchantID)
 		if err != nil {
 			dto.Fail(
 				c,
@@ -110,7 +110,7 @@ func (wc *Controller) GetWalletTransactions() gin.HandlerFunc {
 			cursor = &parsedCursor
 		}
 
-		transactions, pagination, err := wc.LedgerService.GetTransactions(
+		transactions, pagination, err := wc.Services.GetTransactions(
 			&accountType,
 			wallet.ID,
 			cursor,
@@ -204,7 +204,7 @@ func (wc *Controller) GetWalletTransaction() gin.HandlerFunc {
 			return
 		}
 
-		wallet, errW := wc.WalletService.GetWalletByMerchantID(parsedMerchantId)
+		wallet, errW := wc.Services.GetWalletByMerchantID(parsedMerchantId)
 		if errW != nil {
 			dto.Fail(
 				c,
@@ -215,7 +215,7 @@ func (wc *Controller) GetWalletTransaction() gin.HandlerFunc {
 			return
 		}
 
-		transaction, errT := wc.LedgerService.GetTransaction(wallet.ID, parsedTransactionId)
+		transaction, errT := wc.Services.GetTransaction(wallet.ID, parsedTransactionId)
 		if errT != nil {
 			dto.Fail(
 				c,
@@ -259,7 +259,7 @@ func (wc *Controller) TopUpWallet() gin.HandlerFunc {
 			return
 		}
 
-		wallet, errW := wc.WalletService.GetWalletByMerchantID(parsedMerchantID)
+		wallet, errW := wc.Services.GetWalletByMerchantID(parsedMerchantID)
 		if errW != nil {
 			dto.Fail(
 				c,
@@ -269,7 +269,7 @@ func (wc *Controller) TopUpWallet() gin.HandlerFunc {
 			)
 		}
 
-		updatedWallet, errUW := wc.WalletService.TopUpWalletFromPrimaryBank(wc.DB, wallet, request.Amount)
+		updatedWallet, errUW := wc.Services.TopUpWalletFromPrimaryBank(wc.DB, wallet, request.Amount)
 		if errUW != nil {
 			dto.Fail(
 				c,

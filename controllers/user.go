@@ -64,7 +64,7 @@ func (uc *Controller) GetUserByID() gin.HandlerFunc {
 			)
 			return
 		}
-		user, errM := uc.UserService.GetUser(parsedUserId)
+		user, errM := uc.Services.GetUser(parsedUserId)
 		if errM != nil {
 			dto.Fail(
 				c,
@@ -85,7 +85,7 @@ func (uc *Controller) GetUserByID() gin.HandlerFunc {
 
 func (uc *Controller) GetUsers() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		merchants, errM := uc.UserService.GetUsers()
+		merchants, errM := uc.Services.GetUsers()
 		if errM != nil {
 			dto.Fail(
 				c,
@@ -128,7 +128,7 @@ func (uc *Controller) UpdateUserStatus() gin.HandlerFunc {
 			)
 		}
 
-		updatedUser, errUU := uc.UserService.UpdateUserStatus(request.Status, parsedUserID)
+		updatedUser, errUU := uc.Services.UpdateUserStatus(request.Status, parsedUserID)
 		if errUU != nil {
 			dto.Fail(
 				c,
@@ -170,7 +170,7 @@ func (uc *Controller) GetUsersByMerchant() gin.HandlerFunc {
 			return
 		}
 
-		users, errU := uc.UserService.GetUsersByMerchant(parsedMerchantID)
+		users, errU := uc.Services.GetUsersByMerchant(parsedMerchantID)
 		if errU != nil {
 			dto.Fail(
 				c,

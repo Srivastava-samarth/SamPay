@@ -8,48 +8,14 @@ import (
 	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	"github.com/Srivastava-samarth/sampay/middlewares"
-	"github.com/Srivastava-samarth/sampay/notifications"
-	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
-type AuthService struct {
-	DB                  *gorm.DB
-	UserRepo            *repositories.UserRepository
-	UserSessionRepo     *repositories.UserSessionRepository
-	MerchantUserRepo    *repositories.MerchantUserRepository
-	JwtService          middlewares.Jwt
-	NotificationService notifications.EmailService
-	PasswordResetRepo   *repositories.PasswordResetTokenRepository
-}
-
-func NewAuthService(
-	db *gorm.DB,
-	userRepo *repositories.UserRepository,
-	userSessionRepo *repositories.UserSessionRepository,
-	merchantUserRepo *repositories.MerchantUserRepository,
-	jwtService *middlewares.Jwt,
-	notification *notifications.EmailService,
-	passwordResetRepo *repositories.PasswordResetTokenRepository,
-) *AuthService {
-	return &AuthService{
-		DB:                  db,
-		UserRepo:            userRepo,
-		UserSessionRepo:     userSessionRepo,
-		MerchantUserRepo:    merchantUserRepo,
-		JwtService:          *jwtService,
-		NotificationService: *notification,
-		PasswordResetRepo:   passwordResetRepo,
-	}
-}
-
-func (as *AuthService) Authentication(authRequest *dto.AuthRequest) (*dto.AuthResponse, error) {
+func (as *Services) Authentication(authRequest *dto.AuthRequest) (*dto.AuthResponse, error) {
 	var authResponse *dto.AuthResponse
 
-	user, errU := as.UserRepo.GetUserByEmail(authRequest.Email)
+	user, errU := as.Repo.GetUserByEmail(authRequest.Email)
 	if errU != nil {
 		return nil, errU
 	}
@@ -66,7 +32,7 @@ func (as *AuthService) Authentication(authRequest *dto.AuthRequest) (*dto.AuthRe
 		return nil, errors.New("temporary password can't be used. Please reset the password")
 	}
 
-	merchantUser, errMU := as.MerchantUserRepo.GetMerchantUserByUserID(user.ID)
+	merchantUser, errMU := as.Repo.GetMerchantUserByUserID(user.ID)
 	if errMU != nil {
 		return nil, errMU
 	}
@@ -109,7 +75,7 @@ func (as *AuthService) Authentication(authRequest *dto.AuthRequest) (*dto.AuthRe
 		RefreshTokenHash: hashedRefreshToken,
 		ExpiresAt:        refreshTokenExpiry,
 	}
-	_, errUS := as.UserSessionRepo.CreateUserSession(userSessionRequestPayload)
+	_, errUS := as.Repo.CreateUserSession(userSessionRequestPayload)
 	if errUS != nil {
 		return nil, errUS
 	}
@@ -124,8 +90,8 @@ func (as *AuthService) Authentication(authRequest *dto.AuthRequest) (*dto.AuthRe
 
 }
 
-func (as *AuthService) ForgotPasswod(forgotPasswordRequest *dto.ForgotPasswordRequest) error {
-	user, errU := as.UserRepo.GetUserByEmail(forgotPasswordRequest.Email)
+func (as *Services) ForgotPasswod(forgotPasswordRequest *dto.ForgotPasswordRequest) error {
+	user, errU := as.Repo.GetUserByEmail(forgotPasswordRequest.Email)
 	if errU != nil {
 		return errU
 	}
@@ -161,7 +127,7 @@ func (as *AuthService) ForgotPasswod(forgotPasswordRequest *dto.ForgotPasswordRe
 		CreatedAt: time.Now(),
 	}
 
-	_, errPR := as.PasswordResetRepo.CreatePasswordReset(passwordResetPayload)
+	_, errPR := as.Repo.CreatePasswordReset(passwordResetPayload)
 	if errPR != nil {
 		return errPR
 	}
@@ -173,7 +139,7 @@ func (as *AuthService) ForgotPasswod(forgotPasswordRequest *dto.ForgotPasswordRe
 	return nil
 }
 
-func (as *AuthService) ResetPassword(
+func (as *Services) ResetPassword(
 	resetPasswordRequest *dto.ResetPasswordRequest,
 ) error {
 	userID, email, err := as.JwtService.ValidateResetPaasword(
@@ -187,7 +153,7 @@ func (as *AuthService) ResetPassword(
 		return errors.New("email does not match reset token")
 	}
 
-	passwordReset, errP := as.PasswordResetRepo.FindByToken(
+	passwordReset, errP := as.Repo.FindByToken(
 		resetPasswordRequest.ResetToken,
 	)
 	if errP != nil {
@@ -230,15 +196,14 @@ func (as *AuthService) ResetPassword(
 		}
 	}()
 
-	userRepo := as.UserRepo.WithTx(tx)
-	passwordResetRepo := as.PasswordResetRepo.WithTx(tx)
+	repo := as.Repo.WithTx(tx)
 
 	updateUserRequest := &dto.UpdateUserRequest{
 		PasswordHash:       hashedPassword,
 		MustChangePassword: false,
 	}
 
-	_, err = userRepo.UpdateUser(userID, updateUserRequest)
+	_, err = repo.UpdateUser(userID, updateUserRequest)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -249,7 +214,7 @@ func (as *AuthService) ResetPassword(
 		UsedAt: time.Now(),
 	}
 
-	_, err = passwordResetRepo.UpdatePasswordReset(
+	_, err = repo.UpdatePasswordReset(
 		updatePasswordResetRequest,
 	)
 	if err != nil {
@@ -264,7 +229,7 @@ func (as *AuthService) ResetPassword(
 	return nil
 }
 
-func (as *AuthService) RefreshToken(
+func (as *Services) RefreshToken(
 	refreshTokenRequest *dto.RefreshTokenRequest,
 ) (*dto.AuthResponse, error) {
 
@@ -286,11 +251,9 @@ func (as *AuthService) RefreshToken(
 		}
 	}()
 
-	userSessionRepo := as.UserSessionRepo.WithTx(tx)
-	userRepo := as.UserRepo.WithTx(tx)
-	merchantUserRepo := as.MerchantUserRepo.WithTx(tx)
+	repo := as.Repo.WithTx(tx)
 
-	userSession, err := userSessionRepo.
+	userSession, err := repo.
 		GetUserSessionByRefreshTokenHash(refreshTokenRequest.RefreshToken)
 
 	if err != nil {
@@ -303,12 +266,12 @@ func (as *AuthService) RefreshToken(
 		return nil, errors.New("refresh token expired")
 	}
 
-	user, err := userRepo.GetUserByID(userSession.UserID)
+	user, err := repo.GetUserByID(userSession.UserID)
 	if err != nil {
 		return nil, err
 	}
 
-	merchantUser, err := merchantUserRepo.GetMerchantUserByUserID(userSession.UserID)
+	merchantUser, err := repo.GetMerchantUserByUserID(userSession.UserID)
 
 	if err != nil {
 		return nil, err

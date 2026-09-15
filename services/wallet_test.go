@@ -9,9 +9,8 @@ import (
 )
 
 func TestCreateWalletForMerchant(t *testing.T) {
-	ws := &WalletService{}
 
-	_, err := ws.CreateWalletForMerchant(uuid.Nil)
+	_, err := testServices.CreateWalletForMerchant(uuid.Nil)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -27,9 +26,8 @@ func TestCreateWalletForMerchant(t *testing.T) {
 }
 
 func TestGetWalletByMerchantID(t *testing.T) {
-	ws := &WalletService{}
 
-	_, err := ws.GetWalletByMerchantID(uuid.Nil)
+	_, err := testServices.GetWalletByMerchantID(uuid.Nil)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -45,9 +43,8 @@ func TestGetWalletByMerchantID(t *testing.T) {
 }
 
 func TestUpdateWalletStatus(t *testing.T) {
-	ws := &WalletService{}
 
-	_, err := ws.UpdateWalletStatus(uuid.Nil, "")
+	_, err := testServices.UpdateWalletStatus(uuid.Nil, "")
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -63,7 +60,6 @@ func TestUpdateWalletStatus(t *testing.T) {
 }
 
 func TestTopUpWalletFromPrimaryBank(t *testing.T) {
-	ws := &WalletService{}
 
 	tests := []struct {
 		name          string
@@ -93,7 +89,7 @@ func TestTopUpWalletFromPrimaryBank(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := ws.TopUpWalletFromPrimaryBank(
+			_, err := testServices.TopUpWalletFromPrimaryBank(
 				nil,
 				tt.wallet,
 				tt.amount,

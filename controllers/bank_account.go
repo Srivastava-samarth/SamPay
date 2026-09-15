@@ -21,7 +21,7 @@ func (bc *Controller) CreateBankAccount() gin.HandlerFunc {
 			return
 		}
 
-		bankAccount, linkedBankAccount, err := bc.BankService.CreateBankAccountAndLink(request)
+		bankAccount, linkedBankAccount, err := bc.Services.CreateBankAccountAndLink(request)
 		if err != nil {
 			dto.Fail(
 				c,
@@ -66,7 +66,7 @@ func (bc *Controller) UpdateBankAccount() gin.HandlerFunc {
 			return
 		}
 
-		updatedBankAccount, updateLinkedBankAccount, err := bc.BankService.UpdateBankAccountAndlink(request)
+		updatedBankAccount, updateLinkedBankAccount, err := bc.Services.UpdateBankAccountAndlink(request)
 		if err != nil {
 			dto.Fail(
 				c,
@@ -111,7 +111,7 @@ func (bc *Controller) GetBankAccounts() gin.HandlerFunc {
 			return
 		}
 
-		bankAccounts, errBA := bc.BankService.GetBankAccountsByMerchantID(parsedMerchantID)
+		bankAccounts, errBA := bc.Services.GetBankAccountsByMerchantID(parsedMerchantID)
 		if errBA != nil {
 			dto.Fail(
 				c,
@@ -144,7 +144,7 @@ func (bc *Controller) GetBankAccount() gin.HandlerFunc {
 			return
 		}
 
-		bankAccount, errBA := bc.BankService.GetBankAccount(parsedBankAccountID)
+		bankAccount, errBA := bc.Services.GetBankAccount(parsedBankAccountID)
 		if errBA != nil {
 			dto.Fail(
 				c,

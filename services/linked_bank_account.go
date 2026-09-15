@@ -5,23 +5,10 @@ import (
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/google/uuid"
 )
 
-type LinkedBankAccountService struct {
-	LinkedBankAccountRepo *repositories.LinkedBankAccountRepository
-}
-
-func NewLinkedBankAccountService(
-	LinkedBankAccountRepo *repositories.LinkedBankAccountRepository,
-) *LinkedBankAccountService {
-	return &LinkedBankAccountService{
-		LinkedBankAccountRepo: LinkedBankAccountRepo,
-	}
-}
-
-func (lbs *LinkedBankAccountService) CreateLinkedBankAccount(linkedBankAccountRequest *dto.CreateLinkedBankAccountRequest) (*dto.CreateLinkedBankAccountResponse, error) {
+func (lbs *Services) CreateLinkedBankAccount(linkedBankAccountRequest *dto.CreateLinkedBankAccountRequest) (*dto.CreateLinkedBankAccountResponse, error) {
 	if linkedBankAccountRequest == nil {
 		return nil, errors.New("request is required")
 	}
@@ -49,7 +36,7 @@ func (lbs *LinkedBankAccountService) CreateLinkedBankAccount(linkedBankAccountRe
 		Status:        linkedBankAccountRequest.Status,
 	}
 
-	linkedBankAccount, err := lbs.LinkedBankAccountRepo.CreateLinkedBankAccount(createLinkedBankAccountRequestPayload)
+	linkedBankAccount, err := lbs.Repo.CreateLinkedBankAccount(createLinkedBankAccountRequestPayload)
 	if err != nil {
 		return nil, err
 	}

@@ -6,25 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type PasswordResetTokenRepository struct {
-	db *gorm.DB
-}
-
-func NewPasswordResetTokenRepository(
-	db *gorm.DB,
-) *PasswordResetTokenRepository {
-	return &PasswordResetTokenRepository{
-		db: db,
-	}
-}
-
-func (wr *PasswordResetTokenRepository) WithTx(tx *gorm.DB) *PasswordResetTokenRepository {
-	return &PasswordResetTokenRepository{
-		db: tx,
-	}
-}
-
-func (pr *PasswordResetTokenRepository) CreatePasswordReset(resetRequest *models.PasswordResetToken) (*models.PasswordResetToken, error) {
+func (pr *Repository) CreatePasswordReset(resetRequest *models.PasswordResetToken) (*models.PasswordResetToken, error) {
 	resetRequestPayload := &models.PasswordResetToken{
 		ID:        utils.GenerateUUID(),
 		UserID:    resetRequest.UserID,
@@ -33,17 +15,17 @@ func (pr *PasswordResetTokenRepository) CreatePasswordReset(resetRequest *models
 		CreatedAt: resetRequest.CreatedAt,
 	}
 
-	if err := pr.db.Create(resetRequestPayload).Error; err != nil {
+	if err := pr.DB.Create(resetRequestPayload).Error; err != nil {
 		return nil, err
 	}
 	return resetRequestPayload, nil
 }
 
-func (pr *PasswordResetTokenRepository) UpdatePasswordReset(
+func (pr *Repository) UpdatePasswordReset(
 	resetRequest *models.PasswordResetToken,
 ) (*models.PasswordResetToken, error) {
 
-	result := pr.db.
+	result := pr.DB.
 		Model(&models.PasswordResetToken{}).
 		Where("id = ?", resetRequest.ID).
 		Updates(map[string]interface{}{
@@ -60,7 +42,7 @@ func (pr *PasswordResetTokenRepository) UpdatePasswordReset(
 
 	var updatedResetToken models.PasswordResetToken
 
-	if err := pr.db.
+	if err := pr.DB.
 		Where("id = ?", resetRequest.ID).
 		First(&updatedResetToken).Error; err != nil {
 		return nil, err
@@ -69,7 +51,7 @@ func (pr *PasswordResetTokenRepository) UpdatePasswordReset(
 	return &updatedResetToken, nil
 }
 
-func (pr *PasswordResetTokenRepository) FindByToken(
+func (pr *Repository) FindByToken(
 	token string,
 ) (*models.PasswordResetToken, error) {
 
@@ -77,7 +59,7 @@ func (pr *PasswordResetTokenRepository) FindByToken(
 
 	var resetToken models.PasswordResetToken
 
-	err := pr.db.
+	err := pr.DB.
 		Where("token_hash = ?", tokenHash).
 		First(&resetToken).Error
 

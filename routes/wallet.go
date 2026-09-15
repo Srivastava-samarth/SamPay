@@ -1,24 +1,11 @@
 package routes
 
 import (
-	"github.com/Srivastava-samarth/sampay/controllers"
 	"github.com/Srivastava-samarth/sampay/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
-type WalletRouter struct {
-	walletCntlr *controllers.WalletController
-}
-
-func NewWalletRouter(
-	walletController *controllers.WalletController,
-) *WalletRouter {
-	return &WalletRouter{
-		walletCntlr: walletController,
-	}
-}
-
-func (wr *WalletRouter) WalletRoutes(
+func (wr *Router) WalletRoutes(
 	router *gin.RouterGroup,
 	authMiddleware gin.HandlerFunc,
 ) {
@@ -29,24 +16,24 @@ func (wr *WalletRouter) WalletRoutes(
 		"/:merchant_id/wallet",
 		middlewares.RequireRole("owner", "finance", "super_admin"),
 		middlewares.RequireMerchantAccess("super_admin"),
-		wr.walletCntlr.GetWallet(),
+		wr.Controller.GetWallet(),
 	)
 
 	wallet.GET(
 		"/:merchant_id/wallet/transactions",
 		middlewares.RequireRole("owner", "finance", "super_admin"),
 		middlewares.RequireMerchantAccess("super_admin"),
-		wr.walletCntlr.GetWalletTransactions(),
+		wr.Controller.GetWalletTransactions(),
 	)
 	wallet.GET(
 		"/:merchant_id/wallet/transaction/:transaction_id",
 		middlewares.RequireRole("owner", "finance", "super_admin"),
 		middlewares.RequireMerchantAccess("super_admin"),
-		wr.walletCntlr.GetWalletTransaction(),
+		wr.Controller.GetWalletTransaction(),
 	)
 	wallet.PUT(
 		"/:merchant_id/wallet/topup",
 		middlewares.RequireRole("super_admin"),
-		wr.walletCntlr.TopUpWallet(),
+		wr.Controller.TopUpWallet(),
 	)
 }

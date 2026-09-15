@@ -42,7 +42,7 @@ func (pc *Controller) WalletToBankAccount() gin.HandlerFunc {
 			return
 		}
 
-		existingIdempotencyKey, errEI := pc.IdempotencyService.GetIdempotencyByKeyAndMerchantId(parsedMerchantID, idempotencyKey)
+		existingIdempotencyKey, errEI := pc.Services.GetIdempotencyByKeyAndMerchantId(parsedMerchantID, idempotencyKey)
 		if errEI != nil {
 			dto.Fail(
 				c,
@@ -214,7 +214,7 @@ func (pc *Controller) BankToBankAccount() gin.HandlerFunc {
 			return
 		}
 
-		existingIdempotencyKey, errEI := pc.IdempotencyService.GetIdempotencyByKeyAndMerchantId(parsedMerchantID, idempotencyKey)
+		existingIdempotencyKey, errEI := pc.Services.GetIdempotencyByKeyAndMerchantId(parsedMerchantID, idempotencyKey)
 		if errEI != nil {
 			dto.Fail(
 				c,
@@ -372,7 +372,7 @@ func (pc *Controller) GetPayoutsByMerchantID() gin.HandlerFunc {
 			return
 		}
 
-		payouts, errGP := pc.PayoutService.GetPayoutsByMerchantID(parsedMerchantID)
+		payouts, errGP := pc.Services.GetPayoutsByMerchantID(parsedMerchantID)
 		if errGP != nil {
 			dto.Fail(
 				c,
@@ -405,7 +405,7 @@ func (pc *Controller) GetPayoutByID() gin.HandlerFunc {
 			return
 		}
 
-		payout, errGP := pc.PayoutService.GetPayoutByID(parsedPayoutID)
+		payout, errGP := pc.Services.GetPayoutByID(parsedPayoutID)
 		if errGP != nil {
 			dto.Fail(
 				c,

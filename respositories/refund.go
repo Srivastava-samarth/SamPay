@@ -8,28 +8,9 @@ import (
 	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
-type RefundRepository struct {
-	DB *gorm.DB
-}
-
-func NewRefundRepository(
-	db *gorm.DB,
-) *RefundRepository {
-	return &RefundRepository{
-		DB: db,
-	}
-}
-
-func (pr *RefundRepository) WithTx(tx *gorm.DB) *RefundRepository {
-	return &RefundRepository{
-		DB: tx,
-	}
-}
-
-func (rr *RefundRepository) CreateRefund(request *dto.CreateRefundRequest) (*models.Refund, error) {
+func (rr *Repository) CreateRefund(request *dto.CreateRefundRequest) (*models.Refund, error) {
 	createRefundPayload := &models.Refund{
 		ID:                utils.GenerateUUID(),
 		PaymentID:         request.PaymentID,
@@ -52,7 +33,7 @@ func (rr *RefundRepository) CreateRefund(request *dto.CreateRefundRequest) (*mod
 	return createRefundPayload, nil
 }
 
-func (rr *RefundRepository) GetRefundsByPaymentID(
+func (rr *Repository) GetRefundsByPaymentID(
 	paymentID uuid.UUID,
 ) ([]*models.Refund, error) {
 
@@ -70,7 +51,7 @@ func (rr *RefundRepository) GetRefundsByPaymentID(
 	return refunds, nil
 }
 
-func (rr *RefundRepository) GetRefundByReference(
+func (rr *Repository) GetRefundByReference(
 	refundRef string,
 ) (*models.Refund, error) {
 	var refund *models.Refund
@@ -87,7 +68,7 @@ func (rr *RefundRepository) GetRefundByReference(
 	return refund, nil
 }
 
-func (rr *RefundRepository) UpdateRefundStatus(RefundReference string, status string) (*models.Refund, error) {
+func (rr *Repository) UpdateRefundStatus(RefundReference string, status string) (*models.Refund, error) {
 	var refund *models.Refund
 	err := rr.DB.Where("refund_reference = ?", RefundReference).First(&refund).Error
 	if err != nil {
@@ -122,7 +103,7 @@ func (rr *RefundRepository) UpdateRefundStatus(RefundReference string, status st
 
 }
 
-func (rr *RefundRepository) GetRefundById(
+func (rr *Repository) GetRefundById(
 	refundID uuid.UUID,
 ) (*models.Refund, error) {
 	var refund *models.Refund
@@ -139,7 +120,7 @@ func (rr *RefundRepository) GetRefundById(
 	return refund, nil
 }
 
-func (rr *RefundRepository) GetRefundsByMerchantId(
+func (rr *Repository) GetRefundsByMerchantId(
 	merchantID uuid.UUID,
 ) ([]*models.Refund, error) {
 

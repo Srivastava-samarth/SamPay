@@ -7,22 +7,11 @@ import (
 
 	"github.com/Srivastava-samarth/sampay/constants"
 	"github.com/Srivastava-samarth/sampay/dto"
-	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-type ComplianceService struct {
-	UserRepo *repositories.UserRepository
-}
-
-func NewComplianceService(UserRepo *repositories.UserRepository) *ComplianceService {
-	return &ComplianceService{
-		UserRepo: UserRepo,
-	}
-}
-
-func (cs *ComplianceService) PerformIndividualComplianceCheck(
+func (cs *Services) PerformIndividualComplianceCheck(
 	request *dto.IndividualComplianceCheckRequest,
 	merchantID uuid.UUID,
 ) (*dto.ComplianceCheckResponse, error) {
@@ -87,7 +76,7 @@ func (cs *ComplianceService) PerformIndividualComplianceCheck(
 		}
 	}
 
-	blockedUser, err := cs.UserRepo.GetBlockedUserByEmail(request.Email)
+	blockedUser, err := cs.Repo.GetBlockedUserByEmail(request.Email)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, err
 	}
@@ -128,7 +117,7 @@ func (cs *ComplianceService) PerformIndividualComplianceCheck(
 	}, nil
 }
 
-func (cs *ComplianceService) PerformCorporateComplianceCheck(
+func (cs *Services) PerformCorporateComplianceCheck(
 	request *dto.CompanyComplianceCheckRequest,
 	merchantID uuid.UUID,
 ) (*dto.ComplianceCheckResponse, error) {
@@ -246,7 +235,7 @@ func (cs *ComplianceService) PerformCorporateComplianceCheck(
 	}
 
 	// Check merchant email against blocked users
-	blockedUser, err := cs.UserRepo.GetBlockedUserByEmail(
+	blockedUser, err := cs.Repo.GetBlockedUserByEmail(
 		request.Email,
 	)
 
@@ -290,7 +279,7 @@ func (cs *ComplianceService) PerformCorporateComplianceCheck(
 	}, nil
 }
 
-func (cs *ComplianceService) ValidateIndividualMerchantRequest(
+func (cs *Services) ValidateIndividualMerchantRequest(
 	individualRequest *dto.IndividualComplianceCheckRequest,
 ) error {
 	if individualRequest == nil {
@@ -315,7 +304,7 @@ func (cs *ComplianceService) ValidateIndividualMerchantRequest(
 	return nil
 }
 
-func (cs *ComplianceService) ValidateCorporateMerchantRequest(
+func (cs *Services) ValidateCorporateMerchantRequest(
 	corporateRequest *dto.CompanyComplianceCheckRequest,
 ) error {
 	if corporateRequest == nil {

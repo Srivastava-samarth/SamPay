@@ -1,24 +1,11 @@
 package routes
 
 import (
-	"github.com/Srivastava-samarth/sampay/controllers"
 	"github.com/Srivastava-samarth/sampay/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
-type ReconRouter struct {
-	reconCtlr *controllers.ReconController
-}
-
-func NewReconRouter(
-	reconCtlr *controllers.ReconController,
-) *ReconRouter {
-	return &ReconRouter{
-		reconCtlr: reconCtlr,
-	}
-}
-
-func (rr *ReconRouter) ReconRoutes(
+func (rr *Router) ReconRoutes(
 	router *gin.RouterGroup,
 	authMiddleware gin.HandlerFunc,
 ) {
@@ -27,6 +14,6 @@ func (rr *ReconRouter) ReconRoutes(
 	recon.POST(
 		"/recon",
 		middlewares.RequireRole("super_admin"),
-		rr.reconCtlr.TriggerRecon(),
+		rr.Controller.TriggerRecon(),
 	)
 }

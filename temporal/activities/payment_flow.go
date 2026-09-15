@@ -24,13 +24,13 @@ func (a *Registry) ValidatePaymentRequest(
 	request *dto.CreatePaymentRequest,
 	merchantID uuid.UUID,
 ) error {
-	return a.PaymentService.ValidatePaymentRequest(request, merchantID)
+	return a.Services.ValidatePaymentRequest(request, merchantID)
 }
 
 func (a *Registry) CalculateFees(
 	amount decimal.Decimal,
 ) (decimal.Decimal, error) {
-	fee, errF := a.PaymentService.CalculateFees(amount)
+	fee, errF := a.Services.CalculateFees(amount)
 	if errF != nil {
 		return decimal.Zero, errF
 	}
@@ -43,7 +43,7 @@ func (a *Registry) CreatePayment(
 	merchantID uuid.UUID,
 	status *string,
 ) (*models.Payment, error) {
-	return a.PaymentService.PaymentRepo.CreatePayment(merchantID, request, status)
+	return a.Repo.CreatePayment(merchantID, request, status)
 }
 
 func (a *Registry) UpdatePaymentStatus(
@@ -51,7 +51,7 @@ func (a *Registry) UpdatePaymentStatus(
 	status *string,
 	paymentRef string,
 ) (*models.Payment, error) {
-	return a.PaymentService.PaymentRepo.UpdatePaymentStatus(paymentRef, status)
+	return a.Repo.UpdatePaymentStatus(paymentRef, status)
 }
 
 func (a *Registry) ExecutePayment(
@@ -69,9 +69,7 @@ func (a *Registry) ExecutePayment(
 			totalAmount := paymentRequest.Amount.Add(fees)
 
 			// Transaction-aware repositories
-			walletRepo := a.WalletService.WalletRepo.WithTx(tx)
-			paymentRepo := a.PaymentService.PaymentRepo.WithTx(tx)
-			vaultRepo := a.VaultService.VaultRepo.WithTx(tx)
+			repo := a.Repo.WithTx(tx)
 
 			// ---------------------------------------------------------
 			// 1. Mark payment as PROCESSING
@@ -79,7 +77,7 @@ func (a *Registry) ExecutePayment(
 
 			paymentStatus := constants.TransactionStatusProcessing
 
-			payment, err := paymentRepo.UpdatePaymentStatus(
+			payment, err := repo.UpdatePaymentStatus(
 				request.PaymentReference,
 				&paymentStatus,
 			)
@@ -94,7 +92,7 @@ func (a *Registry) ExecutePayment(
 			// 2. Check balance
 			// ---------------------------------------------------------
 
-			isBalanceSufficient, err := a.PaymentService.CheckBalance(
+			isBalanceSufficient, err := a.Services.CheckBalance(
 				merchantID,
 				totalAmount,
 			)
@@ -109,7 +107,7 @@ func (a *Registry) ExecutePayment(
 			// 3. Get sender wallet
 			// ---------------------------------------------------------
 
-			senderWallet, err := walletRepo.GetWalletByMerchantId(
+			senderWallet, err := repo.GetWalletByMerchantId(
 				merchantID,
 			)
 			if err != nil {
@@ -126,7 +124,7 @@ func (a *Registry) ExecutePayment(
 			updatedWallet := senderWallet
 
 			if !isBalanceSufficient {
-				updatedWallet, err = a.WalletService.TopUpWalletFromPrimaryBank(
+				updatedWallet, err = a.Services.TopUpWalletFromPrimaryBank(
 					tx,
 					senderWallet,
 					totalAmount,
@@ -151,7 +149,7 @@ func (a *Registry) ExecutePayment(
 				totalAmount,
 			)
 
-			updatedSenderWallet, err := walletRepo.UpdateWalletBalance(
+			updatedSenderWallet, err := repo.UpdateWalletBalance(
 				merchantID,
 				&dto.UpdateWalletBalanceRequest{
 					ReservedBalance:  reservedWalletAmount,
@@ -169,7 +167,7 @@ func (a *Registry) ExecutePayment(
 			// 6. Get Payment Vault
 			// ---------------------------------------------------------
 
-			paymentVault, err := vaultRepo.GetVaultByType(
+			paymentVault, err := repo.GetVaultByType(
 				constants.PaymentVault,
 			)
 			if err != nil {
@@ -183,7 +181,7 @@ func (a *Registry) ExecutePayment(
 			// 7. Wallet A -> Payment Vault
 			// ---------------------------------------------------------
 
-			updatedPaymentVault, errUV := vaultRepo.UpdateVaultBalance(
+			updatedPaymentVault, errUV := repo.UpdateVaultBalance(
 				paymentVault.Balance.Add(totalAmount),
 				constants.PaymentVault,
 			)
@@ -195,7 +193,7 @@ func (a *Registry) ExecutePayment(
 			}
 
 			// Release sender reservation after movement
-			_, err = walletRepo.UpdateWalletBalance(
+			_, err = repo.UpdateWalletBalance(
 				merchantID,
 				&dto.UpdateWalletBalanceRequest{
 					ReservedBalance: updatedSenderWallet.ReservedBalance.Sub(
@@ -214,7 +212,7 @@ func (a *Registry) ExecutePayment(
 			// 8. Ledger: Wallet A -> Payment Vault
 			// ---------------------------------------------------------
 
-			ledgerTransaction, err := a.LedgerService.PostTransaction(
+			ledgerTransaction, err := a.Services.PostTransaction(
 				tx,
 				&dto.PostLedgerTransactionRequest{
 					ReferenceID:      *payment.PaymentReference,
@@ -255,7 +253,7 @@ func (a *Registry) ExecutePayment(
 				fees,
 			)
 
-			_, err = vaultRepo.UpdateVaultBalance(
+			_, err = repo.UpdateVaultBalance(
 				paymentVaultBalanceAfterFees,
 				constants.PaymentVault,
 			)
@@ -270,7 +268,7 @@ func (a *Registry) ExecutePayment(
 			// 10. Get Company Vault
 			// ---------------------------------------------------------
 
-			companyVault, err := vaultRepo.GetVaultByType(
+			companyVault, err := repo.GetVaultByType(
 				constants.CompanyVault,
 			)
 			if err != nil {
@@ -284,7 +282,7 @@ func (a *Registry) ExecutePayment(
 			// 11. Add fees to Company Vault
 			// ---------------------------------------------------------
 
-			updatedCompanyVault, err := vaultRepo.UpdateVaultBalance(
+			updatedCompanyVault, err := repo.UpdateVaultBalance(
 				companyVault.Balance.Add(fees),
 				constants.CompanyVault,
 			)
@@ -299,7 +297,7 @@ func (a *Registry) ExecutePayment(
 			// 12. Ledger: Payment Vault -> Company Vault
 			// ---------------------------------------------------------
 
-			_, err = a.LedgerService.CreateLedgerEntries(
+			_, err = a.Services.CreateLedgerEntries(
 				tx,
 				[]*models.LedgerEntry{
 					{
@@ -333,7 +331,7 @@ func (a *Registry) ExecutePayment(
 
 			completedStatus := constants.TransactionStatusCompleted
 
-			updatedPayment, err := paymentRepo.UpdatePaymentStatus(
+			updatedPayment, err := repo.UpdatePaymentStatus(
 				*payment.PaymentReference,
 				&completedStatus,
 			)
