@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"time"
 
 	"github.com/Srivastava-samarth/sampay/constants"
@@ -8,6 +9,7 @@ import (
 	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (rr *Repository) CreateRefund(request *dto.CreateRefundRequest) (*models.Refund, error) {
@@ -62,6 +64,9 @@ func (rr *Repository) GetRefundByReference(
 		Find(&refund).Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
