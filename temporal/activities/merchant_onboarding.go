@@ -71,14 +71,15 @@ func (a *Registry) SendWelcomeEmail(
 
 func (a *Registry) SendKYCReattemptEmail(
 	ctx context.Context,
-	request *dto.CreateMerchantOnboardingRequest,
+	email string,
 	merchantID uuid.UUID,
+	merchantType string,
 ) error {
 
 	return a.NotificationService.SendKYCReattemptEmail(
-		request.Email,
+		email,
 		merchantID,
-		request.MerchantType,
+		merchantType,
 	)
 }
 

@@ -37,9 +37,17 @@ func (pr *Repository) CreatePayment(merchantID uuid.UUID, request *dto.CreatePay
 	return createPaymentPayload, nil
 }
 
-func (pr *Repository) UpdatePaymentStatus(PaymentReference string, status *string) (*models.Payment, error) {
-	var payment *models.Payment
-	err := pr.DB.Where("payment_reference = ?", PaymentReference).First(&payment).Error
+func (pr *Repository) UpdatePaymentStatus(
+	paymentReference string,
+	status *string,
+) (*models.Payment, error) {
+
+	var payment models.Payment
+
+	err := pr.DB.
+		Where("payment_reference = ?", paymentReference).
+		First(&payment).Error
+
 	if err != nil {
 		return nil, err
 	}
@@ -49,27 +57,31 @@ func (pr *Repository) UpdatePaymentStatus(PaymentReference string, status *strin
 	}
 
 	if status == payment.Status {
-		return payment, nil
+		return &payment, nil
 	}
 
 	updates["status"] = status
 
-	errU := pr.DB.
+	err = pr.DB.
 		Model(&models.Payment{}).
 		Where("id = ?", payment.ID).
 		Updates(updates).Error
 
-	if errU != nil {
-		return nil, errU
+	if err != nil {
+		return nil, err
 	}
 
-	var updatedPayment *models.Payment
-	errF := pr.DB.Where("id = ?", payment.ID).First(&updatedPayment).Error
-	if errF != nil {
-		return nil, errF
-	}
-	return updatedPayment, nil
+	var updatedPayment models.Payment
 
+	err = pr.DB.
+		Where("id = ?", payment.ID).
+		First(&updatedPayment).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &updatedPayment, nil
 }
 
 func (pr *Repository) UpdateSettlementStatusByID(

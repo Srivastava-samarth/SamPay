@@ -2,6 +2,7 @@ package workflows
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/Srivastava-samarth/sampay/constants"
@@ -66,6 +67,12 @@ func PaymentFlow(
 	if errCP != nil {
 		return nil, errCP
 	}
+
+	log.Printf(
+		"CreatePayment: payment_reference=%v payment_id=%v",
+		payment.PaymentReference,
+		payment.ID,
+	)
 
 	executePaymentPayload := &activities.PaymentWorkflowRequest{
 		PaymentReference: *payment.PaymentReference,

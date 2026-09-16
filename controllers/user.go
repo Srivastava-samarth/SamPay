@@ -126,6 +126,7 @@ func (uc *Controller) UpdateUserStatus() gin.HandlerFunc {
 				"PARSING_ERROR",
 				errP.Error(),
 			)
+			return
 		}
 
 		updatedUser, errUU := uc.Services.UpdateUserStatus(request.Status, parsedUserID)
@@ -157,6 +158,7 @@ func (uc *Controller) GetUsersByMerchant() gin.HandlerFunc {
 				"MERCHANT_ID_NOT_FOUND",
 				"Merchant ID not passed in params",
 			)
+			return
 		}
 
 		parsedMerchantID, errP := uuid.Parse(merchantID)

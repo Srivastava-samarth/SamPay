@@ -56,10 +56,10 @@ type CreateMerchantOnboardingRequest struct {
 type UpdateIndividualMerchantRequest struct {
 	FirstName   string `json:"first_name"`
 	LastName    string `json:"last_name"`
-	DateOfBirth string `json:"date_of_birth" validate:"required"`
-	Country     string `json:"country" validate:"required"`
-	TaxID       string `json:"tax_id" validate:"required"`
-	Address     string `json:"address" validate:"required"`
+	DateOfBirth string `json:"date_of_birth"`
+	Country     string `json:"country"`
+	TaxID       string `json:"tax_id"`
+	Address     string `json:"address"`
 }
 
 type UpdateCompanyMerchantRequest struct {

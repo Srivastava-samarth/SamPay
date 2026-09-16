@@ -30,6 +30,28 @@ func GenerateTestMerchant() *models.Merchant {
 	}
 }
 
+func GenerateCorporateTestMerchant() *models.Merchant {
+	merchantName := "Test Merchant"
+	email := uuid.NewString() + "@test.com"
+	phoneNumber := "9999999999"
+	status := constants.MerchantStatusActive
+	merchantType := constants.MerrchantTypeCorporate
+	country := "IN"
+	complianceStatus := "pending"
+
+	return &models.Merchant{
+		ID:                uuid.New(),
+		MerchantReference: utils.GenerateMerchantReference(),
+		MerchantName:      merchantName,
+		Email:             email,
+		PhoneNumber:       phoneNumber,
+		Status:            status,
+		MerchantType:      merchantType,
+		Country:           country,
+		ComplianceStatus:  complianceStatus,
+	}
+}
+
 func GenerateTestWallet(merchantID uuid.UUID) *models.Wallets {
 	status := constants.MerchantStatusActive
 
@@ -47,7 +69,27 @@ func GenerateTestBankAccount() *models.BankAccount {
 	accountName := "Test Account"
 	bankName := "Test Bank"
 	ifscCode := "TEST0001234"
-	accountType := "savings"
+	accountType := "primary"
+	status := constants.MerchantStatusActive
+
+	return &models.BankAccount{
+		ID:            uuid.New(),
+		AccountNumber: accountNumber,
+		AccountName:   accountName,
+		BankName:      bankName,
+		IFSCCode:      ifscCode,
+		AccountType:   accountType,
+		Balance:       decimal.NewFromInt(10000),
+		Status:        status,
+	}
+}
+
+func GenerateTestSecondaryBankAccount() *models.BankAccount {
+	accountNumber := uuid.NewString()
+	accountName := "Test Account"
+	bankName := "Test Bank"
+	ifscCode := "TEST0001234"
+	accountType := "secondary"
 	status := constants.MerchantStatusActive
 
 	return &models.BankAccount{

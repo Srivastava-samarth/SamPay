@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
@@ -143,7 +144,7 @@ func (vs *Services) UpdateVaultBalance(merchantID uuid.UUID, balance decimal.Dec
 		},
 	)
 	if err != nil {
-		return nil, errors.New("failed to post ledger transaction")
+		return nil, fmt.Errorf("failed to post ledger transaction: %w", err)
 	}
 
 	return updatedVault, errUV
