@@ -198,9 +198,10 @@ func (as *Services) ResetPassword(
 
 	repo := as.Repo.WithTx(tx)
 
+	mustChangePassword := false
 	updateUserRequest := &dto.UpdateUserRequest{
 		PasswordHash:       hashedPassword,
-		MustChangePassword: false,
+		MustChangePassword: &mustChangePassword,
 	}
 
 	_, err = repo.UpdateUser(userID, updateUserRequest)

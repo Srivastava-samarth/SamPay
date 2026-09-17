@@ -8,6 +8,10 @@ import (
 	"github.com/google/uuid"
 )
 
+func boolPointer(value bool) *bool {
+	return &value
+}
+
 func TestUpdateUser(t *testing.T) {
 
 	tests := []struct {
@@ -21,7 +25,7 @@ func TestUpdateUser(t *testing.T) {
 				FirstName:          "",
 				LastName:           "Doe",
 				PasswordHash:       "hashed-password",
-				MustChangePassword: true,
+				MustChangePassword: boolPointer(true),
 			},
 			expectedError: "first_name is required",
 		},
@@ -31,7 +35,7 @@ func TestUpdateUser(t *testing.T) {
 				FirstName:          "John",
 				LastName:           "",
 				PasswordHash:       "hashed-password",
-				MustChangePassword: true,
+				MustChangePassword: boolPointer(true),
 			},
 			expectedError: "last_name is required",
 		},
@@ -41,7 +45,7 @@ func TestUpdateUser(t *testing.T) {
 				FirstName:          "John",
 				LastName:           "Doe",
 				PasswordHash:       "",
-				MustChangePassword: true,
+				MustChangePassword: boolPointer(true),
 			},
 			expectedError: "password_hash is required",
 		},
@@ -51,7 +55,7 @@ func TestUpdateUser(t *testing.T) {
 				FirstName:          "John",
 				LastName:           "Doe",
 				PasswordHash:       "hashed-password",
-				MustChangePassword: false,
+				MustChangePassword: boolPointer(false),
 			},
 			expectedError: "must_change_password is required",
 		},

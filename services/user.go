@@ -104,7 +104,7 @@ func (us *Services) UpdateUser(
 		return nil, errors.New("password_hash is required")
 	}
 
-	if !request.MustChangePassword {
+	if request.MustChangePassword != nil {
 		return nil, errors.New("must_change_password is required")
 	}
 

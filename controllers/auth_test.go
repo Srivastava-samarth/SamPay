@@ -118,7 +118,7 @@ func TestLogin(t *testing.T) {
 		}
 
 		userUpdate := &dto.UpdateUserRequest{
-			MustChangePassword: mustChangePassword,
+			MustChangePassword: &mustChangePassword,
 		}
 
 		newUser, errUU := testRepo.UpdateUser(user.ID, userUpdate)
