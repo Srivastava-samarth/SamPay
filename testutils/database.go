@@ -8,8 +8,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func SetupTestDB() (*gorm.DB, error) {
-	err := godotenv.Load("../.env")
+func SetupTestDB(envPath string) (*gorm.DB, error) {
+	err := godotenv.Load(envPath)
 	if err != nil {
 		return nil, err
 	}

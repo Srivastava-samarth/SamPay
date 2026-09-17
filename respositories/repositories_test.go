@@ -14,7 +14,7 @@ var testRepo *Repository
 func TestMain(m *testing.M) {
 	var err error
 
-	db, err = testutils.SetupTestDB()
+	db, err = testutils.SetupTestDB("../.env")
 	if err != nil {
 		panic(err)
 	}

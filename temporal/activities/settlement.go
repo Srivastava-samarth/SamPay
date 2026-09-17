@@ -35,6 +35,10 @@ func (a *Registry) ExecuteSettlementByMerchant(
 			return errPV
 		}
 
+		if paymentVault == nil{
+			return errors.New("payment vault not found")
+		}
+
 		wallet, errW := repo.GetWalletByMerchantId(merchantID)
 		if errW != nil {
 			return errW
