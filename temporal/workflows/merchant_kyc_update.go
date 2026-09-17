@@ -14,7 +14,7 @@ import (
 
 func MerchantUpdateKycFlow(
 	ctx workflow.Context,
-	request dto.UpdateKYCRequest,
+	request *dto.UpdateKYCRequest,
 	merchantID uuid.UUID,
 ) (*models.Merchant, error) {
 
@@ -30,13 +30,27 @@ func MerchantUpdateKycFlow(
 
 	ctx = workflow.WithActivityOptions(ctx, activityOptions)
 
+	var oldMerchant *models.Merchant
+
+	errOM := workflow.ExecuteActivity(
+		ctx,
+		"GetMerchantById",
+		merchantID,
+	).Get(ctx, &oldMerchant)
+
+	if errOM != nil {
+		return nil, errOM
+	}
+
 	var complianceResponse dto.ComplianceCheckResponse
 
 	// 1. Compliance check
 
 	complianceRequest := &dto.CreateMerchantOnboardingRequest{
-		Individual: request.Individual,
-		Company:    request.Company,
+		MerchantType: oldMerchant.MerchantType,
+		Email:        oldMerchant.Email,
+		Individual:   request.Individual,
+		Company:      request.Company,
 	}
 	err := workflow.ExecuteActivity(
 		ctx,

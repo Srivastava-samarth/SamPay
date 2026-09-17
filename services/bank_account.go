@@ -87,6 +87,7 @@ func (bs *Services) CreateBankAccountAndLink(bankAccountRequest *dto.CreateBankA
 	}
 
 	if len(linkedBankAccounts) == 2 {
+		tx.Rollback()
 		return nil, nil, errors.New("already have 2 bank accounts with this merchnat id")
 	}
 
@@ -128,18 +129,6 @@ func (bs *Services) UpdateBankAccountAndlink(updateBankAccountRequest *dto.Updat
 
 	if updateBankAccountRequest.ID == uuid.Nil {
 		return nil, nil, errors.New("id is required")
-	}
-
-	if updateBankAccountRequest.AccountName == "" {
-		return nil, nil, errors.New("account name is required")
-	}
-
-	if updateBankAccountRequest.AccountType == "" {
-		return nil, nil, errors.New("account_type is required")
-	}
-
-	if updateBankAccountRequest.Status == "" {
-		return nil, nil, errors.New("status is required")
 	}
 
 	updatedBankAccount, errUBA := bs.Repo.UpdateBankAccount(updateBankAccountRequest.ID, updateBankAccountRequest)

@@ -68,9 +68,7 @@ func (ur *Repository) UpdateUser(userID uuid.UUID, request *dto.UpdateUserReques
 		updates["last_name"] = request.LastName
 	}
 
-	if request.MustChangePassword {
-		updates["must_change_password"] = request.MustChangePassword
-	}
+	updates["must_change_password"] = request.MustChangePassword
 
 	err := ur.DB.
 		Model(&models.User{}).

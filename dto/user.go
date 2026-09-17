@@ -29,5 +29,5 @@ type UpdateUserRequest struct {
 	FirstName          string `json:"first_name"`
 	LastName           string `json:"last_name"`
 	PasswordHash       string `json:"password_hash"`
-	MustChangePassword bool   `json:"must_change_password"`
+	MustChangePassword *bool   `json:"must_change_password"`
 }

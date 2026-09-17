@@ -183,11 +183,12 @@ func TestUpdateUser(t *testing.T) {
 		t.Fatalf("failed to create user: %v", err)
 	}
 
+	mustChangePassword = true
 	request := &dto.UpdateUserRequest{
 		PasswordHash:       "new-password",
 		FirstName:          "New",
 		LastName:           "User",
-		MustChangePassword: true,
+		MustChangePassword: &mustChangePassword,
 	}
 
 	result, err := testRepo.UpdateUser(user.ID, request)

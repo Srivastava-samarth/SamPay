@@ -100,7 +100,7 @@ func (vc *Controller) UpdateVaultBalance() gin.HandlerFunc {
 		if !exist {
 			dto.Fail(
 				c,
-				http.StatusInternalServerError,
+				http.StatusBadRequest,
 				"MERCHANT_ID_NOT_FOUND",
 				"merchant_id not found in context",
 			)
