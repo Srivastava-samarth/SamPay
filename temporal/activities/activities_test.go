@@ -1,4 +1,4 @@
-package services
+package activities
 
 import (
 	"os"
@@ -8,31 +8,40 @@ import (
 	"github.com/Srivastava-samarth/sampay/middlewares"
 	"github.com/Srivastava-samarth/sampay/notifications"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
+	"github.com/Srivastava-samarth/sampay/services"
 	"github.com/Srivastava-samarth/sampay/testutils"
+	"gorm.io/gorm"
 )
 
-var testServices *Services
+var (
+	db           *gorm.DB
+	testRepo     *repositories.Repository
+	testServices *services.Services
+)
 
 func TestMain(m *testing.M) {
 	var err error
 
-	db, err := testutils.SetupTestDB("../.env")
+	db, err = testutils.SetupTestDB("../../.env")
 	if err != nil {
 		panic(err)
 	}
 
-	// Initialize repositories
-	repo := repositories.NewRepository(db)
-	jwtService := middlewares.NewJwt(&config.JWTConfig{})
+	testRepo = repositories.NewRepository(db)
+
+	jwtService := middlewares.NewJwt(&config.JWTConfig{
+		AccessExpiry:  "3600",
+		RefreshExpiry: "86400",
+	})
 
 	notificationService, err := notifications.NewEmailService(config.SMTPConfig{})
 	if err != nil {
 		panic(err)
 	}
 
-	testServices = NewServices(
+	testServices = services.NewServices(
 		db,
-		repo,
+		testRepo,
 		jwtService,
 		notificationService,
 	)
@@ -44,4 +53,12 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(code)
+}
+
+func cleanTestDB(t *testing.T) {
+	t.Helper()
+
+	if err := testutils.CleanupTestDB(db); err != nil {
+		t.Fatalf("failed to clean test DB: %v", err)
+	}
 }
