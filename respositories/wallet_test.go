@@ -183,9 +183,11 @@ func TestUpdateWalletBalance(t *testing.T) {
 		t.Fatalf("failed to create wallet: %v", err)
 	}
 
+	updatedAvalBal := decimal.NewFromInt(8000)
+	updateResBal := decimal.NewFromInt(2000)
 	request := &dto.UpdateWalletBalanceRequest{
-		AvailableBalance: decimal.NewFromInt(8000),
-		ReservedBalance:  decimal.NewFromInt(2000),
+		AvailableBalance: &updatedAvalBal,
+		ReservedBalance:  &updateResBal,
 	}
 
 	result, err := testRepo.UpdateWalletBalance(merchant.ID, request)
@@ -202,7 +204,7 @@ func TestUpdateWalletBalance(t *testing.T) {
 		t.Errorf("expected wallet ID %v, got %v", wallet.ID, result.ID)
 	}
 
-	if !result.AvailableBalance.Equal(request.AvailableBalance) {
+	if !result.AvailableBalance.Equal(*request.AvailableBalance) {
 		t.Errorf(
 			"expected available balance %v, got %v",
 			request.AvailableBalance,
@@ -210,7 +212,7 @@ func TestUpdateWalletBalance(t *testing.T) {
 		)
 	}
 
-	if !result.ReservedBalance.Equal(request.ReservedBalance) {
+	if !result.ReservedBalance.Equal(*request.ReservedBalance) {
 		t.Errorf(
 			"expected reserved balance %v, got %v",
 			request.ReservedBalance,
@@ -218,9 +220,10 @@ func TestUpdateWalletBalance(t *testing.T) {
 		)
 	}
 
+	zeroBlance := decimal.Zero;
 	request = &dto.UpdateWalletBalanceRequest{
-		AvailableBalance: decimal.Zero,
-		ReservedBalance:  decimal.Zero,
+		AvailableBalance: &zeroBlance,
+		ReservedBalance:  &zeroBlance,
 	}
 
 	result, err = testRepo.UpdateWalletBalance(merchant.ID, request)

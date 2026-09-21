@@ -69,11 +69,11 @@ func (wr *Repository) UpdateWalletBalance(merchantID uuid.UUID, walletRequest *d
 		"updated_at": time.Now(),
 	}
 
-	if walletRequest.AvailableBalance.GreaterThan(decimal.Zero) {
+	if walletRequest.AvailableBalance != nil {
 		updates["available_balance"] = walletRequest.AvailableBalance
 	}
 
-	if walletRequest.ReservedBalance.GreaterThan(decimal.Zero) {
+	if walletRequest.ReservedBalance != nil {
 		updates["reserved_balance"] = walletRequest.ReservedBalance
 	}
 

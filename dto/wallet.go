@@ -21,8 +21,8 @@ type WalletTransactionResponse struct {
 }
 
 type UpdateWalletBalanceRequest struct {
-	AvailableBalance decimal.Decimal `json:"available_balance"`
-	ReservedBalance  decimal.Decimal `json:"reserved_balance"`
+	AvailableBalance *decimal.Decimal `json:"available_balance"`
+	ReservedBalance  *decimal.Decimal `json:"reserved_balance"`
 }
 
 type TopupWalletBalanceRequest struct {
