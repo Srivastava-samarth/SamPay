@@ -153,8 +153,8 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			updatedSenderWallet, err := repo.UpdateWalletBalance(
 				merchantID,
 				&dto.UpdateWalletBalanceRequest{
-					ReservedBalance:  reservedWalletAmount,
-					AvailableBalance: availableWalletAmount,
+					ReservedBalance:  &reservedWalletAmount,
+					AvailableBalance: &availableWalletAmount,
 				},
 			)
 			if err != nil {
@@ -194,12 +194,11 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			}
 
 			// Release sender reservation after movement
+			updatedWalletResvBal := updatedSenderWallet.ReservedBalance.Sub(totalAmount)
 			_, err = repo.UpdateWalletBalance(
 				merchantID,
 				&dto.UpdateWalletBalanceRequest{
-					ReservedBalance: updatedSenderWallet.ReservedBalance.Sub(
-						totalAmount,
-					),
+					ReservedBalance: &updatedWalletResvBal,
 				},
 			)
 			if err != nil {

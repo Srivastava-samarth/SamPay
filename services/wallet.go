@@ -115,10 +115,11 @@ func (ws *Services) TopUpWalletFromPrimaryBank(
 		return nil, err
 	}
 
+	updatedAvalBal := wallet.AvailableBalance.Add(amount)
 	updatedWallet, err := repo.UpdateWalletBalance(
 		wallet.MerchantID,
 		&dto.UpdateWalletBalanceRequest{
-			AvailableBalance: wallet.AvailableBalance.Add(amount),
+			AvailableBalance: &updatedAvalBal,
 		},
 	)
 	if err != nil {

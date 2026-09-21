@@ -120,8 +120,8 @@ func (a *Registry) RefundFromMerchantWallet(
 			updateSenderAvailableAmount := refundSenderWallet.AvailableBalance.Sub(Amount)
 			updatedSenderReservedAmount := refundSenderWallet.ReservedBalance.Add(Amount)
 			updatedRefundSenderWallet, errURSW := repo.UpdateWalletBalance(refundSenderMerchantID, &dto.UpdateWalletBalanceRequest{
-				AvailableBalance: updateSenderAvailableAmount,
-				ReservedBalance:  updatedSenderReservedAmount,
+				AvailableBalance: &updateSenderAvailableAmount,
+				ReservedBalance:  &updatedSenderReservedAmount,
 			})
 
 			if errURSW != nil {
@@ -147,8 +147,9 @@ func (a *Registry) RefundFromMerchantWallet(
 				return errUPV
 			}
 
+			updatedRefundSenderWalletAfterBalanceResvBal := updatedRefundSenderWallet.ReservedBalance.Sub(Amount)
 			updatedRefundSenderWalletAfterBalance, errRSWAB := repo.UpdateWalletBalance(refundSenderMerchantID, &dto.UpdateWalletBalanceRequest{
-				ReservedBalance: updatedRefundSenderWallet.ReservedBalance.Sub(Amount),
+				ReservedBalance: &updatedRefundSenderWalletAfterBalanceResvBal,
 			})
 
 			if errRSWAB != nil {
@@ -193,9 +194,9 @@ func (a *Registry) RefundFromMerchantWallet(
 			if errUPVAB != nil {
 				return errUPVAB
 			}
-
+			updatedRefundReceiverWalletAvalBal := refundReceiverWallet.AvailableBalance.Add(Amount)
 			updatedRefundReceiverWallet, errURRW := repo.UpdateWalletBalance(refundReceiverMerchantID, &dto.UpdateWalletBalanceRequest{
-				AvailableBalance: refundReceiverWallet.AvailableBalance.Add(Amount),
+				AvailableBalance: &updatedRefundReceiverWalletAvalBal,
 			})
 
 			if errURRW != nil {
@@ -303,9 +304,9 @@ func (a *Registry) RefundFromPaymentVault(
 			if errUPV != nil {
 				return errUPV
 			}
-
+			updatedReceiverWalletNewAvalBal := refundReceiverWallet.AvailableBalance.Add(Amount)
 			updatedReceiverWallet, errURW := repo.UpdateWalletBalance(refundReceiverMerchantID, &dto.UpdateWalletBalanceRequest{
-				AvailableBalance: refundReceiverWallet.AvailableBalance.Add(Amount),
+				AvailableBalance: &updatedReceiverWalletNewAvalBal,
 			})
 
 			if errURW != nil {
