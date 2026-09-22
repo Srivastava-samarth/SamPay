@@ -56,9 +56,9 @@ func (pr *Repository) UpdatePaymentStatus(
 		"updated_at": time.Now(),
 	}
 
-	if status == payment.Status {
-		return &payment, nil
-	}
+	if *status == *payment.Status {
+	return &payment, nil
+}
 
 	updates["status"] = status
 
