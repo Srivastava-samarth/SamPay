@@ -1849,345 +1849,345 @@ func TestExecutePayoutBankToBank(t *testing.T) {
 		Repo:     testRepo,
 		Services: testServices,
 	}
-    t.Run("successful bank to bank payout", func(t *testing.T) {
-        cleanTestDB(t)
+	t.Run("successful bank to bank payout", func(t *testing.T) {
+		cleanTestDB(t)
 
-        merchant := testutils.GenerateTestMerchant()
-        if errM := db.Create(merchant).Error; errM != nil {
-            t.Fatalf("error creating merchant: %v", errM)
-        }
+		merchant := testutils.GenerateTestMerchant()
+		if errM := db.Create(merchant).Error; errM != nil {
+			t.Fatalf("error creating merchant: %v", errM)
+		}
 
-        senderBankAccount := testutils.GenerateTestBankAccount()
-        if errSBA := db.Create(senderBankAccount).Error; errSBA != nil {
-            t.Fatalf("error creating sender bank account: %v", errSBA)
-        }
+		senderBankAccount := testutils.GenerateTestBankAccount()
+		if errSBA := db.Create(senderBankAccount).Error; errSBA != nil {
+			t.Fatalf("error creating sender bank account: %v", errSBA)
+		}
 
-        receiverBankAccount := testutils.GenerateTestBankAccount()
-        if errRBA := db.Create(receiverBankAccount).Error; errRBA != nil {
-            t.Fatalf("error creating receiver bank account: %v", errRBA)
-        }
+		receiverBankAccount := testutils.GenerateTestBankAccount()
+		if errRBA := db.Create(receiverBankAccount).Error; errRBA != nil {
+			t.Fatalf("error creating receiver bank account: %v", errRBA)
+		}
 
-        payoutAmount := decimal.NewFromInt(1000)
-        fee := decimal.NewFromInt(50)
-        totalAmount := payoutAmount.Add(fee)
+		payoutAmount := decimal.NewFromInt(1000)
+		fee := decimal.NewFromInt(50)
+		totalAmount := payoutAmount.Add(fee)
 
-        payoutReference := "payout-bank-to-bank-success"
-        processingStatus := constants.TransactionStatusProcessing
+		payoutReference := "payout-bank-to-bank-success"
+		processingStatus := constants.TransactionStatusProcessing
 
-        payout := &models.Payout{
-            ID:                       uuid.New(),
-            MerchantID:               merchant.ID,
-            SourceBankAccountID:      &senderBankAccount.ID,
-            DestinationBankAccountID: receiverBankAccount.ID,
-            PayoutReference:          payoutReference,
-            Amount:                   payoutAmount,
-            Currency:                 "INR",
-            Status:                   processingStatus,
-            CreatedAt:                time.Now(),
-            UpdatedAt:                time.Now(),
-        }
+		payout := &models.Payout{
+			ID:                       uuid.New(),
+			MerchantID:               merchant.ID,
+			SourceBankAccountID:      &senderBankAccount.ID,
+			DestinationBankAccountID: receiverBankAccount.ID,
+			PayoutReference:          payoutReference,
+			Amount:                   payoutAmount,
+			Currency:                 "INR",
+			Status:                   processingStatus,
+			CreatedAt:                time.Now(),
+			UpdatedAt:                time.Now(),
+		}
 
-        if err := db.Create(payout).Error; err != nil {
-            t.Fatalf("failed to create payout: %v", err)
-        }
+		if err := db.Create(payout).Error; err != nil {
+			t.Fatalf("failed to create payout: %v", err)
+		}
 
-        request := &PayoutWorkflowBankToBanRequest{
-            PayoutReference: payoutReference,
-            MerchantID:      merchant.ID,
-            Fee:             fee,
-            Request: dto.CreateBankToBankRequest{
-                Amount:                   payoutAmount,
-                Currency:                 "INR",
-                SourceBankAccountID:      senderBankAccount.ID,
-                DestinationBankAccountID: receiverBankAccount.ID,
-            },
-        }
+		request := &PayoutWorkflowBankToBanRequest{
+			PayoutReference: payoutReference,
+			MerchantID:      merchant.ID,
+			Fee:             fee,
+			Request: dto.CreateBankToBankRequest{
+				Amount:                   payoutAmount,
+				Currency:                 "INR",
+				SourceBankAccountID:      senderBankAccount.ID,
+				DestinationBankAccountID: receiverBankAccount.ID,
+			},
+		}
 
-        result, err := activityRegistry.ExecutePayoutBankToBank(
-            context.Background(),
-            request,
-        )
+		result, err := activityRegistry.ExecutePayoutBankToBank(
+			context.Background(),
+			request,
+		)
 
-        if err != nil {
-            t.Fatalf("expected successful payout, got error: %v", err)
-        }
+		if err != nil {
+			t.Fatalf("expected successful payout, got error: %v", err)
+		}
 
-        if result == nil {
-            t.Fatal("expected payout result, got nil")
-        }
+		if result == nil {
+			t.Fatal("expected payout result, got nil")
+		}
 
-        if result.ID != payout.ID {
-            t.Errorf(
-                "expected payout ID %s, got %s",
-                payout.ID,
-                result.ID,
-            )
-        }
+		if result.ID != payout.ID {
+			t.Errorf(
+				"expected payout ID %s, got %s",
+				payout.ID,
+				result.ID,
+			)
+		}
 
-        if result.Status != constants.TransactionStatusCompleted {
-            t.Errorf(
-                "expected payout status %q, got %q",
-                constants.TransactionStatusCompleted,
-                result.Status,
-            )
-        }
+		if result.Status != constants.TransactionStatusCompleted {
+			t.Errorf(
+				"expected payout status %q, got %q",
+				constants.TransactionStatusCompleted,
+				result.Status,
+			)
+		}
 
-        var updatedSenderBankAccount models.BankAccount
-        if err := db.
-            Where("id = ?", senderBankAccount.ID).
-            First(&updatedSenderBankAccount).Error; err != nil {
-            t.Fatalf("failed to fetch sender bank account: %v", err)
-        }
+		var updatedSenderBankAccount models.BankAccount
+		if err := db.
+			Where("id = ?", senderBankAccount.ID).
+			First(&updatedSenderBankAccount).Error; err != nil {
+			t.Fatalf("failed to fetch sender bank account: %v", err)
+		}
 
-        expectedSenderBalance := decimal.NewFromInt(8950)
+		expectedSenderBalance := decimal.NewFromInt(8950)
 
-        if !updatedSenderBankAccount.Balance.Equal(expectedSenderBalance) {
-            t.Errorf(
-                "expected sender bank balance %s, got %s",
-                expectedSenderBalance,
-                updatedSenderBankAccount.Balance,
-            )
-        }
+		if !updatedSenderBankAccount.Balance.Equal(expectedSenderBalance) {
+			t.Errorf(
+				"expected sender bank balance %s, got %s",
+				expectedSenderBalance,
+				updatedSenderBankAccount.Balance,
+			)
+		}
 
-        var updatedReceiverBankAccount models.BankAccount
-        if err := db.
-            Where("id = ?", receiverBankAccount.ID).
-            First(&updatedReceiverBankAccount).Error; err != nil {
-            t.Fatalf("failed to fetch receiver bank account: %v", err)
-        }
+		var updatedReceiverBankAccount models.BankAccount
+		if err := db.
+			Where("id = ?", receiverBankAccount.ID).
+			First(&updatedReceiverBankAccount).Error; err != nil {
+			t.Fatalf("failed to fetch receiver bank account: %v", err)
+		}
 
-        expectedReceiverBalance := decimal.NewFromInt(11050)
+		expectedReceiverBalance := decimal.NewFromInt(11050)
 
-        if !updatedReceiverBankAccount.Balance.Equal(expectedReceiverBalance) {
-            t.Errorf(
-                "expected receiver bank balance %s, got %s",
-                expectedReceiverBalance,
-                updatedReceiverBankAccount.Balance,
-            )
-        }
+		if !updatedReceiverBankAccount.Balance.Equal(expectedReceiverBalance) {
+			t.Errorf(
+				"expected receiver bank balance %s, got %s",
+				expectedReceiverBalance,
+				updatedReceiverBankAccount.Balance,
+			)
+		}
 
-        var updatedPayout models.Payout
-        if err := db.
-            Where("id = ?", payout.ID).
-            First(&updatedPayout).Error; err != nil {
-            t.Fatalf("failed to fetch payout: %v", err)
-        }
+		var updatedPayout models.Payout
+		if err := db.
+			Where("id = ?", payout.ID).
+			First(&updatedPayout).Error; err != nil {
+			t.Fatalf("failed to fetch payout: %v", err)
+		}
 
-        if updatedPayout.Status != constants.TransactionStatusCompleted {
-            t.Errorf(
-                "expected payout status %q, got %q",
-                constants.TransactionStatusCompleted,
-                updatedPayout.Status,
-            )
-        }
+		if updatedPayout.Status != constants.TransactionStatusCompleted {
+			t.Errorf(
+				"expected payout status %q, got %q",
+				constants.TransactionStatusCompleted,
+				updatedPayout.Status,
+			)
+		}
 
-        var ledgerTransaction models.LedgerTransaction
-        if err := db.
-            Where("reference_id = ?", payoutReference).
-            First(&ledgerTransaction).Error; err != nil {
-            t.Fatalf("failed to fetch ledger transaction: %v", err)
-        }
+		var ledgerTransaction models.LedgerTransaction
+		if err := db.
+			Where("reference_id = ?", payoutReference).
+			First(&ledgerTransaction).Error; err != nil {
+			t.Fatalf("failed to fetch ledger transaction: %v", err)
+		}
 
-        if ledgerTransaction.Status != constants.TransactionStatusCompleted {
-            t.Errorf(
-                "expected ledger status %q, got %q",
-                constants.TransactionStatusCompleted,
-                ledgerTransaction.Status,
-            )
-        }
+		if ledgerTransaction.Status != constants.TransactionStatusCompleted {
+			t.Errorf(
+				"expected ledger status %q, got %q",
+				constants.TransactionStatusCompleted,
+				ledgerTransaction.Status,
+			)
+		}
 
-        if ledgerTransaction.SettlementStatus != constants.TransactionStatusCompleted {
-            t.Errorf(
-                "expected settlement status %q, got %q",
-                constants.TransactionStatusCompleted,
-                ledgerTransaction.SettlementStatus,
-            )
-        }
+		if ledgerTransaction.SettlementStatus != constants.TransactionStatusCompleted {
+			t.Errorf(
+				"expected settlement status %q, got %q",
+				constants.TransactionStatusCompleted,
+				ledgerTransaction.SettlementStatus,
+			)
+		}
 
-        var ledgerEntries []models.LedgerEntry
-        if err := db.
-            Where("ledger_transaction_id = ?", ledgerTransaction.ID).
-            Find(&ledgerEntries).Error; err != nil {
-            t.Fatalf("failed to fetch ledger entries: %v", err)
-        }
+		var ledgerEntries []models.LedgerEntry
+		if err := db.
+			Where("ledger_transaction_id = ?", ledgerTransaction.ID).
+			Find(&ledgerEntries).Error; err != nil {
+			t.Fatalf("failed to fetch ledger entries: %v", err)
+		}
 
-        if len(ledgerEntries) != 2 {
-            t.Fatalf(
-                "expected 2 ledger entries, got %d",
-                len(ledgerEntries),
-            )
-        }
+		if len(ledgerEntries) != 2 {
+			t.Fatalf(
+				"expected 2 ledger entries, got %d",
+				len(ledgerEntries),
+			)
+		}
 
-        var debitAmount decimal.Decimal
-        var creditAmount decimal.Decimal
+		var debitAmount decimal.Decimal
+		var creditAmount decimal.Decimal
 
-        for _, entry := range ledgerEntries {
-            switch entry.EntryType {
-            case constants.LedgerEntryTypeDebit:
-                if entry.AccountID != senderBankAccount.ID {
-                    t.Errorf(
-                        "expected debit account %s, got %s",
-                        senderBankAccount.ID,
-                        entry.AccountID,
-                    )
-                }
+		for _, entry := range ledgerEntries {
+			switch entry.EntryType {
+			case constants.LedgerEntryTypeDebit:
+				if entry.AccountID != senderBankAccount.ID {
+					t.Errorf(
+						"expected debit account %s, got %s",
+						senderBankAccount.ID,
+						entry.AccountID,
+					)
+				}
 
-                debitAmount = debitAmount.Add(entry.Amount)
+				debitAmount = debitAmount.Add(entry.Amount)
 
-            case constants.LedgerEntryTypeCredit:
-                if entry.AccountID != receiverBankAccount.ID {
-                    t.Errorf(
-                        "expected credit account %s, got %s",
-                        receiverBankAccount.ID,
-                        entry.AccountID,
-                    )
-                }
+			case constants.LedgerEntryTypeCredit:
+				if entry.AccountID != receiverBankAccount.ID {
+					t.Errorf(
+						"expected credit account %s, got %s",
+						receiverBankAccount.ID,
+						entry.AccountID,
+					)
+				}
 
-                creditAmount = creditAmount.Add(entry.Amount)
-            }
-        }
+				creditAmount = creditAmount.Add(entry.Amount)
+			}
+		}
 
-        if !debitAmount.Equal(totalAmount) {
-            t.Errorf(
-                "expected debit amount %s, got %s",
-                totalAmount,
-                debitAmount,
-            )
-        }
+		if !debitAmount.Equal(totalAmount) {
+			t.Errorf(
+				"expected debit amount %s, got %s",
+				totalAmount,
+				debitAmount,
+			)
+		}
 
-        if !creditAmount.Equal(totalAmount) {
-            t.Errorf(
-                "expected credit amount %s, got %s",
-                totalAmount,
-                creditAmount,
-            )
-        }
-    })
+		if !creditAmount.Equal(totalAmount) {
+			t.Errorf(
+				"expected credit amount %s, got %s",
+				totalAmount,
+				creditAmount,
+			)
+		}
+	})
 
-    t.Run("insufficient sender bank balance rolls back transaction", func(t *testing.T) {
-        cleanTestDB(t)
+	t.Run("insufficient sender bank balance rolls back transaction", func(t *testing.T) {
+		cleanTestDB(t)
 
-        merchant := testutils.GenerateTestMerchant()
-        if errM := db.Create(merchant).Error; errM != nil {
-            t.Fatalf("error creating merchant: %v", errM)
-        }
+		merchant := testutils.GenerateTestMerchant()
+		if errM := db.Create(merchant).Error; errM != nil {
+			t.Fatalf("error creating merchant: %v", errM)
+		}
 
-        senderBankAccount := testutils.GenerateTestBankAccount()
-        senderBankAccount.Balance = decimal.NewFromInt(500)
+		senderBankAccount := testutils.GenerateTestBankAccount()
+		senderBankAccount.Balance = decimal.NewFromInt(500)
 
-        if errSBA := db.Create(senderBankAccount).Error; errSBA != nil {
-            t.Fatalf("error creating sender bank account: %v", errSBA)
-        }
+		if errSBA := db.Create(senderBankAccount).Error; errSBA != nil {
+			t.Fatalf("error creating sender bank account: %v", errSBA)
+		}
 
-        receiverBankAccount := testutils.GenerateTestBankAccount()
-        if errRBA := db.Create(receiverBankAccount).Error; errRBA != nil {
-            t.Fatalf("error creating receiver bank account: %v", errRBA)
-        }
+		receiverBankAccount := testutils.GenerateTestBankAccount()
+		if errRBA := db.Create(receiverBankAccount).Error; errRBA != nil {
+			t.Fatalf("error creating receiver bank account: %v", errRBA)
+		}
 
-        payoutAmount := decimal.NewFromInt(1000)
-        fee := decimal.NewFromInt(50)
+		payoutAmount := decimal.NewFromInt(1000)
+		fee := decimal.NewFromInt(50)
 
-        payoutReference := "payout-bank-to-bank-insufficient"
-        processingStatus := constants.TransactionStatusProcessing
+		payoutReference := "payout-bank-to-bank-insufficient"
+		processingStatus := constants.TransactionStatusProcessing
 
-        payout := &models.Payout{
-            ID:                       uuid.New(),
-            MerchantID:               merchant.ID,
-            SourceBankAccountID:      &senderBankAccount.ID,
-            DestinationBankAccountID: receiverBankAccount.ID,
-            PayoutReference:          payoutReference,
-            Amount:                   payoutAmount,
-            Currency:                 "INR",
-            Status:                   processingStatus,
-            CreatedAt:                time.Now(),
-            UpdatedAt:                time.Now(),
-        }
+		payout := &models.Payout{
+			ID:                       uuid.New(),
+			MerchantID:               merchant.ID,
+			SourceBankAccountID:      &senderBankAccount.ID,
+			DestinationBankAccountID: receiverBankAccount.ID,
+			PayoutReference:          payoutReference,
+			Amount:                   payoutAmount,
+			Currency:                 "INR",
+			Status:                   processingStatus,
+			CreatedAt:                time.Now(),
+			UpdatedAt:                time.Now(),
+		}
 
-        if err := db.Create(payout).Error; err != nil {
-            t.Fatalf("failed to create payout: %v", err)
-        }
+		if err := db.Create(payout).Error; err != nil {
+			t.Fatalf("failed to create payout: %v", err)
+		}
 
-        request := &PayoutWorkflowBankToBanRequest{
-            PayoutReference: payoutReference,
-            MerchantID:      merchant.ID,
-            Fee:             fee,
-            Request: dto.CreateBankToBankRequest{
-                Amount:                   payoutAmount,
-                Currency:                 "INR",
-                SourceBankAccountID:      senderBankAccount.ID,
-                DestinationBankAccountID: receiverBankAccount.ID,
-            },
-        }
+		request := &PayoutWorkflowBankToBanRequest{
+			PayoutReference: payoutReference,
+			MerchantID:      merchant.ID,
+			Fee:             fee,
+			Request: dto.CreateBankToBankRequest{
+				Amount:                   payoutAmount,
+				Currency:                 "INR",
+				SourceBankAccountID:      senderBankAccount.ID,
+				DestinationBankAccountID: receiverBankAccount.ID,
+			},
+		}
 
-        result, err := activityRegistry.ExecutePayoutBankToBank(
-            context.Background(),
-            request,
-        )
+		result, err := activityRegistry.ExecutePayoutBankToBank(
+			context.Background(),
+			request,
+		)
 
-        if err == nil {
-            t.Fatal("expected insufficient balance error, got nil")
-        }
+		if err == nil {
+			t.Fatal("expected insufficient balance error, got nil")
+		}
 
-        if result != nil {
-            t.Errorf("expected nil payout, got %+v", result)
-        }
+		if result != nil {
+			t.Errorf("expected nil payout, got %+v", result)
+		}
 
-        var updatedSenderBankAccount models.BankAccount
-        if err := db.
-            Where("id = ?", senderBankAccount.ID).
-            First(&updatedSenderBankAccount).Error; err != nil {
-            t.Fatalf("failed to fetch sender bank account: %v", err)
-        }
+		var updatedSenderBankAccount models.BankAccount
+		if err := db.
+			Where("id = ?", senderBankAccount.ID).
+			First(&updatedSenderBankAccount).Error; err != nil {
+			t.Fatalf("failed to fetch sender bank account: %v", err)
+		}
 
-        if !updatedSenderBankAccount.Balance.Equal(decimal.NewFromInt(500)) {
-            t.Errorf(
-                "expected sender bank balance 500 after rollback, got %s",
-                updatedSenderBankAccount.Balance,
-            )
-        }
+		if !updatedSenderBankAccount.Balance.Equal(decimal.NewFromInt(500)) {
+			t.Errorf(
+				"expected sender bank balance 500 after rollback, got %s",
+				updatedSenderBankAccount.Balance,
+			)
+		}
 
-        var updatedReceiverBankAccount models.BankAccount
-        if err := db.
-            Where("id = ?", receiverBankAccount.ID).
-            First(&updatedReceiverBankAccount).Error; err != nil {
-            t.Fatalf("failed to fetch receiver bank account: %v", err)
-        }
+		var updatedReceiverBankAccount models.BankAccount
+		if err := db.
+			Where("id = ?", receiverBankAccount.ID).
+			First(&updatedReceiverBankAccount).Error; err != nil {
+			t.Fatalf("failed to fetch receiver bank account: %v", err)
+		}
 
-        if !updatedReceiverBankAccount.Balance.Equal(decimal.NewFromInt(10000)) {
-            t.Errorf(
-                "expected receiver bank balance 10000 after rollback, got %s",
-                updatedReceiverBankAccount.Balance,
-            )
-        }
+		if !updatedReceiverBankAccount.Balance.Equal(decimal.NewFromInt(10000)) {
+			t.Errorf(
+				"expected receiver bank balance 10000 after rollback, got %s",
+				updatedReceiverBankAccount.Balance,
+			)
+		}
 
-        var updatedPayout models.Payout
-        if err := db.
-            Where("id = ?", payout.ID).
-            First(&updatedPayout).Error; err != nil {
-            t.Fatalf("failed to fetch payout: %v", err)
-        }
+		var updatedPayout models.Payout
+		if err := db.
+			Where("id = ?", payout.ID).
+			First(&updatedPayout).Error; err != nil {
+			t.Fatalf("failed to fetch payout: %v", err)
+		}
 
-        if updatedPayout.Status != processingStatus {
-            t.Errorf(
-                "expected payout status %q after rollback, got %q",
-                processingStatus,
-                updatedPayout.Status,
-            )
-        }
+		if updatedPayout.Status != processingStatus {
+			t.Errorf(
+				"expected payout status %q after rollback, got %q",
+				processingStatus,
+				updatedPayout.Status,
+			)
+		}
 
-        var ledgerCount int64
-        if err := db.
-            Model(&models.LedgerTransaction{}).
-            Where("reference_id = ?", payoutReference).
-            Count(&ledgerCount).Error; err != nil {
-            t.Fatalf("failed to count ledger transactions: %v", err)
-        }
+		var ledgerCount int64
+		if err := db.
+			Model(&models.LedgerTransaction{}).
+			Where("reference_id = ?", payoutReference).
+			Count(&ledgerCount).Error; err != nil {
+			t.Fatalf("failed to count ledger transactions: %v", err)
+		}
 
-        if ledgerCount != 0 {
-            t.Errorf(
-                "expected no ledger transaction after rollback, got %d",
-                ledgerCount,
-            )
-        }
-    })
+		if ledgerCount != 0 {
+			t.Errorf(
+				"expected no ledger transaction after rollback, got %d",
+				ledgerCount,
+			)
+		}
+	})
 }

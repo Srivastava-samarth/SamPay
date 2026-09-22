@@ -139,9 +139,7 @@ func TestCreateRefund(t *testing.T) {
 			ResponseBody:   make([]byte, len(responseBody)),
 		}
 
-		for i := range responseBody {
-			idempotency.ResponseBody[i] = responseBody[i]
-		}
+		copy(idempotency.ResponseBody, responseBody)
 
 		if err := db.Create(idempotency).Error; err != nil {
 			t.Fatalf("failed to create idempotency key: %v", err)

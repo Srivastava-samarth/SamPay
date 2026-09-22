@@ -220,7 +220,7 @@ func TestUpdateWalletBalance(t *testing.T) {
 		)
 	}
 
-	zeroBlance := decimal.Zero;
+	zeroBlance := decimal.Zero
 	request = &dto.UpdateWalletBalanceRequest{
 		AvailableBalance: &zeroBlance,
 		ReservedBalance:  &zeroBlance,

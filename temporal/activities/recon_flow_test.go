@@ -318,32 +318,32 @@ func TestGetLedgerEntriesForRecon(t *testing.T) {
 		}
 
 		entry1 := &models.LedgerEntry{
-			ID:                 utils.GenerateUUID(),
+			ID:                  utils.GenerateUUID(),
 			LedgerTransactionID: transactionID,
-			AccountType:        constants.LedgerAccountTypeWallet,
+			AccountType:         constants.LedgerAccountTypeWallet,
 			AccountID:           utils.GenerateUUID(),
-			EntryType:          constants.LedgerEntryTypeDebit,
-			Amount:             decimal.NewFromInt(1000),
+			EntryType:           constants.LedgerEntryTypeDebit,
+			Amount:              decimal.NewFromInt(1000),
 			Currency:            "INR",
 		}
 
 		entry2 := &models.LedgerEntry{
-			ID:                 utils.GenerateUUID(),
+			ID:                  utils.GenerateUUID(),
 			LedgerTransactionID: transactionID,
-			AccountType:        constants.LedgerAccountTypeVault,
+			AccountType:         constants.LedgerAccountTypeVault,
 			AccountID:           utils.GenerateUUID(),
-			EntryType:          constants.LedgerEntryTypeCredit,
-			Amount:             decimal.NewFromInt(1000),
+			EntryType:           constants.LedgerEntryTypeCredit,
+			Amount:              decimal.NewFromInt(1000),
 			Currency:            "INR",
 		}
 
 		otherEntry := &models.LedgerEntry{
-			ID:                 utils.GenerateUUID(),
+			ID:                  utils.GenerateUUID(),
 			LedgerTransactionID: otherTransactionID,
-			AccountType:        constants.LedgerAccountTypeWallet,
+			AccountType:         constants.LedgerAccountTypeWallet,
 			AccountID:           utils.GenerateUUID(),
-			EntryType:          constants.LedgerEntryTypeDebit,
-			Amount:             decimal.NewFromInt(500),
+			EntryType:           constants.LedgerEntryTypeDebit,
+			Amount:              decimal.NewFromInt(500),
 			Currency:            "INR",
 		}
 
@@ -431,7 +431,7 @@ func TestGetLedgerEntriesForRecon(t *testing.T) {
 			ID:                  utils.GenerateUUID(),
 			LedgerTransactionID: transactionID1,
 			AccountType:         constants.LedgerAccountTypeWallet,
-			AccountID:            utils.GenerateUUID(),
+			AccountID:           utils.GenerateUUID(),
 			EntryType:           constants.LedgerEntryTypeDebit,
 			Amount:              decimal.NewFromInt(1000),
 			Currency:            "INR",
@@ -441,8 +441,8 @@ func TestGetLedgerEntriesForRecon(t *testing.T) {
 			ID:                  utils.GenerateUUID(),
 			LedgerTransactionID: transactionID2,
 			AccountType:         constants.LedgerAccountTypeVault,
-			AccountID:            utils.GenerateUUID(),
-			EntryType:            constants.LedgerEntryTypeCredit,
+			AccountID:           utils.GenerateUUID(),
+			EntryType:           constants.LedgerEntryTypeCredit,
 			Amount:              decimal.NewFromInt(2000),
 			Currency:            "INR",
 		}
@@ -1145,14 +1145,14 @@ func TestGenerateReportEmail(t *testing.T) {
 
 	t.Run("generates email for passed report", func(t *testing.T) {
 		report := &dto.ReconReport{
-			ReconDate:         "2026-09-15",
-			TotalTransactions: 5,
-			MatchedCount:      5,
-			FailedCount:       0,
-			TotalDebit:        "5000",
-			TotalCredit:       "5000",
-			Difference:        "0",
-			Status:            "PASSED",
+			ReconDate:          "2026-09-15",
+			TotalTransactions:  5,
+			MatchedCount:       5,
+			FailedCount:        0,
+			TotalDebit:         "5000",
+			TotalCredit:        "5000",
+			Difference:         "0",
+			Status:             "PASSED",
 			FailedTransactions: []dto.ReconFailure{},
 		}
 
@@ -1293,4 +1293,3 @@ func TestSendReconEmail(t *testing.T) {
 		}
 	})
 }
-

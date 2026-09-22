@@ -35,7 +35,7 @@ func (a *Registry) ExecuteSettlementByMerchant(
 			return errPV
 		}
 
-		if paymentVault == nil{
+		if paymentVault == nil {
 			return errors.New("payment vault not found")
 		}
 
