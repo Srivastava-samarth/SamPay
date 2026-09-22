@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -91,6 +92,20 @@ func (as *Services) Authentication(authRequest *dto.AuthRequest) (*dto.AuthRespo
 }
 
 func (as *Services) ForgotPasswod(forgotPasswordRequest *dto.ForgotPasswordRequest) error {
+	start := time.Now()
+
+	fmt.Printf(
+		"ForgotPassword START %s\n",
+		start.Format("15:04:05.000"),
+	)
+
+	defer func() {
+		fmt.Printf(
+			"ForgotPassword END %s duration=%v\n",
+			time.Now().Format("15:04:05.000"),
+			time.Since(start),
+		)
+	}()
 	user, errU := as.Repo.GetUserByEmail(forgotPasswordRequest.Email)
 	if errU != nil {
 		return errU
