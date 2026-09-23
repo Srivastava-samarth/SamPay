@@ -9,6 +9,7 @@ import (
 	"github.com/Srivastava-samarth/sampay/utils"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
+	"gorm.io/gorm/clause"
 )
 
 func (br *Repository) CreateBankAccount(
@@ -35,12 +36,20 @@ func (br *Repository) CreateBankAccount(
 	return newBankAccount, nil
 }
 
-func (br *Repository) GetBankAccountByID(ID uuid.UUID) (*models.BankAccount, error) {
+func (br *Repository) GetBankAccountByID(
+	ID uuid.UUID,
+) (*models.BankAccount, error) {
 	var bankAccount models.BankAccount
-	err := br.DB.Where("id = ?", ID).First(&bankAccount).Error
+
+	err := br.DB.
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("id = ?", ID).
+		First(&bankAccount).Error
+
 	if err != nil {
 		return nil, err
 	}
+
 	return &bankAccount, nil
 }
 

@@ -104,8 +104,10 @@ func (pc *Controller) CreatePayment() gin.HandlerFunc {
 			return
 		}
 
+		workflowID := "payment-flow-" + uuid.New().String()
+
 		workflowOptions := client.StartWorkflowOptions{
-			ID:        "payment-flow-" + merchantID,
+			ID:        workflowID ,
 			TaskQueue: temporal.PaymentFlowTaskQueue,
 		}
 
