@@ -74,10 +74,13 @@ func (j *Jwt) GenerateResetPasswordToken(
 	}
 
 	expiry := time.Now().Add(time.Duration(expirySeconds) * time.Second)
+	jti := uuid.New().String()
+
 	claims := jwt.MapClaims{
 		"sub":   userID.String(),
 		"email": email,
 		"type":  "password_reset",
+		"jti":   jti,
 		"exp":   expiry.Unix(),
 		"iat":   time.Now().Unix(),
 	}

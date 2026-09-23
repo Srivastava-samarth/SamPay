@@ -7,6 +7,7 @@ import (
 	"github.com/Srivastava-samarth/sampay/temporal"
 	"github.com/Srivastava-samarth/sampay/temporal/workflows"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"go.temporal.io/sdk/client"
 )
 
@@ -53,7 +54,7 @@ func (ac *Controller) ForgotPassword() gin.HandlerFunc {
 		}
 
 		workflowOptions := client.StartWorkflowOptions{
-			ID:        "forgot password-" + request.Email,
+			ID:        "forgot-password-" + uuid.New().String(),
 			TaskQueue: temporal.ForgotPasswordTaskQueue,
 		}
 
