@@ -57,8 +57,8 @@ func (pr *Repository) UpdatePaymentStatus(
 	}
 
 	if *status == *payment.Status {
-	return &payment, nil
-}
+		return &payment, nil
+	}
 
 	updates["status"] = status
 

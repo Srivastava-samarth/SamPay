@@ -16,7 +16,7 @@ import (
 
 func TestCreateUser(t *testing.T) {
 	activityRegistry := &Registry{
-		DB: db,
+		DB:       db,
 		Services: testServices,
 		Repo:     testRepo,
 	}
@@ -122,7 +122,7 @@ func TestCreateUser(t *testing.T) {
 			LastName:  "Test",
 		}
 
-		result, err := activityRegistry.CreateUser(context.Background(),request)
+		result, err := activityRegistry.CreateUser(context.Background(), request)
 
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
@@ -227,7 +227,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestCreateMerchantUser(t *testing.T) {
 	activityRegistry := &Registry{
-		DB: db,
+		DB:       db,
 		Services: testServices,
 		Repo:     testRepo,
 	}
@@ -329,13 +329,13 @@ func TestCreateMerchantUser(t *testing.T) {
 	t.Run("creates merchant user successfully", func(t *testing.T) {
 		merchant := testutils.GenerateTestMerchant()
 		user := &models.User{
-			ID: utils.GenerateUUID(),
-			Email: "test.merchant@sampay.io",
-			PasswordHash: "$2a$10$pnhmHrwWKUdy1Kh5CHHNo.3Pv4YhjEYwzGCxreJ/WAwvYJGRBkUWW",
-			Status: constants.UserStatusActive,
+			ID:                 utils.GenerateUUID(),
+			Email:              "test.merchant@sampay.io",
+			PasswordHash:       "$2a$10$pnhmHrwWKUdy1Kh5CHHNo.3Pv4YhjEYwzGCxreJ/WAwvYJGRBkUWW",
+			Status:             constants.UserStatusActive,
 			MustChangePassword: false,
-			FirstName: "Test",
-			LastName: "Merchant",
+			FirstName:          "Test",
+			LastName:           "Merchant",
 		}
 
 		if err := db.Create(merchant).Error; err != nil {
@@ -352,7 +352,7 @@ func TestCreateMerchantUser(t *testing.T) {
 			Role:       "admin",
 		}
 
-		result, err := activityRegistry.CreateMerchantUser(context.Background(),request)
+		result, err := activityRegistry.CreateMerchantUser(context.Background(), request)
 
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
@@ -426,7 +426,7 @@ func TestCreateMerchantUser(t *testing.T) {
 
 func TestGetMerchantById(t *testing.T) {
 	activityRegistry := &Registry{
-		DB: db,
+		DB:       db,
 		Services: testServices,
 		Repo:     testRepo,
 	}
@@ -473,7 +473,7 @@ func TestGetMerchantById(t *testing.T) {
 
 func TestSendUserWelcomeEmail(t *testing.T) {
 	activityRegistry := &Registry{
-		DB: db,
+		DB:       db,
 		Services: testServices,
 		Repo:     testRepo,
 		NotificationService: &notifications.EmailService{
