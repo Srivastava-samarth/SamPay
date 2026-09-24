@@ -90,7 +90,6 @@ func TestCreateIdempotencyKey(t *testing.T) {
 			_, err := testServices.CreateIdempotencyKey(
 				tt.merchantID,
 				tt.key,
-				tt.responseBody,
 			)
 
 			if err == nil {

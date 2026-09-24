@@ -20,7 +20,8 @@ func Connect(cfg *config.DatabaseConfig) (*gorm.DB, error) {
 		cfg.SSLMode,
 		cfg.TimeZone,
 	)
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{TranslateError: true})
 	if err != nil {
 		return nil, err
 	}

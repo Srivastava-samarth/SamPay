@@ -29,3 +29,20 @@ func (ir *Repository) CreateIdempotencyKey(idempotencyKey *models.IdempotencyKey
 
 	return idempotencyKey, nil
 }
+
+func (ir *Repository) UpdateIdempotencyKey(
+    idempotencyKey *models.IdempotencyKey,
+) (*models.IdempotencyKey, error) {
+    err := ir.DB.
+        Model(&models.IdempotencyKey{}).
+        Where("id = ?", idempotencyKey.ID).
+        Updates(map[string]interface{}{
+            "response_body": idempotencyKey.ResponseBody,
+        }).Error
+
+    if err != nil {
+        return nil, err
+    }
+
+    return idempotencyKey, nil
+}

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -12,12 +13,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go.temporal.io/sdk/client"
+	"gorm.io/gorm"
 )
 
 func (pc *Controller) WalletToBankAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.CreateWalletToBankRequest
+
 		merchantID := c.Param("merchant_id")
+
 		parsedMerchantID, errP := uuid.Parse(merchantID)
 		if errP != nil {
 			dto.Fail(
@@ -28,6 +32,7 @@ func (pc *Controller) WalletToBankAccount() gin.HandlerFunc {
 			)
 			return
 		}
+
 		idempotencyKey := strings.TrimSpace(
 			c.GetHeader("Idempotency-Key"),
 		)
@@ -42,39 +47,84 @@ func (pc *Controller) WalletToBankAccount() gin.HandlerFunc {
 			return
 		}
 
-		existingIdempotencyKey, errEI := pc.Services.GetIdempotencyByKeyAndMerchantId(parsedMerchantID, idempotencyKey)
-		if errEI != nil {
-			dto.Fail(
-				c,
-				http.StatusInternalServerError,
-				"ERROR_FINDING_IDEMPOTENCY",
-				errEI.Error(),
+		// Try to claim the idempotency key.
+		createdIdempotencyKey, errCI :=
+			pc.Services.CreateIdempotencyKey(
+				parsedMerchantID,
+				idempotencyKey,
 			)
-			return
-		}
 
-		if existingIdempotencyKey != nil {
+		if errCI != nil {
+			if errors.Is(errCI, gorm.ErrDuplicatedKey) {
+				existingIdempotencyKey, errEI :=
+					pc.Services.GetIdempotencyByKeyAndMerchantId(
+						parsedMerchantID,
+						idempotencyKey,
+					)
 
-			var response dto.Response
+				if errEI != nil {
+					dto.Fail(
+						c,
+						http.StatusInternalServerError,
+						"ERROR_FINDING_IDEMPOTENCY",
+						errEI.Error(),
+					)
+					return
+				}
 
-			err := json.Unmarshal(
-				existingIdempotencyKey.ResponseBody,
-				&response,
-			)
-			if err != nil {
-				dto.Fail(
-					c,
-					http.StatusInternalServerError,
-					"FAILED_UNMARSHALLING",
-					err.Error(),
+				if existingIdempotencyKey == nil {
+					dto.Fail(
+						c,
+						http.StatusInternalServerError,
+						"IDEMPOTENCY_NOT_FOUND",
+						"idempotency key was created by another request but could not be found",
+					)
+					return
+				}
+
+				// The original request is still processing.
+				// We will replace this with waiting for the original
+				// workflow in the next step.
+				if existingIdempotencyKey.ResponseBody == nil {
+					dto.Fail(
+						c,
+						http.StatusConflict,
+						"REQUEST_IN_PROGRESS",
+						"request with this idempotency key is already in progress",
+					)
+					return
+				}
+
+				var response dto.Response
+
+				err := json.Unmarshal(
+					existingIdempotencyKey.ResponseBody,
+					&response,
 				)
+				if err != nil {
+					dto.Fail(
+						c,
+						http.StatusInternalServerError,
+						"FAILED_UNMARSHALLING",
+						err.Error(),
+					)
+					return
+				}
+
+				c.JSON(http.StatusOK, response)
 				return
 			}
 
-			c.JSON(http.StatusOK, response)
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"ERROR_CREATING_IDEMPOTENCY",
+				errCI.Error(),
+			)
 			return
 		}
 
+		// We successfully claimed the idempotency key.
 		if err := c.ShouldBindJSON(&request); err != nil {
 			response := dto.Response{
 				Success: false,
@@ -84,11 +134,31 @@ func (pc *Controller) WalletToBankAccount() gin.HandlerFunc {
 				},
 			}
 
-			pc.SaveIdempotencyResponse(
-				parsedMerchantID,
-				idempotencyKey,
-				response,
+			responseBody, errM := json.Marshal(response)
+			if errM != nil {
+				dto.Fail(
+					c,
+					http.StatusInternalServerError,
+					"FAILED_MARSHALLING",
+					errM.Error(),
+				)
+				return
+			}
+
+			createdIdempotencyKey.ResponseBody = responseBody
+
+			_, errU := pc.Services.UpdateIdempotencyKey(
+				createdIdempotencyKey,
 			)
+			if errU != nil {
+				dto.Fail(
+					c,
+					http.StatusInternalServerError,
+					"ERROR_UPDATING_IDEMPOTENCY",
+					errU.Error(),
+				)
+				return
+			}
 
 			dto.Fail(
 				c,
@@ -121,11 +191,31 @@ func (pc *Controller) WalletToBankAccount() gin.HandlerFunc {
 				},
 			}
 
-			pc.SaveIdempotencyResponse(
-				parsedMerchantID,
-				idempotencyKey,
-				response,
+			responseBody, errM := json.Marshal(response)
+			if errM != nil {
+				dto.Fail(
+					c,
+					http.StatusInternalServerError,
+					"FAILED_MARSHALLING",
+					errM.Error(),
+				)
+				return
+			}
+
+			createdIdempotencyKey.ResponseBody = responseBody
+
+			_, errU := pc.Services.UpdateIdempotencyKey(
+				createdIdempotencyKey,
 			)
+			if errU != nil {
+				dto.Fail(
+					c,
+					http.StatusInternalServerError,
+					"ERROR_UPDATING_IDEMPOTENCY",
+					errU.Error(),
+				)
+				return
+			}
 
 			dto.Fail(
 				c,
@@ -142,7 +232,6 @@ func (pc *Controller) WalletToBankAccount() gin.HandlerFunc {
 			c.Request.Context(),
 			&payout,
 		)
-
 		if err != nil {
 			response := dto.Response{
 				Success: false,
@@ -152,11 +241,31 @@ func (pc *Controller) WalletToBankAccount() gin.HandlerFunc {
 				},
 			}
 
-			pc.SaveIdempotencyResponse(
-				parsedMerchantID,
-				idempotencyKey,
-				response,
+			responseBody, errM := json.Marshal(response)
+			if errM != nil {
+				dto.Fail(
+					c,
+					http.StatusInternalServerError,
+					"FAILED_MARSHALLING",
+					errM.Error(),
+				)
+				return
+			}
+
+			createdIdempotencyKey.ResponseBody = responseBody
+
+			_, errU := pc.Services.UpdateIdempotencyKey(
+				createdIdempotencyKey,
 			)
+			if errU != nil {
+				dto.Fail(
+					c,
+					http.StatusInternalServerError,
+					"ERROR_UPDATING_IDEMPOTENCY",
+					errU.Error(),
+				)
+				return
+			}
 
 			dto.Fail(
 				c,
@@ -172,11 +281,31 @@ func (pc *Controller) WalletToBankAccount() gin.HandlerFunc {
 			Data:    payout,
 		}
 
-		pc.SaveIdempotencyResponse(
-			parsedMerchantID,
-			idempotencyKey,
-			response,
+		responseBody, errM := json.Marshal(response)
+		if errM != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"FAILED_MARSHALLING",
+				errM.Error(),
+			)
+			return
+		}
+
+		createdIdempotencyKey.ResponseBody = responseBody
+
+		_, errU := pc.Services.UpdateIdempotencyKey(
+			createdIdempotencyKey,
 		)
+		if errU != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"ERROR_UPDATING_IDEMPOTENCY",
+				errU.Error(),
+			)
+			return
+		}
 
 		dto.Respond(
 			c,
@@ -189,7 +318,9 @@ func (pc *Controller) WalletToBankAccount() gin.HandlerFunc {
 func (pc *Controller) BankToBankAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request *dto.CreateBankToBankRequest
+
 		merchantID := c.Param("merchant_id")
+
 		parsedMerchantID, errP := uuid.Parse(merchantID)
 		if errP != nil {
 			dto.Fail(
@@ -200,6 +331,7 @@ func (pc *Controller) BankToBankAccount() gin.HandlerFunc {
 			)
 			return
 		}
+
 		idempotencyKey := strings.TrimSpace(
 			c.GetHeader("Idempotency-Key"),
 		)
@@ -214,36 +346,76 @@ func (pc *Controller) BankToBankAccount() gin.HandlerFunc {
 			return
 		}
 
-		existingIdempotencyKey, errEI := pc.Services.GetIdempotencyByKeyAndMerchantId(parsedMerchantID, idempotencyKey)
-		if errEI != nil {
-			dto.Fail(
-				c,
-				http.StatusInternalServerError,
-				"ERROR_FINDING_IDEMPOTENCY",
-				errEI.Error(),
+		createdIdempotencyKey, errCI :=
+			pc.Services.CreateIdempotencyKey(
+				parsedMerchantID,
+				idempotencyKey,
 			)
-			return
-		}
 
-		if existingIdempotencyKey != nil {
+		if errCI != nil {
+			if errors.Is(errCI, gorm.ErrDuplicatedKey) {
+				existingIdempotencyKey, errEI :=
+					pc.Services.GetIdempotencyByKeyAndMerchantId(
+						parsedMerchantID,
+						idempotencyKey,
+					)
 
-			var response dto.Response
+				if errEI != nil {
+					dto.Fail(
+						c,
+						http.StatusInternalServerError,
+						"ERROR_FINDING_IDEMPOTENCY",
+						errEI.Error(),
+					)
+					return
+				}
 
-			err := json.Unmarshal(
-				existingIdempotencyKey.ResponseBody,
-				&response,
-			)
-			if err != nil {
-				dto.Fail(
-					c,
-					http.StatusInternalServerError,
-					"FAILED_UNMARSHALLING",
-					err.Error(),
+				if existingIdempotencyKey == nil {
+					dto.Fail(
+						c,
+						http.StatusInternalServerError,
+						"IDEMPOTENCY_NOT_FOUND",
+						"idempotency key was created by another request but could not be found",
+					)
+					return
+				}
+
+				if existingIdempotencyKey.ResponseBody == nil {
+					dto.Fail(
+						c,
+						http.StatusConflict,
+						"REQUEST_IN_PROGRESS",
+						"request with this idempotency key is already in progress",
+					)
+					return
+				}
+
+				var response dto.Response
+
+				err := json.Unmarshal(
+					existingIdempotencyKey.ResponseBody,
+					&response,
 				)
+				if err != nil {
+					dto.Fail(
+						c,
+						http.StatusInternalServerError,
+						"FAILED_UNMARSHALLING",
+						err.Error(),
+					)
+					return
+				}
+
+				c.JSON(http.StatusOK, response)
 				return
 			}
 
-			c.JSON(http.StatusOK, response)
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"ERROR_CREATING_IDEMPOTENCY",
+				errCI.Error(),
+			)
 			return
 		}
 
@@ -256,11 +428,31 @@ func (pc *Controller) BankToBankAccount() gin.HandlerFunc {
 				},
 			}
 
-			pc.SaveIdempotencyResponse(
-				parsedMerchantID,
-				idempotencyKey,
-				response,
+			responseBody, errM := json.Marshal(response)
+			if errM != nil {
+				dto.Fail(
+					c,
+					http.StatusInternalServerError,
+					"FAILED_MARSHALLING",
+					errM.Error(),
+				)
+				return
+			}
+
+			createdIdempotencyKey.ResponseBody = responseBody
+
+			_, errU := pc.Services.UpdateIdempotencyKey(
+				createdIdempotencyKey,
 			)
+			if errU != nil {
+				dto.Fail(
+					c,
+					http.StatusInternalServerError,
+					"ERROR_UPDATING_IDEMPOTENCY",
+					errU.Error(),
+				)
+				return
+			}
 
 			dto.Fail(
 				c,
@@ -293,11 +485,31 @@ func (pc *Controller) BankToBankAccount() gin.HandlerFunc {
 				},
 			}
 
-			pc.SaveIdempotencyResponse(
-				parsedMerchantID,
-				idempotencyKey,
-				response,
+			responseBody, errM := json.Marshal(response)
+			if errM != nil {
+				dto.Fail(
+					c,
+					http.StatusInternalServerError,
+					"FAILED_MARSHALLING",
+					errM.Error(),
+				)
+				return
+			}
+
+			createdIdempotencyKey.ResponseBody = responseBody
+
+			_, errU := pc.Services.UpdateIdempotencyKey(
+				createdIdempotencyKey,
 			)
+			if errU != nil {
+				dto.Fail(
+					c,
+					http.StatusInternalServerError,
+					"ERROR_UPDATING_IDEMPOTENCY",
+					errU.Error(),
+				)
+				return
+			}
 
 			dto.Fail(
 				c,
@@ -314,7 +526,6 @@ func (pc *Controller) BankToBankAccount() gin.HandlerFunc {
 			c.Request.Context(),
 			&payout,
 		)
-
 		if err != nil {
 			response := dto.Response{
 				Success: false,
@@ -324,11 +535,31 @@ func (pc *Controller) BankToBankAccount() gin.HandlerFunc {
 				},
 			}
 
-			pc.SaveIdempotencyResponse(
-				parsedMerchantID,
-				idempotencyKey,
-				response,
+			responseBody, errM := json.Marshal(response)
+			if errM != nil {
+				dto.Fail(
+					c,
+					http.StatusInternalServerError,
+					"FAILED_MARSHALLING",
+					errM.Error(),
+				)
+				return
+			}
+
+			createdIdempotencyKey.ResponseBody = responseBody
+
+			_, errU := pc.Services.UpdateIdempotencyKey(
+				createdIdempotencyKey,
 			)
+			if errU != nil {
+				dto.Fail(
+					c,
+					http.StatusInternalServerError,
+					"ERROR_UPDATING_IDEMPOTENCY",
+					errU.Error(),
+				)
+				return
+			}
 
 			dto.Fail(
 				c,
@@ -344,11 +575,31 @@ func (pc *Controller) BankToBankAccount() gin.HandlerFunc {
 			Data:    payout,
 		}
 
-		pc.SaveIdempotencyResponse(
-			parsedMerchantID,
-			idempotencyKey,
-			response,
+		responseBody, errM := json.Marshal(response)
+		if errM != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"FAILED_MARSHALLING",
+				errM.Error(),
+			)
+			return
+		}
+
+		createdIdempotencyKey.ResponseBody = responseBody
+
+		_, errU := pc.Services.UpdateIdempotencyKey(
+			createdIdempotencyKey,
 		)
+		if errU != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"ERROR_UPDATING_IDEMPOTENCY",
+				errU.Error(),
+			)
+			return
+		}
 
 		dto.Respond(
 			c,

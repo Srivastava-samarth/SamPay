@@ -4,11 +4,7 @@ CREATE TABLE idempotency_keys (
     id UUID PRIMARY KEY,
     merchant_id UUID NOT NULL,
     idempotency_key VARCHAR(255) NOT NULL,
-    request_hash VARCHAR(255) NOT NULL,
-    response_status INTEGER,
     response_body JSONB,
-    status VARCHAR(50) NOT NULL DEFAULT 'in_progress',
-    expires_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

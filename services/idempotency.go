@@ -26,27 +26,42 @@ func (is *Services) GetIdempotencyByKeyAndMerchantId(merchantID uuid.UUID, key s
 	return idempotency, nil
 }
 
-func (is *Services) CreateIdempotencyKey(merchantID uuid.UUID, key string, responseBody []byte) (*models.IdempotencyKey, error) {
-	if merchantID == uuid.Nil {
-		return nil, errors.New("merchantID is required")
-	}
+func (is *Services) CreateIdempotencyKey(
+    merchantID uuid.UUID,
+    key string,
+) (*models.IdempotencyKey, error) {
+    if merchantID == uuid.Nil {
+        return nil, errors.New("merchantID is required")
+    }
 
-	if strings.TrimSpace(key) == "" {
-		return nil, errors.New("key is required")
-	}
-	key = strings.TrimSpace(key)
+    key = strings.TrimSpace(key)
+    if key == "" {
+        return nil, errors.New("key is required")
+    }
 
-	idempotencyKey := &models.IdempotencyKey{
-		ID:             utils.GenerateUUID(),
-		MerchantID:     merchantID,
-		IdempotencyKey: key,
-		ResponseBody:   responseBody,
-	}
+    idempotencyKey := &models.IdempotencyKey{
+        ID:            utils.GenerateUUID(),
+        MerchantID:   merchantID,
+        IdempotencyKey: key,
+    }
 
-	idempotency, errI := is.Repo.CreateIdempotencyKey(idempotencyKey)
-	if errI != nil {
-		return nil, errI
-	}
+    return is.Repo.CreateIdempotencyKey(idempotencyKey)
+}
 
-	return idempotency, nil
+func (is *Services) UpdateIdempotencyKey(
+    idempotencyKey *models.IdempotencyKey,
+) (*models.IdempotencyKey, error) {
+    if idempotencyKey == nil {
+        return nil, errors.New("idempotencyKey is required")
+    }
+
+    if idempotencyKey.ID == uuid.Nil {
+        return nil, errors.New("idempotencyKey ID is required")
+    }
+
+    if idempotencyKey.ResponseBody == nil {
+        return nil, errors.New("responseBody is required")
+    }
+
+    return is.Repo.UpdateIdempotencyKey(idempotencyKey)
 }
