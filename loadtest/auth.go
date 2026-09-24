@@ -278,7 +278,16 @@ func runLoginLoadTest(
 				}
 
 				responseBody, _ := io.ReadAll(resp.Body)
-				resp.Body.Close()
+				if err := resp.Body.Close(); err != nil {
+					totalRequests.Add(1)
+					failedRequests.Add(1)
+
+					latencyMu.Lock()
+					latencies = append(latencies, latency)
+					latencyMu.Unlock()
+
+					continue
+				}
 
 				totalRequests.Add(1)
 
@@ -468,7 +477,16 @@ func runRefreshTokenLoadTest(
 				}
 
 				responseBody, _ := io.ReadAll(resp.Body)
-				resp.Body.Close()
+				if err := resp.Body.Close(); err != nil {
+					totalRequests.Add(1)
+					failedRequests.Add(1)
+
+					latencyMu.Lock()
+					latencies = append(latencies, latency)
+					latencyMu.Unlock()
+
+					continue
+				}
 
 				totalRequests.Add(1)
 
@@ -641,7 +659,9 @@ func getRefreshToken(baseURL, email, password string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("login request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	if err := resp.Body.Close(); err != nil {
+		return "", fmt.Errorf("login request failed: %w", err)
+	}
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -885,7 +905,16 @@ func runForgotPasswordLoadTest(
 				}
 
 				responseBody, _ := io.ReadAll(resp.Body)
-				resp.Body.Close()
+				if err := resp.Body.Close(); err != nil {
+					totalRequests.Add(1)
+					failedRequests.Add(1)
+
+					latencyMu.Lock()
+					latencies = append(latencies, latency)
+					latencyMu.Unlock()
+
+					continue
+				}
 
 				totalRequests.Add(1)
 
@@ -1123,7 +1152,16 @@ func runResetPasswordLoadTest(
 					resp.Body,
 				)
 
-				resp.Body.Close()
+				if err := resp.Body.Close(); err != nil {
+					totalRequests.Add(1)
+					failedRequests.Add(1)
+
+					latencyMu.Lock()
+					latencies = append(latencies, latency)
+					latencyMu.Unlock()
+
+					continue
+				}
 
 				totalRequests.Add(1)
 
