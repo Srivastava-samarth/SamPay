@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func (wr *Repository) CreateWalletForMerchant(merchantID uuid.UUID) (*models.Wallets, error) {
@@ -33,7 +34,9 @@ func (wr *Repository) CreateWalletForMerchant(merchantID uuid.UUID) (*models.Wal
 
 func (wr *Repository) GetWalletByMerchantId(merchantId uuid.UUID) (*models.Wallets, error) {
 	var wallet *models.Wallets
-	err := wr.DB.Where("merchant_id = ? AND status = ?", merchantId, "active").First(&wallet).Error
+	err := wr.DB.
+	Clauses(clause.Locking{Strength: "UPDATE"}).
+	Where("merchant_id = ? AND status = ?", merchantId, "active").First(&wallet).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}

@@ -138,23 +138,9 @@ func TestWalletToBankAccount(t *testing.T) {
 		merchantID := merchant.ID
 		idempotencyKey := "wallet-bank-test-key"
 
-		storedResponse := dto.Response{
-			Success: false,
-			Error: &dto.ErrorInfo{
-				Code:    "PAYOUT_FAILED",
-				Message: "stored payout failure",
-			},
-		}
-
-		responseBody, err := json.Marshal(storedResponse)
-		if err != nil {
-			t.Fatalf("failed to marshal response: %v", err)
-		}
-
 		if _, err := testServices.CreateIdempotencyKey(
 			merchant.ID,
 			idempotencyKey,
-			responseBody,
 		); err != nil {
 			t.Fatalf("failed to create idempotency key: %v", err)
 		}
@@ -233,12 +219,10 @@ func TestWalletToBankAccount(t *testing.T) {
 		merchantID := merchant.ID
 		idempotencyKey := "wallet-bank-invalid-response"
 
-		responseBody := []byte(`{"success":"not-a-bool"}`)
 
 		if _, err := testServices.CreateIdempotencyKey(
 			merchantID,
 			idempotencyKey,
-			responseBody,
 		); err != nil {
 			t.Fatalf("failed to create idempotency key: %v", err)
 		}
@@ -669,22 +653,9 @@ func TestBankToBankAccount(t *testing.T) {
 
 		idempotencyKey := "existing-bank-to-bank-key"
 
-		response := dto.Response{
-			Success: true,
-			Data: map[string]string{
-				"message": "existing response",
-			},
-		}
-
-		responseBody, err := json.Marshal(response)
-		if err != nil {
-			t.Fatalf("failed to marshal response: %v", err)
-		}
-
-		_, err = testServices.CreateIdempotencyKey(
+		_, err := testServices.CreateIdempotencyKey(
 			merchant.ID,
 			idempotencyKey,
-			responseBody,
 		)
 		if err != nil {
 			t.Fatalf("failed to create idempotency key: %v", err)
@@ -736,12 +707,10 @@ func TestBankToBankAccount(t *testing.T) {
 
 		idempotencyKey := "invalid-bank-to-bank-response"
 
-		invalidResponse := []byte(`{"success":"not-a-bool"}`)
 
 		_, err := testServices.CreateIdempotencyKey(
 			merchant.ID,
 			idempotencyKey,
-			invalidResponse,
 		)
 		if err != nil {
 			t.Fatalf("failed to create idempotency key: %v", err)

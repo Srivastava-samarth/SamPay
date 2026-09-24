@@ -2,6 +2,7 @@ package activities
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/Srivastava-samarth/sampay/constants"
@@ -89,21 +90,6 @@ func (a *Registry) ExecutePayment(
 			}
 
 			// ---------------------------------------------------------
-			// 2. Check balance
-			// ---------------------------------------------------------
-
-			isBalanceSufficient, err := a.Services.CheckBalance(
-				merchantID,
-				totalAmount,
-			)
-			if err != nil {
-				return fmt.Errorf(
-					"balance check failed: %w",
-					err,
-				)
-			}
-
-			// ---------------------------------------------------------
 			// 3. Get sender wallet
 			// ---------------------------------------------------------
 
@@ -117,13 +103,17 @@ func (a *Registry) ExecutePayment(
 				)
 			}
 
+			if senderWallet == nil {
+				return errors.New("wallet does not exist")
+			}
+
 			// ---------------------------------------------------------
 			// 4. Auto top-up if required
 			// ---------------------------------------------------------
 
 			updatedWallet := senderWallet
 
-			if !isBalanceSufficient {
+			if !senderWallet.AvailableBalance.GreaterThanOrEqual(totalAmount) {
 				updatedWallet, err = a.Services.TopUpWalletFromPrimaryBank(
 					tx,
 					senderWallet,
