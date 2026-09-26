@@ -8,7 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-func (mus *Services) CreateMerchantUser(merchantUserRequest *dto.CreateMerchantUserRequest) (*dto.CreateMerchantUserResponse, error) {
+func (mus *Services) CreateMerchantUser(
+	merchantUserRequest *dto.CreateMerchantUserRequest,
+	) (*dto.CreateMerchantUserResponse, error) {
 	if merchantUserRequest == nil {
 		return nil, errors.New("request is required")
 	}

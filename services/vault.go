@@ -12,7 +12,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func (vs *Services) CreateVault(request *dto.CreateVaultRequest) (*models.Vault, error) {
+func (vs *Services) CreateVault(
+	request *dto.CreateVaultRequest,
+	) (*models.Vault, error) {
 	if request == nil {
 		return nil, errors.New("request payload can't be empty")
 	}
@@ -55,7 +57,9 @@ func (vs *Services) GetVaults() ([]*models.Vault, error) {
 	return vaults, nil
 }
 
-func (vs *Services) GetVaultByID(vaultId uuid.UUID) (*models.Vault, error) {
+func (vs *Services) GetVaultByID(
+	vaultId uuid.UUID,
+	) (*models.Vault, error) {
 	if vaultId == uuid.Nil {
 		return nil, errors.New("vault_id is required")
 	}
@@ -67,7 +71,11 @@ func (vs *Services) GetVaultByID(vaultId uuid.UUID) (*models.Vault, error) {
 	return vault, nil
 }
 
-func (vs *Services) UpdateVaultBalance(merchantID uuid.UUID, balance decimal.Decimal, vaultType string) (*models.Vault, error) {
+func (vs *Services) UpdateVaultBalance(
+	merchantID uuid.UUID, 
+	balance decimal.Decimal, 
+	vaultType string,
+	) (*models.Vault, error) {
 	if balance.LessThanOrEqual(decimal.Zero) {
 		return nil, errors.New("balance must be greater than zero")
 	}
@@ -150,7 +158,10 @@ func (vs *Services) UpdateVaultBalance(merchantID uuid.UUID, balance decimal.Dec
 	return updatedVault, errUV
 }
 
-func (vs *Services) UpdateVaultStatus(status string, vaultID uuid.UUID) (*models.Vault, error) {
+func (vs *Services) UpdateVaultStatus(
+	status string, 
+	vaultID uuid.UUID,
+	) (*models.Vault, error) {
 	if !utils.IsValidVaultStatus(status) {
 		return nil, errors.New("status is not a valid status")
 	}

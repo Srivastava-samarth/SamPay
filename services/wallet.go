@@ -12,7 +12,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func (ws *Services) CreateWalletForMerchant(merchantID uuid.UUID) (*models.Wallets, error) {
+func (ws *Services) CreateWalletForMerchant(
+	merchantID uuid.UUID,
+	) (*models.Wallets, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant id is required")
 	}
@@ -33,7 +35,9 @@ func (ws *Services) CreateWalletForMerchant(merchantID uuid.UUID) (*models.Walle
 	return wallet, nil
 }
 
-func (ws *Services) GetWalletByMerchantID(merchantID uuid.UUID) (*models.Wallets, error) {
+func (ws *Services) GetWalletByMerchantID(
+	merchantID uuid.UUID,
+	) (*models.Wallets, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant id is required")
 	}
@@ -45,7 +49,10 @@ func (ws *Services) GetWalletByMerchantID(merchantID uuid.UUID) (*models.Wallets
 	return wallet, nil
 }
 
-func (ws *Services) UpdateWalletStatus(merchantId uuid.UUID, status string) (*models.Wallets, error) {
+func (ws *Services) UpdateWalletStatus(
+	merchantId uuid.UUID, 
+	status string,
+	) (*models.Wallets, error) {
 	if merchantId == uuid.Nil {
 		return nil, errors.New("merchant id is required")
 	}

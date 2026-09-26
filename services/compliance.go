@@ -326,7 +326,9 @@ func (cs *Services) ValidateCorporateMerchantRequest(
 	return nil
 }
 
-func validateDateOfBirth(dobString string) error {
+func validateDateOfBirth(
+	dobString string,
+	) error {
 	dob, err := time.Parse("2006-01-02", dobString)
 	if err != nil {
 		return errors.New("date of birth must be in YYYY-MM-DD format")
@@ -352,7 +354,9 @@ func validateDateOfBirth(dobString string) error {
 	return nil
 }
 
-func isValidCountry(country string) bool {
+func isValidCountry(
+	country string,
+	) bool {
 	country = strings.TrimSpace(country)
 
 	_, exists := constants.ValidCountries[strings.ToLower(country)]

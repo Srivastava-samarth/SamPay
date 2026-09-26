@@ -11,7 +11,10 @@ import (
 
 const MinimumBankBalance = 1000
 
-func (ps *Services) ValidatePayoutRequestWalletToBank(request *dto.CreateWalletToBankRequest, senderMerchantID uuid.UUID) error {
+func (ps *Services) ValidatePayoutRequestWalletToBank(
+	request *dto.CreateWalletToBankRequest, 
+	senderMerchantID uuid.UUID,
+	) error {
 	if request == nil {
 		return errors.New("payment request is required")
 	}
@@ -48,7 +51,10 @@ func (ps *Services) ValidatePayoutRequestWalletToBank(request *dto.CreateWalletT
 	return nil
 }
 
-func (ps *Services) ValidatePayoutRequestBankToBank(request *dto.CreateBankToBankRequest, senderMerchantID uuid.UUID) error {
+func (ps *Services) ValidatePayoutRequestBankToBank(
+	request *dto.CreateBankToBankRequest, 
+	senderMerchantID uuid.UUID,
+	) error {
 	if request == nil {
 		return errors.New("payment request is required")
 	}

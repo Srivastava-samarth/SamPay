@@ -13,7 +13,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (as *Services) Authentication(authRequest *dto.AuthRequest) (*dto.AuthResponse, error) {
+func (as *Services) Authentication(
+	authRequest *dto.AuthRequest,
+	) (*dto.AuthResponse, error) {
 	var authResponse *dto.AuthResponse
 
 	user, errU := as.Repo.GetUserByEmail(authRequest.Email)
@@ -91,7 +93,9 @@ func (as *Services) Authentication(authRequest *dto.AuthRequest) (*dto.AuthRespo
 
 }
 
-func (as *Services) ForgotPasswod(forgotPasswordRequest *dto.ForgotPasswordRequest) error {
+func (as *Services) ForgotPasswod(
+	forgotPasswordRequest *dto.ForgotPasswordRequest,
+	) error {
 	start := time.Now()
 
 	fmt.Printf(

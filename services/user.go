@@ -14,7 +14,9 @@ type CreatedUserResult struct {
 	TemporaryPassword string
 }
 
-func (us *Services) CreateUser(userRequest *dto.CreateUserRequest) (*CreatedUserResult, error) {
+func (us *Services) CreateUser(
+	userRequest *dto.CreateUserRequest,
+	) (*CreatedUserResult, error) {
 	if userRequest == nil {
 		return nil, errors.New("request is required")
 	}
@@ -68,7 +70,9 @@ func (us *Services) CreateUser(userRequest *dto.CreateUserRequest) (*CreatedUser
 	return userResponse, nil
 }
 
-func (us *Services) GetUser(userId uuid.UUID) (*models.User, error) {
+func (us *Services) GetUser(
+	userId uuid.UUID,
+	) (*models.User, error) {
 	if userId == uuid.Nil {
 		return nil, errors.New("user_id is required")
 	}
@@ -118,7 +122,10 @@ func (us *Services) UpdateUser(
 	return us.Repo.UpdateUser(userID, updatedUserPayload)
 }
 
-func (us *Services) UpdateUserStatus(status string, userID uuid.UUID) (*models.User, error) {
+func (us *Services) UpdateUserStatus(
+	status string, 
+	userID uuid.UUID,
+	) (*models.User, error) {
 	if userID == uuid.Nil {
 		return nil, errors.New("user_id is required")
 	}
@@ -148,7 +155,9 @@ func (us *Services) UpdateUserStatus(status string, userID uuid.UUID) (*models.U
 	return updatedUser, nil
 }
 
-func (us *Services) GetUsersByMerchant(merchantID uuid.UUID) ([]*models.User, error) {
+func (us *Services) GetUsersByMerchant(
+	merchantID uuid.UUID,
+	) ([]*models.User, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant_id is required")
 	}

@@ -8,7 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-func (lbs *Services) CreateLinkedBankAccount(linkedBankAccountRequest *dto.CreateLinkedBankAccountRequest) (*dto.CreateLinkedBankAccountResponse, error) {
+func (lbs *Services) CreateLinkedBankAccount(
+	linkedBankAccountRequest *dto.CreateLinkedBankAccountRequest,
+	) (*dto.CreateLinkedBankAccountResponse, error) {
 	if linkedBankAccountRequest == nil {
 		return nil, errors.New("request is required")
 	}

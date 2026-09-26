@@ -85,7 +85,9 @@ func (ps *Services) ValidatePaymentRequest(
 	return nil
 }
 
-func (ps *Services) CalculateFees(amount decimal.Decimal) (decimal.Decimal, error) {
+func (ps *Services) CalculateFees(
+	amount decimal.Decimal,
+	) (decimal.Decimal, error) {
 	if amount.LessThanOrEqual(decimal.Zero) {
 		return decimal.Zero, errors.New("amount must be greater than 0")
 	}
@@ -96,7 +98,10 @@ func (ps *Services) CalculateFees(amount decimal.Decimal) (decimal.Decimal, erro
 	return fee, nil
 }
 
-func (ps *Services) CheckBalance(merchantID uuid.UUID, amount decimal.Decimal) (bool, error) {
+func (ps *Services) CheckBalance(
+	merchantID uuid.UUID, 
+	amount decimal.Decimal,
+	) (bool, error) {
 	wallet, errW := ps.GetWalletByMerchantID(merchantID)
 	if errW != nil {
 		return false, errW
@@ -108,7 +113,9 @@ func (ps *Services) CheckBalance(merchantID uuid.UUID, amount decimal.Decimal) (
 	return wallet.AvailableBalance.GreaterThanOrEqual(amount), nil
 }
 
-func (ps *Services) GetPaymentsByMerchantID(merchantID uuid.UUID) ([]*models.Payment, error) {
+func (ps *Services) GetPaymentsByMerchantID(
+	merchantID uuid.UUID,
+	) ([]*models.Payment, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant_id is required")
 	}
@@ -121,7 +128,9 @@ func (ps *Services) GetPaymentsByMerchantID(merchantID uuid.UUID) ([]*models.Pay
 	return payments, nil
 }
 
-func (ps *Services) GetPaymentByID(paymentID uuid.UUID) (*models.Payment, error) {
+func (ps *Services) GetPaymentByID(
+paymentID uuid.UUID,
+) (*models.Payment, error) {
 	if paymentID == uuid.Nil {
 		return nil, errors.New("payment_id is required")
 	}

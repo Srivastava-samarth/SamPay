@@ -9,7 +9,10 @@ import (
 	"github.com/google/uuid"
 )
 
-func (is *Services) GetIdempotencyByKeyAndMerchantId(merchantID uuid.UUID, key string) (*models.IdempotencyKey, error) {
+func (is *Services) GetIdempotencyByKeyAndMerchantId(
+    merchantID uuid.UUID, 
+    key string,
+    ) (*models.IdempotencyKey, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchantID is required")
 	}

@@ -17,7 +17,9 @@ type MerchantProvisioningResult struct {
 	TemporaryPassword string
 }
 
-func (ms *Services) GetMerchantByID(merchantID uuid.UUID) (*models.Merchant, error) {
+func (ms *Services) GetMerchantByID(
+	merchantID uuid.UUID,
+	) (*models.Merchant, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant_id is required")
 	}
@@ -40,7 +42,9 @@ func (ms *Services) GetMerchants() ([]*models.Merchant, error) {
 	return merchants, nil
 }
 
-func (ms *Services) CreateInitialMerchant(merchantRequest *dto.CreateMerchantOnboardingRequest) (*dto.CreateMerchantOnboardingResponse, error) {
+func (ms *Services) CreateInitialMerchant(
+	merchantRequest *dto.CreateMerchantOnboardingRequest,
+	) (*dto.CreateMerchantOnboardingResponse, error) {
 	if merchantRequest == nil {
 		return nil, errors.New("request can't be empty")
 	}
@@ -213,7 +217,10 @@ func (ms *Services) ProvisionMerchant(
 	return provisionMerchantResult, nil
 }
 
-func (ms *Services) UpdateMerchantCompliance(merchantID uuid.UUID, complianceResponse *dto.ComplianceCheckResponse) (*models.Merchant, error) {
+func (ms *Services) UpdateMerchantCompliance(
+	merchantID uuid.UUID, 
+	complianceResponse *dto.ComplianceCheckResponse,
+	) (*models.Merchant, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant_id is required")
 	}
@@ -229,7 +236,9 @@ func (ms *Services) UpdateMerchantCompliance(merchantID uuid.UUID, complianceRes
 	return updatedMerchant, nil
 }
 
-func (ms *Services) ValidateMerchantOnboardingRequest(r *dto.CreateMerchantOnboardingRequest) error {
+func (ms *Services) ValidateMerchantOnboardingRequest(
+	r *dto.CreateMerchantOnboardingRequest,
+	) error {
 	switch r.MerchantType {
 	case "individual":
 		if r.Individual == nil {
@@ -487,7 +496,9 @@ func (ms *Services) UpdateMerchantKycInfo(
 	return updatedMerchant, nil
 }
 
-func (ms *Services) GetMerchantByEmail(email string) (*models.Merchant, error) {
+func (ms *Services) GetMerchantByEmail(
+	email string,
+	) (*models.Merchant, error) {
 	if email == "" {
 		return nil, errors.New("email is required")
 	}

@@ -218,7 +218,9 @@ func (ls *Services) PostTransaction(
 	return ledgerTransaction, nil
 }
 
-func (ls *Services) GetLedgerTransactionByReferenceID(referenceID string) (*models.LedgerTransaction, error) {
+func (ls *Services) GetLedgerTransactionByReferenceID(
+	referenceID string,
+	) (*models.LedgerTransaction, error) {
 	if referenceID == "" {
 		return nil, errors.New("reference id is required")
 	}

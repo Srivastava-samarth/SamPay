@@ -9,7 +9,9 @@ import (
 	"github.com/google/uuid"
 )
 
-func (bs *Services) CreateBankAccount(bankAccountRequest *dto.CreateBankAccountRequest) (*dto.CreateBankAccountResponse, error) {
+func (bs *Services) CreateBankAccount(
+	bankAccountRequest *dto.CreateBankAccountRequest,
+	) (*dto.CreateBankAccountResponse, error) {
 	if bankAccountRequest == nil {
 		return nil, errors.New("request is required")
 	}
@@ -65,7 +67,9 @@ func (bs *Services) CreateBankAccount(bankAccountRequest *dto.CreateBankAccountR
 	return bankAccountResponse, nil
 }
 
-func (bs *Services) CreateBankAccountAndLink(bankAccountRequest *dto.CreateBankAccountRequest) (*models.BankAccount, *models.LinkedBankAccount, error) {
+func (bs *Services) CreateBankAccountAndLink(
+	bankAccountRequest *dto.CreateBankAccountRequest,
+	) (*models.BankAccount, *models.LinkedBankAccount, error) {
 	tx := bs.DB.Begin()
 
 	if tx.Error != nil {
@@ -122,7 +126,9 @@ func (bs *Services) CreateBankAccountAndLink(bankAccountRequest *dto.CreateBankA
 
 }
 
-func (bs *Services) UpdateBankAccountAndlink(updateBankAccountRequest *dto.UpdateBankAccountRequest) (*models.BankAccount, *models.LinkedBankAccount, error) {
+func (bs *Services) UpdateBankAccountAndlink(
+	updateBankAccountRequest *dto.UpdateBankAccountRequest,
+	) (*models.BankAccount, *models.LinkedBankAccount, error) {
 	if updateBankAccountRequest == nil {
 		return nil, nil, errors.New("request is required")
 	}
@@ -147,7 +153,9 @@ func (bs *Services) UpdateBankAccountAndlink(updateBankAccountRequest *dto.Updat
 	return updatedBankAccount, updatedLinkedBanAccount, nil
 }
 
-func (bs *Services) GetBankAccountsByMerchantID(merchantID uuid.UUID) ([]*models.BankAccount, error) {
+func (bs *Services) GetBankAccountsByMerchantID(
+	merchantID uuid.UUID,
+	) ([]*models.BankAccount, error) {
 	if merchantID == uuid.Nil {
 		return nil, errors.New("merchant_id is required")
 	}
@@ -172,7 +180,9 @@ func (bs *Services) GetBankAccountsByMerchantID(merchantID uuid.UUID) ([]*models
 	return bankAccounts, nil
 }
 
-func (bs *Services) GetBankAccount(bankAccountID uuid.UUID) (*models.BankAccount, error) {
+func (bs *Services) GetBankAccount(
+	bankAccountID uuid.UUID,
+	) (*models.BankAccount, error) {
 	if bankAccountID == uuid.Nil {
 		return nil, errors.New("bank_account_id is empty")
 	}
