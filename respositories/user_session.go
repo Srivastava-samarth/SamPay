@@ -8,7 +8,9 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func (ar *Repository) CreateUserSession(oauth *models.UserSession) (*models.UserSession, error) {
+func (ar *Repository) CreateUserSession(
+	oauth *models.UserSession,
+	) (*models.UserSession, error) {
 	userSessionRequest := &models.UserSession{
 		ID:               utils.GenerateUUID(),
 		UserID:           oauth.UserID,
@@ -23,7 +25,9 @@ func (ar *Repository) CreateUserSession(oauth *models.UserSession) (*models.User
 	return userSessionRequest, nil
 }
 
-func (ar *Repository) GetUserSessionByRefreshTokenHash(refreshTokenHash string) (*models.UserSession, error) {
+func (ar *Repository) GetUserSessionByRefreshTokenHash(
+	refreshTokenHash string,
+	) (*models.UserSession, error) {
 	var userSession *models.UserSession
 	err := ar.DB.
 		Clauses(clause.Locking{

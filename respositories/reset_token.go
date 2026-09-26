@@ -6,7 +6,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func (pr *Repository) CreatePasswordReset(resetRequest *models.PasswordResetToken) (*models.PasswordResetToken, error) {
+func (pr *Repository) CreatePasswordReset(
+	resetRequest *models.PasswordResetToken,
+	) (*models.PasswordResetToken, error) {
 	resetRequestPayload := &models.PasswordResetToken{
 		ID:        utils.GenerateUUID(),
 		UserID:    resetRequest.UserID,

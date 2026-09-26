@@ -132,7 +132,9 @@ func (lr *Repository) GetWalletTransactionById(
 	return &transaction, nil
 }
 
-func (lr *Repository) CreateLedgerEntry(requestEntry *models.LedgerEntry) (*models.LedgerEntry, error) {
+func (lr *Repository) CreateLedgerEntry(
+	requestEntry *models.LedgerEntry,
+	) (*models.LedgerEntry, error) {
 	ledgerEntry := &models.LedgerEntry{
 		ID:                  utils.GenerateUUID(),
 		LedgerTransactionID: requestEntry.LedgerTransactionID,
@@ -150,7 +152,9 @@ func (lr *Repository) CreateLedgerEntry(requestEntry *models.LedgerEntry) (*mode
 	return ledgerEntry, nil
 }
 
-func (lr *Repository) CreateLedgerTransaction(requestTransaction *models.LedgerTransaction) (*models.LedgerTransaction, error) {
+func (lr *Repository) CreateLedgerTransaction(
+	requestTransaction *models.LedgerTransaction,
+	) (*models.LedgerTransaction, error) {
 	ledgerTransaction := &models.LedgerTransaction{
 		ID:               utils.GenerateUUID(),
 		TransactionRef:   utils.GenerateLedgerReference(),
@@ -190,7 +194,10 @@ func (lr *Repository) ExistingLedgerTransactionByReferenceID(
 	return true, nil
 }
 
-func (lr *Repository) UpdateLedgerStatus(ID uuid.UUID, status string, settlementStatus string) (*models.LedgerTransaction, error) {
+func (lr *Repository) UpdateLedgerStatus(ID uuid.UUID,
+	status string, 
+	settlementStatus string,
+	) (*models.LedgerTransaction, error) {
 	updates := map[string]interface{}{
 		"updated_at": time.Now(),
 	}
@@ -230,7 +237,9 @@ func (lr *Repository) UpdateLedgerStatus(ID uuid.UUID, status string, settlement
 	return updatedLedgerTransaction, nil
 }
 
-func (lr *Repository) GetLedgerTransactionByID(ID uuid.UUID) (*models.LedgerTransaction, error) {
+func (lr *Repository) GetLedgerTransactionByID(
+	ID uuid.UUID,
+	) (*models.LedgerTransaction, error) {
 	var ledgerTransaction *models.LedgerTransaction
 	err := lr.DB.Where("id = ?", ID).First(&ledgerTransaction).Error
 	if err != nil {

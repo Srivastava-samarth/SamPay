@@ -14,7 +14,9 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func (wr *Repository) CreateWalletForMerchant(merchantID uuid.UUID) (*models.Wallets, error) {
+func (wr *Repository) CreateWalletForMerchant(
+	merchantID uuid.UUID,
+	) (*models.Wallets, error) {
 	wallet := &models.Wallets{
 		ID:               utils.GenerateUUID(),
 		MerchantID:       merchantID,
@@ -32,7 +34,9 @@ func (wr *Repository) CreateWalletForMerchant(merchantID uuid.UUID) (*models.Wal
 	return wallet, nil
 }
 
-func (wr *Repository) GetWalletByMerchantId(merchantId uuid.UUID) (*models.Wallets, error) {
+func (wr *Repository) GetWalletByMerchantId(
+	merchantId uuid.UUID,
+	) (*models.Wallets, error) {
 	var wallet *models.Wallets
 	err := wr.DB.
 	Clauses(clause.Locking{Strength: "UPDATE"}).
@@ -46,7 +50,10 @@ func (wr *Repository) GetWalletByMerchantId(merchantId uuid.UUID) (*models.Walle
 	return wallet, nil
 }
 
-func (wr *Repository) UpdateWalletStatus(merchantId uuid.UUID, status string) (*models.Wallets, error) {
+func (wr *Repository) UpdateWalletStatus(
+	merchantId uuid.UUID, 
+	status string,
+	) (*models.Wallets, error) {
 	err := wr.DB.
 		Model(&models.Wallets{}).
 		Where("merchant_id = ?", merchantId).
@@ -67,7 +74,10 @@ func (wr *Repository) UpdateWalletStatus(merchantId uuid.UUID, status string) (*
 	return wallet, nil
 }
 
-func (wr *Repository) UpdateWalletBalance(merchantID uuid.UUID, walletRequest *dto.UpdateWalletBalanceRequest) (*models.Wallets, error) {
+func (wr *Repository) UpdateWalletBalance(
+	merchantID uuid.UUID, 
+	walletRequest *dto.UpdateWalletBalanceRequest,
+	) (*models.Wallets, error) {
 	updates := map[string]interface{}{
 		"updated_at": time.Now(),
 	}

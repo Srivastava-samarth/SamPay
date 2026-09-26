@@ -42,7 +42,9 @@ func (vr *Repository) GetVaults() ([]*models.Vault, error) {
 	return vaults, nil
 }
 
-func (vr *Repository) GetVault(vaultId uuid.UUID) (*models.Vault, error) {
+func (vr *Repository) GetVault(
+	vaultId uuid.UUID,
+	) (*models.Vault, error) {
 	var vault *models.Vault
 	if err := vr.DB.Where(
 		"id = ?",
@@ -54,7 +56,10 @@ func (vr *Repository) GetVault(vaultId uuid.UUID) (*models.Vault, error) {
 	return vault, nil
 }
 
-func (vr *Repository) UpdateVaultBalance(balance decimal.Decimal, vaultType string) (*models.Vault, error) {
+func (vr *Repository) UpdateVaultBalance(
+	balance decimal.Decimal, 
+	vaultType string,
+	) (*models.Vault, error) {
 	if balance.LessThanOrEqual(decimal.Zero) {
 		return nil, errors.New("balance should be greater than zero")
 	}
@@ -83,7 +88,9 @@ func (vr *Repository) UpdateVaultBalance(balance decimal.Decimal, vaultType stri
 
 }
 
-func (vr *Repository) GetVaultByType(vaultType string) (*models.Vault, error) {
+func (vr *Repository) GetVaultByType(
+	vaultType string,
+	) (*models.Vault, error) {
 	var vault *models.Vault
 	if err := vr.DB.Where(
 		"type = ? AND status = ?",
@@ -98,7 +105,10 @@ func (vr *Repository) GetVaultByType(vaultType string) (*models.Vault, error) {
 	return vault, nil
 }
 
-func (vr *Repository) UpdateVaultStatus(status string, vaultID uuid.UUID) (*models.Vault, error) {
+func (vr *Repository) UpdateVaultStatus(
+	status string, 
+	vaultID uuid.UUID,
+	) (*models.Vault, error) {
 	updates := map[string]interface{}{
 		"updated_at": time.Now(),
 		"status":     status,

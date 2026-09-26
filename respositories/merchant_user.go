@@ -8,7 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-func (mur *Repository) CreateMerchantUser(merchantUser *models.MerchantUser) (*models.MerchantUser, error) {
+func (mur *Repository) CreateMerchantUser(
+	merchantUser *models.MerchantUser,
+	) (*models.MerchantUser, error) {
 	newMerchantUser := &models.MerchantUser{
 		ID:         utils.GenerateUUID(),
 		MerchantID: merchantUser.MerchantID,
@@ -26,7 +28,9 @@ func (mur *Repository) CreateMerchantUser(merchantUser *models.MerchantUser) (*m
 	return newMerchantUser, nil
 }
 
-func (mur *Repository) GetMerchantUserByUserID(userID uuid.UUID) (*models.MerchantUser, error) {
+func (mur *Repository) GetMerchantUserByUserID(
+	userID uuid.UUID,
+	) (*models.MerchantUser, error) {
 	var merchantUser *models.MerchantUser
 	err := mur.DB.Where("user_id = ?", userID).First(&merchantUser).Error
 	if err != nil {
@@ -35,7 +39,9 @@ func (mur *Repository) GetMerchantUserByUserID(userID uuid.UUID) (*models.Mercha
 	return merchantUser, nil
 }
 
-func (mur *Repository) GetMerchantUsersByMerchantID(merchantID uuid.UUID) ([]*models.MerchantUser, error) {
+func (mur *Repository) GetMerchantUsersByMerchantID(
+	merchantID uuid.UUID,
+	) ([]*models.MerchantUser, error) {
 	var merchantUsers []*models.MerchantUser
 	err := mur.DB.
 		Where("merchant_id = ?", merchantID).

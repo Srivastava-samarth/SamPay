@@ -13,7 +13,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func (mp *Repository) CreateMerchant(request models.Merchant) (*models.Merchant, error) {
+func (mp *Repository) CreateMerchant(
+	request models.Merchant,
+	) (*models.Merchant, error) {
 	merchant := &models.Merchant{
 		ID:                utils.GenerateUUID(),
 		MerchantReference: utils.GenerateMerchantReference(),
@@ -33,7 +35,9 @@ func (mp *Repository) CreateMerchant(request models.Merchant) (*models.Merchant,
 	return merchant, nil
 }
 
-func (mp *Repository) GetMerchantByID(merchantID uuid.UUID) (*models.Merchant, error) {
+func (mp *Repository) GetMerchantByID(
+	merchantID uuid.UUID,
+	) (*models.Merchant, error) {
 	var merchant *models.Merchant
 	err := mp.DB.Where(
 		"id = ?",
@@ -96,7 +100,10 @@ func (mp *Repository) UpdateMerchantCompliance(
 	return &merchant, nil
 }
 
-func (mp *Repository) UpdateMerchantStatus(merchantID uuid.UUID, status string) (*models.Merchant, error) {
+func (mp *Repository) UpdateMerchantStatus(
+	merchantID uuid.UUID, 
+	status string,
+	) (*models.Merchant, error) {
 	updates := map[string]interface{}{
 		"status":     status,
 		"updated_at": time.Now(),
@@ -120,7 +127,10 @@ func (mp *Repository) UpdateMerchantStatus(merchantID uuid.UUID, status string) 
 	return merchant, nil
 }
 
-func (mp *Repository) UpdateMerchant(request *dto.UpdateMerchantRequest, merchantID uuid.UUID) (*models.Merchant, error) {
+func (mp *Repository) UpdateMerchant(
+	request *dto.UpdateMerchantRequest, 
+	merchantID uuid.UUID,
+	) (*models.Merchant, error) {
 	updates := map[string]interface{}{
 		"updated_at": time.Now(),
 	}
@@ -153,7 +163,9 @@ func (mp *Repository) UpdateMerchant(request *dto.UpdateMerchantRequest, merchan
 	return merchant, nil
 }
 
-func (mp *Repository) GetMerchantByEmail(email string) (*models.Merchant, error) {
+func (mp *Repository) GetMerchantByEmail(
+	email string,
+	) (*models.Merchant, error) {
 	var merchant *models.Merchant
 	err := mp.DB.
 		Where("email = ?", email).

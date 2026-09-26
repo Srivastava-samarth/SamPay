@@ -11,7 +11,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func (ur *Repository) GetBlockedUserByEmail(email string) (bool, error) {
+func (ur *Repository) GetBlockedUserByEmail(
+	email string,
+	) (bool, error) {
 	var user models.User
 	err := ur.DB.Where("email = ? AND status = ?", email, constants.MerchantStatusSuspended).First(&user).Error
 	if err != nil {
@@ -23,7 +25,9 @@ func (ur *Repository) GetBlockedUserByEmail(email string) (bool, error) {
 	return true, nil
 }
 
-func (ur *Repository) CreateUser(request *models.User) (*models.User, error) {
+func (ur *Repository) CreateUser(
+	request *models.User,
+	) (*models.User, error) {
 	user := &models.User{
 		ID:                 utils.GenerateUUID(),
 		Email:              request.Email,
@@ -42,7 +46,9 @@ func (ur *Repository) CreateUser(request *models.User) (*models.User, error) {
 	return user, nil
 }
 
-func (ur *Repository) GetUserByEmail(email string) (*models.User, error) {
+func (ur *Repository) GetUserByEmail(
+	email string,
+	) (*models.User, error) {
 	var user *models.User
 	err := ur.DB.Where("email= ?", email).First(&user).Error
 	if err != nil {
@@ -51,7 +57,10 @@ func (ur *Repository) GetUserByEmail(email string) (*models.User, error) {
 	return user, nil
 }
 
-func (ur *Repository) UpdateUser(userID uuid.UUID, request *dto.UpdateUserRequest) (*models.User, error) {
+func (ur *Repository) UpdateUser(
+	userID uuid.UUID, 
+	request *dto.UpdateUserRequest,
+	) (*models.User, error) {
 	updates := map[string]interface{}{
 		"updated_at": time.Now(),
 	}
@@ -91,7 +100,9 @@ func (ur *Repository) UpdateUser(userID uuid.UUID, request *dto.UpdateUserReques
 	return &updatedUser, nil
 }
 
-func (ur *Repository) GetUserByID(userId uuid.UUID) (*models.User, error) {
+func (ur *Repository) GetUserByID(
+	userId uuid.UUID,
+	) (*models.User, error) {
 	var user *models.User
 	err := ur.DB.Where("id= ?", userId).First(&user).Error
 	if err != nil {
@@ -109,7 +120,10 @@ func (ur *Repository) GetUsers() ([]*models.User, error) {
 	return users, nil
 }
 
-func (ur *Repository) UpdateUserStatus(status string, userID uuid.UUID) (*models.User, error) {
+func (ur *Repository) UpdateUserStatus(
+	status string, 
+	userID uuid.UUID,
+	) (*models.User, error) {
 	updates := map[string]interface{}{
 		"status":     status,
 		"updated_at": time.Now(),

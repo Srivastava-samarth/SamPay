@@ -12,7 +12,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func (rr *Repository) CreateRefund(request *dto.CreateRefundRequest) (*models.Refund, error) {
+func (rr *Repository) CreateRefund(
+	request *dto.CreateRefundRequest,
+	) (*models.Refund, error) {
 	createRefundPayload := &models.Refund{
 		ID:                utils.GenerateUUID(),
 		PaymentID:         request.PaymentID,
@@ -73,7 +75,10 @@ func (rr *Repository) GetRefundByReference(
 	return refund, nil
 }
 
-func (rr *Repository) UpdateRefundStatus(RefundReference string, status string) (*models.Refund, error) {
+func (rr *Repository) UpdateRefundStatus(
+	RefundReference string, 
+	status string,
+	) (*models.Refund, error) {
 	var refund *models.Refund
 	err := rr.DB.Where("refund_reference = ?", RefundReference).First(&refund).Error
 	if err != nil {

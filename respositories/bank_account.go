@@ -53,7 +53,10 @@ func (br *Repository) GetBankAccountByID(
 	return &bankAccount, nil
 }
 
-func (br *Repository) UpdateBankAccount(bankAccountID uuid.UUID, request *dto.UpdateBankAccountRequest) (*models.BankAccount, error) {
+func (br *Repository) UpdateBankAccount(
+	bankAccountID uuid.UUID,
+	request *dto.UpdateBankAccountRequest,
+	) (*models.BankAccount, error) {
 	var oldBankAccountEntry *models.BankAccount
 	if err := br.DB.Where("id = ? AND status = ?", bankAccountID, "active").First(&oldBankAccountEntry).Error; err != nil {
 		return nil, err

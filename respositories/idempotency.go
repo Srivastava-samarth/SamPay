@@ -8,7 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
-func (ir *Repository) GetIdempotencyByKey(merchantID uuid.UUID, key string) (*models.IdempotencyKey, error) {
+func (ir *Repository) GetIdempotencyByKey(
+	merchantID uuid.UUID,
+	key string,
+	) (*models.IdempotencyKey, error) {
 	var idempotency *models.IdempotencyKey
 	err := ir.DB.Where("merchant_id = ? AND idempotency_key = ?", merchantID, key).First(&idempotency).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -21,7 +24,9 @@ func (ir *Repository) GetIdempotencyByKey(merchantID uuid.UUID, key string) (*mo
 	return idempotency, nil
 }
 
-func (ir *Repository) CreateIdempotencyKey(idempotencyKey *models.IdempotencyKey) (*models.IdempotencyKey, error) {
+func (ir *Repository) CreateIdempotencyKey(
+	idempotencyKey *models.IdempotencyKey,
+	) (*models.IdempotencyKey, error) {
 	err := ir.DB.Create(idempotencyKey).Error
 	if err != nil {
 		return nil, err

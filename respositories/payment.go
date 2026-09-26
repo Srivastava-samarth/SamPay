@@ -12,7 +12,11 @@ import (
 	"gorm.io/gorm"
 )
 
-func (pr *Repository) CreatePayment(merchantID uuid.UUID, request *dto.CreatePaymentRequest, status *string) (*models.Payment, error) {
+func (pr *Repository) CreatePayment(
+	merchantID uuid.UUID, 
+	request *dto.CreatePaymentRequest, 
+	status *string,
+	) (*models.Payment, error) {
 	settlementStatus := constants.LedgerSettlementPending
 	createPaymentPayload := &models.Payment{
 		ID:                 utils.GenerateUUID(),
@@ -112,7 +116,9 @@ func (pr *Repository) UpdateSettlementStatusByID(
 	return payment, nil
 }
 
-func (pr *Repository) GetPaymentByID(paymentID uuid.UUID) (*models.Payment, error) {
+func (pr *Repository) GetPaymentByID(
+	paymentID uuid.UUID,
+	) (*models.Payment, error) {
 	var payment *models.Payment
 	err := pr.DB.Where("id = ?", paymentID).First(&payment).Error
 	if err != nil {
@@ -125,7 +131,9 @@ func (pr *Repository) GetPaymentByID(paymentID uuid.UUID) (*models.Payment, erro
 	return payment, nil
 }
 
-func (pr *Repository) GetPaymentsBySettlementStatus(status string) ([]*models.Payment, error) {
+func (pr *Repository) GetPaymentsBySettlementStatus(
+	status string,
+	) ([]*models.Payment, error) {
 	var payments []*models.Payment
 	err := pr.DB.Where("settlement_status = ? AND status = ?", status, constants.TransactionStatusCompleted).Find(&payments).Error
 	if err != nil {
@@ -138,7 +146,9 @@ func (pr *Repository) GetPaymentsBySettlementStatus(status string) ([]*models.Pa
 	return payments, nil
 }
 
-func (pr *Repository) GetPaymentsByMerchantID(merchantID uuid.UUID) ([]*models.Payment, error) {
+func (pr *Repository) GetPaymentsByMerchantID(
+	merchantID uuid.UUID,
+	) ([]*models.Payment, error) {
 	var payments []*models.Payment
 	err := pr.DB.Where("sender_merchant_id = ?", merchantID).Find(&payments).Error
 	if err != nil {
