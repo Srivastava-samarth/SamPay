@@ -12,6 +12,7 @@ type Config struct {
 	SMTP     SMTPConfig
 	Temporal TemporalConfig
 	JWT      JWTConfig
+	Nats     NatsConfig
 }
 
 type SMTPConfig struct {
@@ -22,6 +23,10 @@ type SMTPConfig struct {
 
 type TemporalConfig struct {
 	Host string
+}
+
+type NatsConfig struct{
+	URL string
 }
 
 type DatabaseConfig struct {
@@ -69,6 +74,9 @@ func Load() (*Config, error) {
 			Secret:        os.Getenv("JWT_SECRET"),
 			AccessExpiry:  os.Getenv("JWT_ACCESS_EXPIRY"),
 			RefreshExpiry: os.Getenv("JWT_REFRESH_EXPIRY"),
+		},
+		Nats: NatsConfig{
+			URL: os.Getenv("SAMPAY_BANK_NATS_URL"),
 		},
 	}
 
@@ -120,6 +128,9 @@ func (cfg Config) validate() error {
 	}
 	if cfg.JWT.RefreshExpiry == "" {
 		return errors.New("missing required configuration: JWT_REFRESH_EXPIRY")
+	}
+	if cfg.Nats.URL == "" {
+		return errors.New("missing required configuration: SAMPAY_BANK_NATS_URL")
 	}
 	return nil
 }
