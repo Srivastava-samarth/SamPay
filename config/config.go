@@ -13,6 +13,12 @@ type Config struct {
 	Temporal TemporalConfig
 	JWT      JWTConfig
 	Nats     NatsConfig
+	Internal InternalConfig
+}
+
+type InternalConfig struct {
+	SampayPrivateKey string
+	BankPublicKey    string
 }
 
 type SMTPConfig struct {
@@ -25,7 +31,7 @@ type TemporalConfig struct {
 	Host string
 }
 
-type NatsConfig struct{
+type NatsConfig struct {
 	URL string
 }
 
@@ -77,6 +83,10 @@ func Load() (*Config, error) {
 		},
 		Nats: NatsConfig{
 			URL: os.Getenv("SAMPAY_BANK_NATS_URL"),
+		},
+		Internal: InternalConfig{
+			SampayPrivateKey: os.Getenv("SAMPAY_PRIVATE_KEY"),
+			BankPublicKey:    os.Getenv("SAMPAY_BANK_PUBLIC_KEY"),
 		},
 	}
 
@@ -131,6 +141,12 @@ func (cfg Config) validate() error {
 	}
 	if cfg.Nats.URL == "" {
 		return errors.New("missing required configuration: SAMPAY_BANK_NATS_URL")
+	}
+	if cfg.Internal.SampayPrivateKey == "" {
+		return errors.New("missing required configuration: SAMPAY_PRIVATE_KEY")
+	}
+	if cfg.Internal.BankPublicKey == "" {
+		return errors.New("missing required configuration: SAMPAY_BANK_PUBLIC_KEY")
 	}
 	return nil
 }

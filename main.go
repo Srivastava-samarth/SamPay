@@ -7,6 +7,7 @@ import (
 	"github.com/Srivastava-samarth/sampay/controllers"
 	"github.com/Srivastava-samarth/sampay/database"
 	"github.com/Srivastava-samarth/sampay/middlewares"
+	"github.com/Srivastava-samarth/sampay/nats"
 	"github.com/Srivastava-samarth/sampay/notifications"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/routes"
@@ -26,6 +27,9 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Failed to load configuration: %v", err)
 	}
+
+	sampayPrivateKey := []byte(cfg.Internal.SampayPrivateKey)
+	bankPublicKey := []byte(cfg.Internal.BankPublicKey)
 
 	db, err := database.Connect(&cfg.Database)
 	if err != nil {
@@ -71,6 +75,19 @@ func main() {
 			}
 		}(w)
 	}
+
+	natsClient, err := nats.NewClient(
+		&cfg.Nats,
+		services,
+		temporalClient,
+		sampayPrivateKey,
+		bankPublicKey,
+	)
+
+	if err != nil {
+		logger.Fatalf("Failed to create NATS client: %v", err)
+	}
+	defer natsClient.Close()
 
 	router := gin.Default()
 
