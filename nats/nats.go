@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Srivastava-samarth/sampay/config"
+	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/security"
 	"github.com/Srivastava-samarth/sampay/services"
 
@@ -16,6 +17,7 @@ type NatsClient struct {
 	conn           *nats.Conn
 	js             jetstream.JetStream
 	service        *services.Services
+	repo           *repositories.Repository
 	temporalClient client.Client
 
 	signer   *security.Signer

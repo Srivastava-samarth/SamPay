@@ -3,6 +3,7 @@ package activities
 import (
 	"gorm.io/gorm"
 
+	"github.com/Srivastava-samarth/sampay/nats"
 	"github.com/Srivastava-samarth/sampay/notifications"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/services"
@@ -13,6 +14,7 @@ type Registry struct {
 	NotificationService *notifications.EmailService
 	Services            *services.Services
 	Repo                *repositories.Repository
+	nats                *nats.NatsClient
 }
 
 func NewRegistry(

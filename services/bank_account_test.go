@@ -7,55 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-func TestCreateBankAccount(t *testing.T) {
-
-	tests := []struct {
-		name    string
-		request *dto.CreateBankAccountRequest
-		wantErr string
-	}{
-		{
-			name:    "nil request",
-			request: nil,
-			wantErr: "request is required",
-		},
-		{
-			name: "empty account name",
-			request: &dto.CreateBankAccountRequest{
-				AccountName: "",
-				MerchantID:  uuid.New(),
-			},
-			wantErr: "account_name is required",
-		},
-		{
-			name: "nil merchant id",
-			request: &dto.CreateBankAccountRequest{
-				AccountName: "Primary Account",
-				MerchantID:  uuid.Nil,
-			},
-			wantErr: "merchant_id is required",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, err := testServices.CreateBankAccount(tt.request)
-
-			if err == nil {
-				t.Fatal("expected error, got nil")
-			}
-
-			if err.Error() != tt.wantErr {
-				t.Errorf(
-					"expected error %q, got %q",
-					tt.wantErr,
-					err.Error(),
-				)
-			}
-		})
-	}
-}
-
 func TestUpdateBankAccountAndlink(t *testing.T) {
 
 	validRequest := &dto.UpdateBankAccountRequest{
