@@ -10,17 +10,17 @@ import (
 	"github.com/nats-io/nats.go/jetstream"
 )
 
-const BankingCommandsConsumer = "BANKING_COMMANDS"
+const BankingResponsesConsumer = "BANKING_RESPONSES"
 const BankingEventsStream = "BANKING_EVENTS"
 
-func (c *NatsClient) CreateBankingCommandsConsumer(
+func (c *NatsClient) CreateBankingResponsesConsumer(
 	ctx context.Context,
 ) (jetstream.Consumer, error) {
 	consumer, err := c.js.CreateOrUpdateConsumer(
 		ctx,
 		BankingEventsStream,
 		jetstream.ConsumerConfig{
-			Durable:       BankingCommandsConsumer,
+			Durable:       BankingResponsesConsumer,
 			FilterSubject: "bank.sampay.>",
 			AckPolicy:     jetstream.AckExplicitPolicy,
 		},
@@ -103,9 +103,50 @@ func (c *NatsClient) handleBankingEvents(
 ) error {
     switch event.EventType {
     case "bank.sampay.account.created":
-        _, err := c.handleBankAccountCreated(ctx, event)
+		result, err := c.handleBankAccountCreated(ctx, event)
         if err != nil {
             return err
+        }
+
+        if result == nil || result.Payload == nil {
+            return fmt.Errorf("bank account creation response is empty")
+        }
+        // Find the original outgoing request.
+        originalEvent, err := c.repo.GetEventByEventID(
+            ctx,
+            result.Payload.RequestedEventID,
+        )
+        if err != nil {
+            return fmt.Errorf("get original bank request: %w", err)
+        }
+
+        if originalEvent == nil {
+            return fmt.Errorf(
+                "original bank request not found: %s",
+                result.Payload.RequestedEventID,
+            )
+        }
+
+        if originalEvent.WorkflowID == "" {
+            return fmt.Errorf(
+                "workflow ID missing for request event: %s",
+                originalEvent.EventID,
+            )
+        }
+
+        // Signal the workflow waiting for this response.
+        err = c.temporalClient.SignalWorkflow(
+            ctx,
+            originalEvent.WorkflowID,
+            "",
+            "BankAccountCreationResult",
+            result,
+        )
+        if err != nil {
+            return fmt.Errorf(
+                "signal merchant onboarding workflow: %w",
+                err,
+            )
         }
 
         return nil

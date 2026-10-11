@@ -13,50 +13,50 @@ import (
 )
 
 func (c *NatsClient) handleBankAccountCreated(
-    ctx context.Context,
-    event *security.SignedEvent,
+	ctx context.Context,
+	event *security.SignedEvent,
 ) (*dto.BankAccountCreatedPayload, error) {
 
-	newEvent, errE := c.repo.CreateEvent(context.Background(), &dto.CreateEventRequest{
-		EventID: event.EventID,
+	newEvent, errE := c.repo.CreateEvent(ctx, &dto.CreateEventRequest{
+		EventID:   event.EventID,
 		EventType: string(constants.EventTypeBankToSampayBankAccountCreated),
 		Direction: string(constants.EventDirectionInbound),
-		Payload: datatypes.JSON(event.Payload),
-		Status: constants.ComplianceStatusPending,
+		WorkflowID: "bank-to-sampay",
+		Payload:   datatypes.JSON(event.Payload),
+		Status:    constants.ComplianceStatusPending,
 	})
 
-	if errE != nil{
+	if errE != nil {
 		return nil, errE
 	}
 
-    var response dto.BankAccountEventResponsePayload
+	var response dto.BankAccountEventResponsePayload
 
-    if err := json.Unmarshal(event.Payload, &response); err != nil {
-        return nil, fmt.Errorf(
-            "unmarshal bank account response payload: %w",
-            err,
-        )
-    }
+	if err := json.Unmarshal(event.Payload, &response); err != nil {
+		return nil, fmt.Errorf(
+			"unmarshal bank account response payload: %w",
+			err,
+		)
+	}
 
-    if response.EventID == uuid.Nil {
-        return nil, fmt.Errorf("bank account response event ID is missing")
-    }
+	if response.EventID == uuid.Nil {
+		return nil, fmt.Errorf("bank account response event ID is missing")
+	}
 
-    if response.RequestedEventID == uuid.Nil {
-        return nil, fmt.Errorf("requested event ID is missing")
-    }
+	if response.RequestedEventID == uuid.Nil {
+		return nil, fmt.Errorf("requested event ID is missing")
+	}
 
-    if response.BankAccountID == uuid.Nil {
-        return nil, fmt.Errorf("bank account ID is missing")
-    }
+	if response.BankAccountID == uuid.Nil {
+		return nil, fmt.Errorf("bank account ID is missing")
+	}
 
-    if len(response.Payload) == 0 {
-        return nil, fmt.Errorf("bank account model payload is empty")
-    }
+	if len(response.Payload) == 0 {
+		return nil, fmt.Errorf("bank account model payload is empty")
+	}
 
-	
-    return &dto.BankAccountCreatedPayload{
-		Event: newEvent,
+	return &dto.BankAccountCreatedPayload{
+		Event:   newEvent,
 		Payload: &response,
 	}, nil
 }

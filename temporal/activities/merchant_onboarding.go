@@ -119,7 +119,7 @@ func (a *Registry) CreateLinkedBankAccount(
 	return a.Repo.CreateLinkedBankAccount(&models.LinkedBankAccount{
 		MerchantID: merchantID,
 		BankAccountID: bankAccount.ID,
-		Type: bankAccount.AccountType,
+		Type: constants.BankAccountTypePrimary,
 		Status: bankAccount.Status,
 	})
 }
@@ -127,6 +127,7 @@ func (a *Registry) CreateLinkedBankAccount(
 func (a *Registry) PublishBankAccountCreationRequest(
 	ctx context.Context,
 	request dto.BankAccountCreationRequestEvent,
+	workflowID string,
 ) (*models.Event,error){
 	payload := request.Payload
 	p, err := json.Marshal(payload)
@@ -139,6 +140,7 @@ func (a *Registry) PublishBankAccountCreationRequest(
 		EventType: request.EventType,
 		Direction: string(constants.EventDirectionOutbound),
 		Payload: p,
+		WorkflowID: workflowID,
 		Status: string(constants.EventStatusProcessing),
 	})
 	if errNE != nil{

@@ -19,6 +19,7 @@ func (r *Repository) CreateEvent(
 		EventID: eventPayload.EventID,
 		EventType: eventPayload.EventType,
 		Direction: eventPayload.Direction,
+		WorkflowID: eventPayload.WorkflowID,
 		Status: eventPayload.Status,
 		Payload: eventPayload.Payload,
 	}
@@ -57,6 +58,18 @@ func(r *Repository) UpdateEventStatus(
 	var event *models.Event
 	if errE := r.DB.WithContext(ctx).Where("event_id = ?", eventID).Take(&event).Error; errE != nil{
 		return nil, errE
+	}
+
+	return event, nil
+}
+
+func (r *Repository) GetEventByEventID(
+	ctx context.Context,
+	eventID uuid.UUID,
+) (*models.Event, error) {
+	var event *models.Event
+	if err := r.DB.WithContext(ctx).Where("event_id = ?", eventID).Take(&event).Error; err != nil{
+		return nil, err
 	}
 
 	return event, nil

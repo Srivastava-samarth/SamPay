@@ -18,6 +18,7 @@ func TestPerformComplianceCheck(t *testing.T) {
 		testServices.NotificationService,
 		testServices,
 		testRepo,
+		testNats,
 	)
 
 	t.Run("individual merchant - approved", func(t *testing.T) {
@@ -246,6 +247,7 @@ func TestSendWelcomeEmail(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		user := &dto.CreateUserResponse{
@@ -278,6 +280,7 @@ func TestSendKYCReattemptEmail(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		email := "merchant@example.com"
@@ -306,6 +309,7 @@ func TestUpdateMerchantCompliance(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		complianceResponse := &dto.ComplianceCheckResponse{}
@@ -337,6 +341,7 @@ func TestUpdateMerchantCompliance(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		merchantID := uuid.New()
@@ -368,6 +373,7 @@ func TestUpdateMerchantCompliance(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		merchant := testutils.GenerateTestMerchant()

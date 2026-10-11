@@ -22,11 +22,13 @@ func NewRegistry(
 	notificationService *notifications.EmailService,
 	services *services.Services,
 	repo *repositories.Repository,
+	nats *nats.NatsClient,
 ) *Registry {
 	return &Registry{
 		DB:                  db,
 		NotificationService: notificationService,
 		Services:            services,
 		Repo:                repo,
+		nats:                nats,
 	}
 }

@@ -42,6 +42,11 @@ func StartWorkers(
 				w.RegisterActivity(activityRegistry.SendKYCReattemptEmail)
 				w.RegisterActivity(activityRegistry.UpdateMerchantCompliance)
 				w.RegisterActivity(activityRegistry.ActivateMerchantOnboarding)
+				w.RegisterActivity(activityRegistry.CreateLinkedBankAccount)
+				w.RegisterActivity(activityRegistry.PublishBankAccountCreationRequest)
+				w.RegisterActivity(activityRegistry.CreateEvent)
+				w.RegisterActivity(activityRegistry.UpdateEventStatus)
+				w.RegisterActivity(activityRegistry.ProvisionUser)
 			},
 		},
 		{

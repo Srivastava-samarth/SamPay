@@ -35,6 +35,7 @@ func TestForgotPassword(t *testing.T) {
 			notificationService,
 			services,
 			testRepo,
+			testNats,
 		)
 
 		email := "does-not-exist@example.com"
@@ -88,6 +89,7 @@ func TestForgotPassword(t *testing.T) {
 			notificationService,
 			services,
 			testRepo,
+			testNats,
 		)
 
 		request := &dto.ForgotPasswordRequest{

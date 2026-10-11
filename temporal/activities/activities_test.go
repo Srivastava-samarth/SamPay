@@ -6,6 +6,7 @@ import (
 
 	"github.com/Srivastava-samarth/sampay/config"
 	"github.com/Srivastava-samarth/sampay/middlewares"
+	"github.com/Srivastava-samarth/sampay/nats"
 	"github.com/Srivastava-samarth/sampay/notifications"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/services"
@@ -17,6 +18,7 @@ var (
 	db           *gorm.DB
 	testRepo     *repositories.Repository
 	testServices *services.Services
+	testNats     *nats.NatsClient
 )
 
 func TestMain(m *testing.M) {
@@ -45,6 +47,8 @@ func TestMain(m *testing.M) {
 		jwtService,
 		notificationService,
 	)
+
+	testNats = &nats.NatsClient{}
 
 	code := m.Run()
 

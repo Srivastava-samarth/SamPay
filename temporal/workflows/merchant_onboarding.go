@@ -20,6 +20,7 @@ func MerchantONboardingWorkflow(
 	request *dto.CreateMerchantOnboardingRequest,
 	merchantID uuid.UUID,
 ) error {
+	workflowID := "merchant-onboarding-" + merchantID.String()
 	activityOptions := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Minute,
 		RetryPolicy: &temporal.RetryPolicy{
@@ -99,6 +100,7 @@ func MerchantONboardingWorkflow(
 		ctx,
 		"PublishBankAccountCreationRequest",
 		bankAccoutnCreationEventPayload,
+		workflowID,
 	).Get(ctx, &event)
 	if err != nil {
 		return err
