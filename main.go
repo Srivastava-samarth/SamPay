@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/Srivastava-samarth/sampay/config"
@@ -89,6 +90,25 @@ func main() {
 	}
 	defer natsClient.Close()
 
+	// Create the durable JetStream consumer.
+	bankingConsumer, err :=
+		natsClient.CreateBankingCommandsConsumer(context.Background())
+	if err != nil {
+		logger.Fatalf("Failed to create banking consumer: %v", err)
+	}
+
+	// Start consuming bank-service responses.
+	consumeContext, err :=
+		natsClient.ConsumeBankingCommands(context.Background(), bankingConsumer)
+	if err != nil {
+		logger.Fatalf("Failed to start banking consumer: %v", err)
+	}
+
+	// Stop the consumer during shutdown.
+	defer consumeContext.Stop()
+
+	logger.Println("NATS banking consumer started")
+
 	router := gin.Default()
 
 	api := router.Group("/api/v1")
@@ -98,7 +118,6 @@ func main() {
 	mainRouter.MerchantRoutes(api, jwtService.Authenticate())
 	mainRouter.AuthRoutes(api)
 	mainRouter.UserRoutes(api, jwtService.Authenticate())
-	mainRouter.BankAccountRoutes(api, jwtService.Authenticate())
 	mainRouter.WalletRoutes(api, jwtService.Authenticate())
 	mainRouter.VaultRoutes(api, jwtService.Authenticate())
 	mainRouter.PaymentRoutes(api, jwtService.Authenticate())
