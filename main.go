@@ -1,7 +1,13 @@
 package main
 
 import (
+	"context"
+	"encoding/base64"
+	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/Srivastava-samarth/sampay/config"
 	"github.com/Srivastava-samarth/sampay/controllers"
@@ -28,8 +34,14 @@ func main() {
 		logger.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	sampayPrivateKey := []byte(cfg.Internal.SampayPrivateKey)
-	bankPublicKey := []byte(cfg.Internal.BankPublicKey)
+	sampayPrivateKey, errD := base64.StdEncoding.DecodeString(cfg.Internal.SampayPrivateKey)
+	if errD != nil{
+		log.Fatalf("decode SamPay private key: %v", err)
+	}
+	bankPublicKey,errD := base64.StdEncoding.DecodeString(cfg.Internal.BankPublicKey)
+	if errD != nil{
+		log.Fatalf("decode bank public key: %v", err)
+	}
 
 	db, err := database.Connect(&cfg.Database)
 	if err != nil {
@@ -56,11 +68,26 @@ func main() {
 	services := services.NewServices(db, repo, jwtService, notificationService)
 
 	controllers := controllers.NewController(db, temporalClient, services)
+	natsClient, err := nats.NewClient(
+		&cfg.Nats,
+		services,
+		repo,
+		temporalClient,
+		sampayPrivateKey,
+		bankPublicKey,
+	)
+
+	if err != nil {
+		logger.Fatalf("Failed to create NATS client: %v", err)
+	}
+	defer natsClient.Close()
+
 	activityRegistry := activities.NewRegistry(
 		db,
 		notificationService,
 		services,
 		repo,
+		natsClient,
 	)
 
 	workers := temporal.StartWorkers(
@@ -76,18 +103,31 @@ func main() {
 		}(w)
 	}
 
-	natsClient, err := nats.NewClient(
-		&cfg.Nats,
-		services,
-		temporalClient,
-		sampayPrivateKey,
-		bankPublicKey,
-	)
+	ctx, stop := signal.NotifyContext(
+    context.Background(),
+    os.Interrupt,
+    syscall.SIGTERM,
+)
+defer stop()
 
+	// Create the durable JetStream consumer.
+	bankingConsumer, err :=
+		natsClient.CreateBankingResponsesConsumer(ctx)
 	if err != nil {
-		logger.Fatalf("Failed to create NATS client: %v", err)
+		logger.Fatalf("Failed to create banking consumer: %v", err)
 	}
-	defer natsClient.Close()
+
+	// Start consuming bank-service responses.
+	consumeContext, err :=
+		natsClient.ConsumeBankingCommands(ctx, bankingConsumer)
+	if err != nil {
+		logger.Fatalf("Failed to start banking consumer: %v", err)
+	}
+
+	// Stop the consumer during shutdown.
+	defer consumeContext.Stop()
+
+	logger.Println("NATS banking consumer started")
 
 	router := gin.Default()
 
@@ -98,7 +138,6 @@ func main() {
 	mainRouter.MerchantRoutes(api, jwtService.Authenticate())
 	mainRouter.AuthRoutes(api)
 	mainRouter.UserRoutes(api, jwtService.Authenticate())
-	mainRouter.BankAccountRoutes(api, jwtService.Authenticate())
 	mainRouter.WalletRoutes(api, jwtService.Authenticate())
 	mainRouter.VaultRoutes(api, jwtService.Authenticate())
 	mainRouter.PaymentRoutes(api, jwtService.Authenticate())

@@ -82,6 +82,7 @@ func TestGetUnsettledPayment(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		payments, err := registry.GetUnsettledPayment(context.Background())
@@ -111,6 +112,7 @@ func TestGetUnsettledPayment(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		payments, err := registry.GetUnsettledPayment(context.Background())
@@ -135,6 +137,7 @@ func TestExecuteSettlementByMerchant(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		merchant := testutils.GenerateTestMerchant()
@@ -273,6 +276,7 @@ func TestExecuteSettlementByMerchant(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		merchant := testutils.GenerateTestMerchant()

@@ -6,7 +6,6 @@ import (
 	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	"github.com/Srivastava-samarth/sampay/services"
 	"github.com/google/uuid"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -105,7 +104,7 @@ func MerchantUpdateKycFlow(
 	}
 
 	// 4. Provision everything
-	var provisionedUser services.MerchantProvisioningResult
+	var provisionedUser dto.MerchantProvisioningResult
 	merchantOnboardingRequest := &dto.CreateMerchantOnboardingRequest{
 		MerchantType: merchant.MerchantType,
 		MerchantName: merchant.MerchantName,

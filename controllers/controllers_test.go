@@ -229,7 +229,6 @@ func TestMain(m *testing.M) {
 
 	updateKYCWorker.RegisterWorkflow(workflows.MerchantUpdateKycFlow)
 	updateKYCWorker.RegisterActivity(activityRegistry.GetMerchantById)
-	updateKYCWorker.RegisterActivity(activityRegistry.ProvisionMerchant)
 	updateKYCWorker.RegisterActivity(activityRegistry.PerformComplianceCheck)
 	updateKYCWorker.RegisterActivity(activityRegistry.SendKYCReattemptEmail)
 	updateKYCWorker.RegisterActivity(activityRegistry.SendWelcomeEmail)
@@ -249,7 +248,6 @@ func TestMain(m *testing.M) {
 	merchantOnboardingWorker.RegisterWorkflow(workflows.MerchantONboardingWorkflow)
 
 	merchantOnboardingWorker.RegisterActivity(activityRegistry.PerformComplianceCheck)
-	merchantOnboardingWorker.RegisterActivity(activityRegistry.ProvisionMerchant)
 	merchantOnboardingWorker.RegisterActivity(activityRegistry.SendWelcomeEmail)
 	merchantOnboardingWorker.RegisterActivity(activityRegistry.SendKYCReattemptEmail)
 	merchantOnboardingWorker.RegisterActivity(activityRegistry.UpdateMerchantCompliance)

@@ -12,10 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type MerchantProvisioningResult struct {
-	User              *dto.CreateUserResponse
-	TemporaryPassword string
-}
+
 
 func (ms *Services) GetMerchantByID(
 	merchantID uuid.UUID,
@@ -94,127 +91,6 @@ func (ms *Services) CreateInitialMerchant(
 	}
 
 	return response, nil
-}
-
-func (ms *Services) ProvisionMerchant(
-	merchantRequest *dto.CreateMerchantOnboardingRequest,
-	merchantID uuid.UUID,
-) (*MerchantProvisioningResult, error) {
-
-	tx := ms.DB.Begin()
-
-	if tx.Error != nil {
-		return nil, tx.Error
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			panic(r)
-		}
-	}()
-
-	_, err := ms.CreateWalletForMerchant(merchantID)
-	if err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-
-	bankAccountRequest := &dto.CreateBankAccountRequest{
-		AccountName: merchantRequest.MerchantName,
-		MerchantID:  merchantID,
-	}
-
-	merchantBankAccount, err := ms.CreateBankAccount(
-		bankAccountRequest,
-	)
-	if err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-
-	// 3. Create Linked Bank Account
-	linkedBankAccountRequest := &dto.CreateLinkedBankAccountRequest{
-		MerchantID:    merchantID,
-		BankAccountID: merchantBankAccount.ID,
-		Type:          merchantBankAccount.AccountType,
-		Status:        merchantBankAccount.Status,
-	}
-
-	_, err = ms.CreateLinkedBankAccount(
-		linkedBankAccountRequest,
-	)
-	if err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-
-	// 4. Determine owner name
-	var firstName string
-	var lastName string
-
-	if merchantRequest.MerchantType ==
-		constants.MerchantTypeIndividual {
-
-		firstName = merchantRequest.Individual.FirstName
-		lastName = merchantRequest.Individual.LastName
-
-	} else {
-
-		firstName = merchantRequest.Company.OwnerFirstName
-		lastName = merchantRequest.Company.OwnerLastName
-	}
-
-	// 5. Create User
-	userRequest := &dto.CreateUserRequest{
-		Email:     merchantRequest.Email,
-		FirstName: firstName,
-		LastName:  lastName,
-	}
-
-	user, err := ms.CreateUser(
-		userRequest,
-	)
-	if err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-
-	// 6. Create Merchant User
-	merchantUserRequest := &dto.CreateMerchantUserRequest{
-		MerchantID: merchantID,
-		UserID:     user.User.ID,
-		Role:       "owner",
-	}
-	_, err = ms.CreateMerchantUser(
-		merchantUserRequest,
-	)
-	if err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-
-	repo := ms.Repo.WithTx(tx)
-	_, errM := repo.UpdateMerchantStatus(
-		merchantID,
-		constants.MerchantStatusActive,
-	)
-	if errM != nil {
-		tx.Rollback()
-		return nil, errM
-	}
-
-	// 8. Commit everything
-	if err := tx.Commit().Error; err != nil {
-		return nil, err
-	}
-
-	provisionMerchantResult := &MerchantProvisioningResult{
-		User:              user.User,
-		TemporaryPassword: user.TemporaryPassword,
-	}
-
-	return provisionMerchantResult, nil
 }
 
 func (ms *Services) UpdateMerchantCompliance(

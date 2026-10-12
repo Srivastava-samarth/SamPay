@@ -37,10 +37,16 @@ func StartWorkers(
 				w.RegisterWorkflow(workflows.MerchantONboardingWorkflow)
 
 				w.RegisterActivity(activityRegistry.PerformComplianceCheck)
-				w.RegisterActivity(activityRegistry.ProvisionMerchant)
+				w.RegisterActivity(activityRegistry.CreateWallet)
 				w.RegisterActivity(activityRegistry.SendWelcomeEmail)
 				w.RegisterActivity(activityRegistry.SendKYCReattemptEmail)
 				w.RegisterActivity(activityRegistry.UpdateMerchantCompliance)
+				w.RegisterActivity(activityRegistry.ActivateMerchantOnboarding)
+				w.RegisterActivity(activityRegistry.CreateLinkedBankAccount)
+				w.RegisterActivity(activityRegistry.PublishBankAccountCreationRequest)
+				w.RegisterActivity(activityRegistry.CreateEvent)
+				w.RegisterActivity(activityRegistry.UpdateEventStatus)
+				w.RegisterActivity(activityRegistry.ProvisionUser)
 			},
 		},
 		{
@@ -127,7 +133,6 @@ func StartWorkers(
 			Register: func(w worker.Worker) {
 				w.RegisterWorkflow(workflows.MerchantUpdateKycFlow)
 				w.RegisterActivity(activityRegistry.GetMerchantById)
-				w.RegisterActivity(activityRegistry.ProvisionMerchant)
 				w.RegisterActivity(activityRegistry.PerformComplianceCheck)
 				w.RegisterActivity(activityRegistry.SendKYCReattemptEmail)
 				w.RegisterActivity(activityRegistry.SendWelcomeEmail)

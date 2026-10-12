@@ -23,6 +23,7 @@ func TestValidateRefundRequest(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		err := registry.ValidateRefundRequest(
@@ -51,6 +52,7 @@ func TestValidateRefundRequest(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		merchant := testutils.GenerateTestMerchant()
@@ -92,6 +94,7 @@ func TestValidateRefundRequest(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		reason := "customer requested refund"
@@ -129,6 +132,7 @@ func TestValidateRefundRequest(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		request := &dto.CreateRefundRequest{
@@ -163,6 +167,7 @@ func TestValidateRefundRequest(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		request := &dto.CreateRefundRequest{
@@ -197,6 +202,7 @@ func TestValidateRefundRequest(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		reason := "customer requested refund"
@@ -227,6 +233,7 @@ func TestValidateRefundRequest(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		merchant := testutils.GenerateTestMerchant()
@@ -298,6 +305,7 @@ func TestValidateRefundRequest(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		merchant := testutils.GenerateTestMerchant()
@@ -366,6 +374,7 @@ func TestValidateRefundRequest(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		merchant := testutils.GenerateTestMerchant()
@@ -435,6 +444,7 @@ func TestValidateRefundRequest(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		merchant := testutils.GenerateTestMerchant()
@@ -525,6 +535,7 @@ func TestUpdateRefundStatus(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		refundReference := utils.GenerateRefundReference()
@@ -553,6 +564,7 @@ func TestUpdateRefundStatus(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		merchant := testutils.GenerateTestMerchant()
@@ -646,6 +658,7 @@ func TestUpdateRefundStatus(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		merchant := testutils.GenerateTestMerchant()
@@ -759,6 +772,7 @@ func TestGetRefundByPaymentID(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		merchant := testutils.GenerateTestMerchant()
@@ -868,6 +882,7 @@ func TestGetRefundByPaymentID(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		merchant := testutils.GenerateTestMerchant()
@@ -956,6 +971,7 @@ func TestGetRefundByPaymentID(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		refunds, err := registry.GetRefundByPaymentID(
@@ -985,6 +1001,7 @@ func TestGetPaymentByID(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		merchant := testutils.GenerateTestMerchant()
@@ -1083,6 +1100,7 @@ func TestGetPaymentByID(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		result, err := registry.GetPaymentByID(
@@ -1112,6 +1130,7 @@ func TestCreateRefund(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		merchant := testutils.GenerateTestMerchant()
@@ -1206,6 +1225,7 @@ func TestCreateRefund(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		merchant := testutils.GenerateTestMerchant()
@@ -1315,6 +1335,7 @@ func TestCreateRefund(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		merchant := testutils.GenerateTestMerchant()
@@ -1480,6 +1501,7 @@ func TestRefundFromMerchantWallet(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		payment := &models.Payment{
@@ -1509,6 +1531,7 @@ func TestRefundFromMerchantWallet(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		refund := &models.Refund{
@@ -1539,6 +1562,7 @@ func TestRefundFromMerchantWallet(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		senderMerchant := testutils.GenerateTestMerchant()
@@ -1743,6 +1767,7 @@ func TestRefundFromMerchantWallet(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		senderMerchant := testutils.GenerateTestMerchant()
@@ -1906,6 +1931,7 @@ func TestRefundFromMerchantWallet(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		senderMerchant := testutils.GenerateTestMerchant()
@@ -1962,6 +1988,7 @@ func TestRefundFromMerchantWallet(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		senderMerchant := testutils.GenerateTestMerchant()
@@ -2038,6 +2065,7 @@ func TestRefundFromMerchantWallet(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		senderMerchant := testutils.GenerateTestMerchant()
@@ -2126,6 +2154,7 @@ func TestRefundFromPaymentVault(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		result, err := registry.RefundFromPaymentVault(
@@ -2159,6 +2188,7 @@ func TestRefundFromPaymentVault(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		refundReference := utils.GenerateRefundReference()
@@ -2201,6 +2231,7 @@ func TestRefundFromPaymentVault(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		senderMerchant := testutils.GenerateTestMerchant()
@@ -2253,6 +2284,7 @@ func TestRefundFromPaymentVault(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		senderMerchant := testutils.GenerateTestMerchant()
@@ -2319,6 +2351,7 @@ func TestRefundFromPaymentVault(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		senderMerchant := testutils.GenerateTestMerchant()
@@ -2412,6 +2445,7 @@ func TestRefundFromPaymentVault(t *testing.T) {
 			testServices.NotificationService,
 			testServices,
 			testRepo,
+			testNats,
 		)
 
 		senderMerchant := testutils.GenerateTestMerchant()

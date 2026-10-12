@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Srivastava-samarth/sampay/config"
+	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/security"
 	"github.com/Srivastava-samarth/sampay/services"
 
@@ -16,6 +17,7 @@ type NatsClient struct {
 	conn           *nats.Conn
 	js             jetstream.JetStream
 	service        *services.Services
+	repo           *repositories.Repository
 	temporalClient client.Client
 
 	signer   *security.Signer
@@ -25,6 +27,7 @@ type NatsClient struct {
 func NewClient(
 	config *config.NatsConfig,
 	service *services.Services,
+	repo *repositories.Repository,
 	temporalClient client.Client,
 	privateKey []byte,
 	bankPublicKey []byte,
@@ -56,6 +59,7 @@ func NewClient(
 		conn:           conn,
 		js:             js,
 		service:        service,
+		repo:           repo,
 		temporalClient: temporalClient,
 		signer:         signer,
 		verifier:       verifier,

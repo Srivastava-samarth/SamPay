@@ -10,17 +10,17 @@ import (
 	"github.com/nats-io/nats.go/jetstream"
 )
 
-const BankingCommandsConsumer = "BANKING_COMMANDS"
+const BankingResponsesConsumer = "BANKING_RESPONSES"
 const BankingEventsStream = "BANKING_EVENTS"
 
-func (c *NatsClient) CreateBankingCommandsConsumer(
+func (c *NatsClient) CreateBankingResponsesConsumer(
 	ctx context.Context,
 ) (jetstream.Consumer, error) {
 	consumer, err := c.js.CreateOrUpdateConsumer(
 		ctx,
 		BankingEventsStream,
 		jetstream.ConsumerConfig{
-			Durable:       BankingCommandsConsumer,
+			Durable:       BankingResponsesConsumer,
 			FilterSubject: "bank.sampay.>",
 			AckPolicy:     jetstream.AckExplicitPolicy,
 		},
@@ -36,65 +36,125 @@ func (c *NatsClient) CreateBankingCommandsConsumer(
 }
 
 func (c *NatsClient) ConsumeBankingCommands(
-	ctx context.Context,
-	consumer jetstream.Consumer,
+    ctx context.Context,
+    consumer jetstream.Consumer,
 ) (jetstream.ConsumeContext, error) {
-	consumeContext, err := consumer.Consume(
-		func(msg jetstream.Msg) {
-			var event security.SignedEvent
+    consumeContext, err := consumer.Consume(
+        func(msg jetstream.Msg) {
+            var event security.SignedEvent
 
-			if err := json.Unmarshal(msg.Data(), &event); err != nil {
-				log.Printf("unmarshal banking event: %v", err)
-				return
-			}
+            if err := json.Unmarshal(msg.Data(), &event); err != nil {
+                log.Printf("unmarshal banking event: %v", err)
+                if termErr := msg.Term(); termErr != nil {
+                    log.Printf("terminate malformed event: %v", termErr)
+                }
+                return
+            }
 
-			if err := c.verifier.VerifyEvent(event); err != nil {
-				log.Printf(
-					"invalid event signature subject=%s: %v",
-					msg.Subject(),
-					err,
-				)
-				return
-			}
-			if err := c.handleBankingEvents(ctx, msg); err != nil {
-				log.Printf("handle banking event: %v", err)
-				return
-			}
+            if err := c.verifier.VerifyEvent(event); err != nil {
+                log.Printf(
+                    "invalid event signature subject=%s: %v",
+                    msg.Subject(),
+                    err,
+                )
+                // Invalid signatures are not transient processing failures.
+                if termErr := msg.Term(); termErr != nil {
+                    log.Printf("terminate invalid event: %v", termErr)
+                }
+                return
+            }
 
-			if err := msg.Ack(); err != nil {
-				log.Printf("ack message: %v", err)
-			}
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"consume banking commands: %w",
-			err,
-		)
-	}
+            // Ensure the signed event corresponds to the delivered subject.
+            if event.EventType != msg.Subject() {
+                log.Printf(
+                    "event type mismatch: subject=%s event_type=%s",
+                    msg.Subject(),
+                    event.EventType,
+                )
+                if termErr := msg.Term(); termErr != nil {
+                    log.Printf("terminate mismatched event: %v", termErr)
+                }
+                return
+            }
 
-	return consumeContext, nil
+            if err := c.handleBankingEvents(ctx, &event); err != nil {
+                log.Printf("handle banking event: %v", err)
+                if nakErr := msg.Nak(); nakErr != nil {
+                    log.Printf("negative acknowledge banking event: %v", nakErr)
+                }
+                return
+            }
+
+            if err := msg.Ack(); err != nil {
+                log.Printf("ack banking event: %v", err)
+            }
+        },
+    )
+    if err != nil {
+        return nil, fmt.Errorf("consume banking commands: %w", err)
+    }
+
+    return consumeContext, nil
 }
 
 func (c *NatsClient) handleBankingEvents(
-	ctx context.Context,
-	msg jetstream.Msg,
+    ctx context.Context,
+    event *security.SignedEvent,
 ) error {
-	log.Printf(
-		"received banking event subject=%s data=%s",
-		msg.Subject(),
-		string(msg.Data()),
-	)
+    switch event.EventType {
+    case "bank.sampay.account.created":
+		result, err := c.handleBankAccountCreated(ctx, event)
+        if err != nil {
+            return err
+        }
 
-	switch msg.Subject() {
-	case "bank.sampay.account.created":
-		return nil
-	case "bank.sampay.account.create.failed":
-		return nil
-	default:
-		return fmt.Errorf(
-			"unsupported banking event subject: %s",
-			msg.Subject(),
-		)
-	}
+        if result == nil || result.Payload == nil {
+            return fmt.Errorf("bank account creation response is empty")
+        }
+        // Find the original outgoing request.
+        originalEvent, err := c.repo.GetEventByEventID(
+            ctx,
+            result.Payload.RequestedEventID,
+        )
+        if err != nil {
+            return fmt.Errorf("get original bank request: %w", err)
+        }
+
+        if originalEvent == nil {
+            return fmt.Errorf(
+                "original bank request not found: %s",
+                result.Payload.RequestedEventID,
+            )
+        }
+
+        if originalEvent.WorkflowID == "" {
+            return fmt.Errorf(
+                "workflow ID missing for request event: %s",
+                originalEvent.EventID,
+            )
+        }
+
+        // Signal the workflow waiting for this response.
+        err = c.temporalClient.SignalWorkflow(
+            ctx,
+            originalEvent.WorkflowID,
+            "",
+            "BankAccountCreationResult",
+            result,
+        )
+        if err != nil {
+            return fmt.Errorf(
+                "signal merchant onboarding workflow: %w",
+                err,
+            )
+        }
+
+        return nil
+
+    default:
+        return fmt.Errorf(
+            "unsupported banking event type: %s",
+            event.EventType,
+        )
+    }
 }

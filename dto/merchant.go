@@ -91,3 +91,8 @@ type UpdateMerchantRequest struct {
 type UpdateMerchantStatusRequest struct {
 	Status string `json:"status" binding:"required"`
 }
+
+type MerchantProvisioningResult struct {
+	User              *CreateUserResponse
+	TemporaryPassword string
+}
