@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
@@ -69,7 +70,7 @@ func (bs *Services) GetBankAccount(
 		return nil, errors.New("bank_account_id is empty")
 	}
 
-	bankAccount, errBA := bs.Repo.GetBankAccountByID(bankAccountID)
+	bankAccount, errBA := bs.Libs.GetBankAccount(context.Background(), bankAccountID)
 	if errBA != nil {
 		return nil, errBA
 	}

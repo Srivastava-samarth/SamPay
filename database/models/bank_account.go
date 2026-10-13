@@ -9,7 +9,7 @@ import (
 
 type BankAccount struct {
 	ID            uuid.UUID       `json:"id" gorm:"primaryKey"`
-	AccountNumber string          `json:"-" gorm:"not null"`
+	AccountNumber string          `json:"account_number" gorm:"not null"`
 	AccountName   string          `json:"account_name" gorm:"not null"`
 	BankName      string          `json:"bank_name" gorm:"not null"`
 	IFSCCode      string          `json:"ifsc_code" gorm:"not null"`
