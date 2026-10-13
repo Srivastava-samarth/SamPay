@@ -52,7 +52,7 @@ func (bs *Services) GetBankAccountsByMerchantID(
 
 	var bankAccounts []*models.BankAccount
 	for _, linkedBankAccount := range linkedBankAccounts {
-		bankAccount, errBA := bs.Repo.GetBankAccountByID(linkedBankAccount.BankAccountID)
+		bankAccount, errBA := bs.Libs.GetBankAccount(context.Background(),linkedBankAccount.BankAccountID)
 		if errBA != nil {
 			return nil, errBA
 		}

@@ -19,12 +19,12 @@ func (br *Router) BankAccountRoutes(
 		br.Controller.GetBankAccount(),
 	)
 
-// 	bankAccount.GET(
-// 		"/:merchant_id/bank_accounts",
-// 		middlewares.RequireRole("owner", "finance", "super_admin"),
-// 		middlewares.RequireMerchantAccess("super_admin"),
-// 		br.Controller.GetBankAccounts(),
-// 	)
+	bankAccount.GET(
+		"/:merchant_id/bank_accounts",
+		middlewares.RequireRole("owner", "finance", "super_admin"),
+		middlewares.RequireMerchantAccess("super_admin"),
+		br.Controller.GetBankAccounts(),
+	)
 // 	bankAccount.PATCH(
 // 		"/:merchant_id/bank_account",
 // 		middlewares.RequireRole("super_admin"),
