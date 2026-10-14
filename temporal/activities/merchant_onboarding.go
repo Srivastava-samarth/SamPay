@@ -119,7 +119,7 @@ func (a *Registry) CreateLinkedBankAccount(
 	return a.Repo.CreateLinkedBankAccount(&models.LinkedBankAccount{
 		MerchantID: merchantID,
 		BankAccountID: bankAccount.ID,
-		Type: constants.BankAccountTypePrimary,
+		Type: bankAccount.AccountType,
 		Status: bankAccount.Status,
 	})
 }

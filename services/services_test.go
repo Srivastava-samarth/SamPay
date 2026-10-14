@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Srivastava-samarth/sampay/config"
+	"github.com/Srivastava-samarth/sampay/libs"
 	"github.com/Srivastava-samarth/sampay/middlewares"
 	"github.com/Srivastava-samarth/sampay/notifications"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
@@ -24,6 +25,7 @@ func TestMain(m *testing.M) {
 	// Initialize repositories
 	repo := repositories.NewRepository(db)
 	jwtService := middlewares.NewJwt(&config.JWTConfig{})
+	libs := libs.NewLibs(&config.InternalConfig{})
 
 	notificationService, err := notifications.NewEmailService(config.SMTPConfig{})
 	if err != nil {
@@ -33,6 +35,7 @@ func TestMain(m *testing.M) {
 	testServices = NewServices(
 		db,
 		repo,
+		libs,
 		jwtService,
 		notificationService,
 	)

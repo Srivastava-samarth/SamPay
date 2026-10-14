@@ -1,31 +1,34 @@
 package services
 
 import (
+	"context"
 	"errors"
 
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
-func (bs *Services) UpdateBankAccountAndlink(
-	updateBankAccountRequest *dto.UpdateBankAccountRequest,
+func (bs *Services) UpdateBankAccountAndlinkStatus(
+	ctx context.Context,
+	bankAccountID uuid.UUID,
+	updateBankAccountRequest *dto.UpdateBankAccountStatus,
 	) (*models.BankAccount, *models.LinkedBankAccount, error) {
 	if updateBankAccountRequest == nil {
 		return nil, nil, errors.New("request is required")
 	}
 
-	if updateBankAccountRequest.ID == uuid.Nil {
-		return nil, nil, errors.New("id is required")
+	if updateBankAccountRequest.Status == ""{
+		return nil, nil, errors.New("status is required")
 	}
 
-	updatedBankAccount, errUBA := bs.Repo.UpdateBankAccount(updateBankAccountRequest.ID, updateBankAccountRequest)
+	updatedBankAccount, errUBA := bs.Libs.UpdateBankAccountStatus(ctx, bankAccountID, updateBankAccountRequest)
 	if errUBA != nil {
 		return nil, nil, errUBA
 	}
 
 	updatedLinkedBanAccount, errULBA := bs.Repo.UpdateLinkedBankAccount(updatedBankAccount.ID, &dto.UpdateLinkedBankAccountRequest{
-		Type:   updateBankAccountRequest.AccountType,
 		Status: updateBankAccountRequest.Status,
 	})
 	if errULBA != nil {
@@ -33,6 +36,27 @@ func (bs *Services) UpdateBankAccountAndlink(
 	}
 
 	return updatedBankAccount, updatedLinkedBanAccount, nil
+}
+
+func (bs *Services) UpdateBankAccountBalance(
+	ctx context.Context,
+	bankAccountID uuid.UUID,
+	request *dto.UpdateBankAccountBalance,
+) (*models.BankAccount, error){
+	if request == nil{
+		return nil, errors.New("request can't be nil")
+	}
+
+	if request.Balance == decimal.Zero{
+		return nil, errors.New("balance_is_required")
+	}
+
+	updatedBankAccount, errUBA := bs.Libs.UpdateBankAccountBalance(ctx, bankAccountID, request)
+	if errUBA != nil{
+		return nil, errUBA
+	}
+
+	return updatedBankAccount, nil
 }
 
 func (bs *Services) GetBankAccountsByMerchantID(
@@ -51,7 +75,7 @@ func (bs *Services) GetBankAccountsByMerchantID(
 
 	var bankAccounts []*models.BankAccount
 	for _, linkedBankAccount := range linkedBankAccounts {
-		bankAccount, errBA := bs.Repo.GetBankAccountByID(linkedBankAccount.BankAccountID)
+		bankAccount, errBA := bs.Libs.GetBankAccount(context.Background(),linkedBankAccount.BankAccountID)
 		if errBA != nil {
 			return nil, errBA
 		}
@@ -69,10 +93,43 @@ func (bs *Services) GetBankAccount(
 		return nil, errors.New("bank_account_id is empty")
 	}
 
-	bankAccount, errBA := bs.Repo.GetBankAccountByID(bankAccountID)
+	bankAccount, errBA := bs.Libs.GetBankAccount(context.Background(), bankAccountID)
 	if errBA != nil {
 		return nil, errBA
 	}
 
 	return bankAccount, nil
+}
+
+func (bs *Services) ValidateCreateBankAccountRequest(
+	ctx context.Context,
+	request *dto.CreateBankAccountRequest,
+	merchantID uuid.UUID,
+) error{
+	if request == nil{
+		return errors.New("request can't be empty")
+	}
+
+	if request.AccountName == ""{
+		return errors.New("account_name is required")
+	}
+
+	if request.AccountType == ""{
+		return errors.New("account_type is required")
+	}
+
+	linkedBankAccounts, errLBA := bs.Repo.GetAllBankAccountLinkedByMerchantID(merchantID)
+	if errLBA != nil{
+		return errLBA
+	}
+
+	if len(linkedBankAccounts) == 2{
+		return errors.New("can't create more than two accounts")
+	}
+
+	if linkedBankAccounts[0].Type == request.AccountType{
+		return errors.New("accoun_type already exists")
+	}
+
+	return nil
 }

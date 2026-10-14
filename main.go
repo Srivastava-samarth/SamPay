@@ -12,6 +12,7 @@ import (
 	"github.com/Srivastava-samarth/sampay/config"
 	"github.com/Srivastava-samarth/sampay/controllers"
 	"github.com/Srivastava-samarth/sampay/database"
+	"github.com/Srivastava-samarth/sampay/libs"
 	"github.com/Srivastava-samarth/sampay/middlewares"
 	"github.com/Srivastava-samarth/sampay/nats"
 	"github.com/Srivastava-samarth/sampay/notifications"
@@ -65,7 +66,9 @@ func main() {
 
 	jwtService := middlewares.NewJwt(&cfg.JWT)
 
-	services := services.NewServices(db, repo, jwtService, notificationService)
+	libs := libs.NewLibs(&cfg.Internal)
+
+	services := services.NewServices(db, repo, libs, jwtService, notificationService)
 
 	controllers := controllers.NewController(db, temporalClient, services)
 	natsClient, err := nats.NewClient(
@@ -137,6 +140,7 @@ defer stop()
 
 	mainRouter.MerchantRoutes(api, jwtService.Authenticate())
 	mainRouter.AuthRoutes(api)
+	mainRouter.BankAccountRoutes(api, jwtService.Authenticate())
 	mainRouter.UserRoutes(api, jwtService.Authenticate())
 	mainRouter.WalletRoutes(api, jwtService.Authenticate())
 	mainRouter.VaultRoutes(api, jwtService.Authenticate())
