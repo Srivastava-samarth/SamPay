@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/Srivastava-samarth/sampay/dto"
@@ -118,7 +119,7 @@ func (vc *Controller) UpdateVaultBalance() gin.HandlerFunc {
 			return
 		}
 
-		vault, errV := vc.Services.UpdateVaultBalance(merchantID.(uuid.UUID), request.Balance, request.Type)
+		vault, errV := vc.Services.UpdateVaultBalance(context.Background(), merchantID.(uuid.UUID), request.Balance, request.Type)
 		if errV != nil {
 			dto.Fail(
 				c,

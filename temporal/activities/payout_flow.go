@@ -249,7 +249,7 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// 9. Get Receiver Wallet
 			// ---------------------------------------------------------
 
-			receiverBankAccount, err := repo.GetBankAccountByID(
+			receiverBankAccount, err := a.Services.GetBankAccount(
 				payoutRequest.DestinationBankAccountID,
 			)
 			if err != nil {
@@ -263,9 +263,10 @@ func (a *Registry) ExecutePayoutWalletToBank(
 			// 10. Payout Vault -> Receiver bank account
 			// ---------------------------------------------------------
 
-			_, err = repo.UpdateBankAccount(
+			_, err = a.Services.UpdateBankAccountBalance(
+				ctx,
 				receiverBankAccount.ID,
-				&dto.UpdateBankAccountRequest{
+				&dto.UpdateBankAccountBalance{
 					Balance: receiverBankAccount.Balance.Add(
 						payoutRequest.Amount,
 					),
@@ -480,7 +481,7 @@ func (a *Registry) ExecutePayoutBankToBank(
 				)
 			}
 
-			senderBankAccount, err := repo.GetBankAccountByID(request.Request.SourceBankAccountID)
+			senderBankAccount, err := a.Services.GetBankAccount(request.Request.SourceBankAccountID)
 			if err != nil {
 				return fmt.Errorf(
 					"get sender wallet: %w",
@@ -488,9 +489,10 @@ func (a *Registry) ExecutePayoutBankToBank(
 				)
 			}
 
-			updatedSenderBankAccount, err := repo.UpdateBankAccount(
+			updatedSenderBankAccount, err := a.Services.UpdateBankAccountBalance(
+				ctx,
 				senderBankAccount.ID,
-				&dto.UpdateBankAccountRequest{
+				&dto.UpdateBankAccountBalance{
 					Balance: senderBankAccount.Balance.Sub(totalAmount),
 				},
 			)
@@ -501,7 +503,7 @@ func (a *Registry) ExecutePayoutBankToBank(
 				)
 			}
 
-			receiverBankAccount, errRBA := repo.GetBankAccountByID(request.Request.DestinationBankAccountID)
+			receiverBankAccount, errRBA := a.Services.GetBankAccount(request.Request.DestinationBankAccountID)
 			if errRBA != nil {
 				return fmt.Errorf(
 					"getting receiver bank account: %w",
@@ -509,9 +511,10 @@ func (a *Registry) ExecutePayoutBankToBank(
 				)
 			}
 
-			updateReceiverBankAccount, errURBA := repo.UpdateBankAccount(
+			updateReceiverBankAccount, errURBA := a.Services.UpdateBankAccountBalance(
+				ctx,
 				receiverBankAccount.ID,
-				&dto.UpdateBankAccountRequest{
+				&dto.UpdateBankAccountBalance{
 					Balance: receiverBankAccount.Balance.Add(totalAmount),
 				},
 			)

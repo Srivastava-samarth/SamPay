@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Srivastava-samarth/sampay/constants"
@@ -114,6 +115,7 @@ func TestUpdateVaultBalance(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := testServices.UpdateVaultBalance(
+				context.Background(),
 				uuid.New(),
 				tt.balance,
 				constants.PaymentVault,
