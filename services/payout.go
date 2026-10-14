@@ -40,7 +40,7 @@ func (ps *Services) ValidatePayoutRequestWalletToBank(
 		return errors.New("sender_wallet_id issue")
 	}
 
-	destinationBankAccount, errDBA := ps.Repo.GetBankAccountByID(request.DestinationBankAccountID)
+	destinationBankAccount, errDBA := ps.GetBankAccount(request.DestinationBankAccountID)
 	if errDBA != nil {
 		return errDBA
 	}
@@ -71,7 +71,7 @@ func (ps *Services) ValidatePayoutRequestBankToBank(
 		return errors.New("currency should be INR")
 	}
 
-	senderBankAccount, errSBA := ps.Repo.GetBankAccountByID(request.SourceBankAccountID)
+	senderBankAccount, errSBA := ps.GetBankAccount(request.SourceBankAccountID)
 	if errSBA != nil {
 		return errSBA
 	}
@@ -85,7 +85,7 @@ func (ps *Services) ValidatePayoutRequestBankToBank(
 		return errors.New("merchant id doesn't match")
 	}
 
-	destinationBankAccount, errDBA := ps.Repo.GetBankAccountByID(request.DestinationBankAccountID)
+	destinationBankAccount, errDBA := ps.GetBankAccount(request.DestinationBankAccountID)
 	if errDBA != nil {
 		return errDBA
 	}
@@ -105,7 +105,7 @@ func (ps *Services) CheckBankBalance(
 	amount decimal.Decimal,
 ) (bool, error) {
 
-	bankAccount, errBA := ps.Repo.GetBankAccountByID(ID)
+	bankAccount, errBA := ps.GetBankAccount(ID)
 
 	if errBA != nil {
 		return false, errBA

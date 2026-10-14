@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -72,6 +73,7 @@ func (vs *Services) GetVaultByID(
 }
 
 func (vs *Services) UpdateVaultBalance(
+	ctx context.Context,
 	merchantID uuid.UUID, 
 	balance decimal.Decimal, 
 	vaultType string,
@@ -102,8 +104,7 @@ func (vs *Services) UpdateVaultBalance(
 		return nil, errors.New("insufficient balance in bank account")
 	}
 
-	updatedBankAccount, _, errUB := vs.UpdateBankAccountAndlink(&dto.UpdateBankAccountRequest{
-		ID:      bankAccount.ID,
+	updatedBankAccount,errUB := vs.UpdateBankAccountBalance(ctx, bankAccount.ID, &dto.UpdateBankAccountBalance{
 		Balance: bankAccount.Balance.Sub(balance),
 	})
 	if errUB != nil {
