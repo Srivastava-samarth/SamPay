@@ -1,9 +1,9 @@
 package dto
 
 import (
+	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
-	models "github.com/Srivastava-samarth/sampay/database/models"
 )
 
 type CreateBankAccountRequest struct {
@@ -33,4 +33,12 @@ type UpdateBankAccountRequest struct {
 type BankAccountCreatedPayload struct {
 	Event   *models.Event
 	Payload *BankAccountEventResponsePayload
+}
+
+type UpdateBankAccountStatus struct {
+	Status string `json:"status"`
+}
+
+type UpdateBankAccountBalance struct {
+	Balance decimal.Decimal `json:"balance"`
 }

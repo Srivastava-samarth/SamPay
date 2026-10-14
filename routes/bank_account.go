@@ -31,4 +31,16 @@ func (br *Router) BankAccountRoutes(
 		middlewares.RequireMerchantAccess("super_admin"),
 		br.Controller.CreateBankAccount(),
 	)
+	bankAccount.PATCH(
+		"/:merchant_id/bank_account/:bank_account_id",
+		middlewares.RequireRole("owner", "finance", "super_admin"),
+		middlewares.RequireMerchantAccess("super_admin"),
+		br.Controller.UpdateBankAccountStatus(),
+	)
+	bankAccount.PATCH(
+		"/:merchant_id/bank_account/:bank_account_id/balance",
+		middlewares.RequireRole("owner", "finance", "super_admin"),
+		middlewares.RequireMerchantAccess("super_admin"),
+		br.Controller.UpdateBankAccountBalance(),
+	)
 }

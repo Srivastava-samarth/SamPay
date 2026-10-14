@@ -7,26 +7,28 @@ import (
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
-func (bs *Services) UpdateBankAccountAndlink(
-	updateBankAccountRequest *dto.UpdateBankAccountRequest,
+func (bs *Services) UpdateBankAccountAndlinkStatus(
+	ctx context.Context,
+	bankAccountID uuid.UUID,
+	updateBankAccountRequest *dto.UpdateBankAccountStatus,
 	) (*models.BankAccount, *models.LinkedBankAccount, error) {
 	if updateBankAccountRequest == nil {
 		return nil, nil, errors.New("request is required")
 	}
 
-	if updateBankAccountRequest.ID == uuid.Nil {
-		return nil, nil, errors.New("id is required")
+	if updateBankAccountRequest.Status == ""{
+		return nil, nil, errors.New("status is required")
 	}
 
-	updatedBankAccount, errUBA := bs.Repo.UpdateBankAccount(updateBankAccountRequest.ID, updateBankAccountRequest)
+	updatedBankAccount, errUBA := bs.Libs.UpdateBankAccountStatus(ctx, bankAccountID, updateBankAccountRequest)
 	if errUBA != nil {
 		return nil, nil, errUBA
 	}
 
 	updatedLinkedBanAccount, errULBA := bs.Repo.UpdateLinkedBankAccount(updatedBankAccount.ID, &dto.UpdateLinkedBankAccountRequest{
-		Type:   updateBankAccountRequest.AccountType,
 		Status: updateBankAccountRequest.Status,
 	})
 	if errULBA != nil {
@@ -34,6 +36,27 @@ func (bs *Services) UpdateBankAccountAndlink(
 	}
 
 	return updatedBankAccount, updatedLinkedBanAccount, nil
+}
+
+func (bs *Services) UpdateBankAccountBalance(
+	ctx context.Context,
+	bankAccountID uuid.UUID,
+	request *dto.UpdateBankAccountBalance,
+) (*models.BankAccount, error){
+	if request == nil{
+		return nil, errors.New("request can't be nil")
+	}
+
+	if request.Balance == decimal.Zero{
+		return nil, errors.New("balance_is_required")
+	}
+
+	updatedBankAccount, errUBA := bs.Libs.UpdateBankAccountBalance(ctx, bankAccountID, request)
+	if errUBA != nil{
+		return nil, errUBA
+	}
+
+	return updatedBankAccount, nil
 }
 
 func (bs *Services) GetBankAccountsByMerchantID(

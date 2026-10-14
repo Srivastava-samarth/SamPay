@@ -161,3 +161,91 @@ func (c *Controller) CreateBankAccount() gin.HandlerFunc{
 		)
 	}
 }
+
+func (c *Controller) UpdateBankAccountStatus() gin.HandlerFunc{
+	return func(ctx *gin.Context) {
+		var request *dto.UpdateBankAccountStatus
+		if err := ctx.ShouldBindJSON(&request); err!= nil{
+			dto.Fail(
+				ctx,
+				http.StatusBadRequest,
+				"BINDING_ERROR",
+				err.Error(),
+			)
+			return
+		}
+
+		bankAccountID := ctx.Param("bank_account_id")
+		parsedBankAccountID, errP := uuid.Parse(bankAccountID)
+		if errP != nil{
+			dto.Fail(
+				ctx,
+				http.StatusBadRequest,
+				"PARSING_ERROR",
+				errP.Error(),
+			)
+			return
+		}
+
+		updatedBankAccount, _, err := c.Services.UpdateBankAccountAndlinkStatus(ctx, parsedBankAccountID, request)
+		if err != nil{
+			dto.Fail(
+				ctx,
+				http.StatusInternalServerError,
+				"ERROR_IN_UPDATING",
+				err.Error(),
+			)
+			return
+		}
+
+		dto.Respond(
+			ctx,
+			http.StatusOK,
+			updatedBankAccount,
+		)
+	}
+}
+
+func (c *Controller) UpdateBankAccountBalance() gin.HandlerFunc{
+	return func(ctx *gin.Context) {
+		var request *dto.UpdateBankAccountBalance
+		if err := ctx.ShouldBindJSON(&request); err!= nil{
+			dto.Fail(
+				ctx,
+				http.StatusBadRequest,
+				"BINDING_ERROR",
+				err.Error(),
+			)
+			return
+		}
+
+		bankAccountID := ctx.Param("bank_account_id")
+		parsedBankAccountID, errP := uuid.Parse(bankAccountID)
+		if errP != nil{
+			dto.Fail(
+				ctx,
+				http.StatusBadRequest,
+				"PARSING_ERROR",
+				errP.Error(),
+			)
+			return
+		}
+
+		updatedBankAccount, err := c.Services.UpdateBankAccountBalance(ctx, parsedBankAccountID, request)
+		if err != nil{
+			dto.Fail(
+				ctx,
+				http.StatusInternalServerError,
+				"ERROR_IN_UPDATING",
+				err.Error(),
+			)
+			return
+		}
+
+		dto.Respond(
+			ctx,
+			http.StatusOK,
+			updatedBankAccount,
+		)
+	}
+}
