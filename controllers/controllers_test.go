@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/Srivastava-samarth/sampay/config"
+	"github.com/Srivastava-samarth/sampay/libs"
 	"github.com/Srivastava-samarth/sampay/middlewares"
+	"github.com/Srivastava-samarth/sampay/nats"
 	"github.com/Srivastava-samarth/sampay/notifications"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
 	"github.com/Srivastava-samarth/sampay/services"
@@ -62,18 +64,35 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
+	libs := libs.NewLibs(&config.InternalConfig{})
+
 	testServices = services.NewServices(
 		db,
 		testRepo,
+		libs,
 		jwtService,
 		notificationService,
 	)
+
+	natsClient, errN := nats.NewClient(
+		&config.NatsConfig{},
+		testServices,
+		testRepo,
+		temporalClient,
+		[]byte{},
+		[]byte{},
+	)
+
+	if errN != nil{
+		panic(errN)
+	}
 
 	activityRegistry := activities.NewRegistry(
 		db,
 		notificationService,
 		testServices,
 		testRepo,
+		natsClient,
 	)
 
 	// Forgot Password Worker

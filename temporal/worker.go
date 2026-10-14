@@ -18,6 +18,7 @@ const (
 	SettlementFlowTaskQueue     = "SETTLEMENT_FLOW"
 	RefundFlowTaskQueue         = "REFUND_FLOW"
 	UpdateKycFlow               = "UPDATE_KYC_FLOW"
+	BankAccountTaskQueue        = "BANK_ACCOUNT"
 )
 
 type WorkerConfig struct {
@@ -151,6 +152,14 @@ func StartWorkers(
 				w.RegisterActivity(activityRegistry.CreateRefund)
 				w.RegisterActivity(activityRegistry.RefundFromMerchantWallet)
 				w.RegisterActivity(activityRegistry.RefundFromPaymentVault)
+			},
+		},
+		{
+			TaskQueue: BankAccountTaskQueue,
+			Register: func(w worker.Worker) {
+				w.RegisterWorkflow(workflows.CreateBankAccount)
+				w.RegisterActivity(activityRegistry.CreateLinkedBankAccount)
+				w.RegisterActivity(activityRegistry.PublishBankAccountCreationRequest)
 			},
 		},
 	}

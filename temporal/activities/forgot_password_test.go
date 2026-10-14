@@ -26,6 +26,7 @@ func TestForgotPassword(t *testing.T) {
 		services := services.NewServices(
 			db,
 			testRepo,
+			testLibs,
 			testServices.JwtService,
 			notificationService,
 		)
@@ -80,6 +81,7 @@ func TestForgotPassword(t *testing.T) {
 		services := services.NewServices(
 			db,
 			testRepo,
+			testLibs,
 			testServices.JwtService,
 			notificationService,
 		)

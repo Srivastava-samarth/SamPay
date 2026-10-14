@@ -77,3 +77,36 @@ func (bs *Services) GetBankAccount(
 
 	return bankAccount, nil
 }
+
+func (bs *Services) ValidateCreateBankAccountRequest(
+	ctx context.Context,
+	request *dto.CreateBankAccountRequest,
+	merchantID uuid.UUID,
+) error{
+	if request == nil{
+		return errors.New("request can't be empty")
+	}
+
+	if request.AccountName == ""{
+		return errors.New("account_name is required")
+	}
+
+	if request.AccountType == ""{
+		return errors.New("account_type is required")
+	}
+
+	linkedBankAccounts, errLBA := bs.Repo.GetAllBankAccountLinkedByMerchantID(merchantID)
+	if errLBA != nil{
+		return errLBA
+	}
+
+	if len(linkedBankAccounts) == 2{
+		return errors.New("can't create more than two accounts")
+	}
+
+	if linkedBankAccounts[0].Type == request.AccountType{
+		return errors.New("accoun_type already exists")
+	}
+
+	return nil
+}

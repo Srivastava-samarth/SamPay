@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Srivastava-samarth/sampay/config"
+	"github.com/Srivastava-samarth/sampay/libs"
 	"github.com/Srivastava-samarth/sampay/middlewares"
 	"github.com/Srivastava-samarth/sampay/nats"
 	"github.com/Srivastava-samarth/sampay/notifications"
@@ -19,6 +20,7 @@ var (
 	testRepo     *repositories.Repository
 	testServices *services.Services
 	testNats     *nats.NatsClient
+	testLibs     *libs.Libs
 )
 
 func TestMain(m *testing.M) {
@@ -41,9 +43,12 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
+	libs := libs.NewLibs(&config.InternalConfig{})
+
 	testServices = services.NewServices(
 		db,
 		testRepo,
+		libs,
 		jwtService,
 		notificationService,
 	)
