@@ -14,6 +14,8 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
+const WalletToBankTransferSignal = "WalletToBankTransferResult"
+
 func PayoutFlow(
 	ctx workflow.Context,
 	request *dto.CreateWalletToBankRequest,
@@ -29,6 +31,7 @@ func PayoutFlow(
 		},
 	}
 
+	workflowID := "payout-flow-wallet-to-bank" + merchantID.String()
 	ctx = workflow.WithActivityOptions(ctx, activityOptions)
 
 	err := workflow.ExecuteActivity(
@@ -73,15 +76,91 @@ func PayoutFlow(
 		Fee:             fees,
 		Request:         *request,
 	}
-	var updatedPayout *models.Payout
+	var response *activities.ExecutePayoutWalletToVault
 	errEP := workflow.ExecuteActivity(
 		ctx,
-		"ExecutePayoutWalletToBank",
+		"ExecutePayoutWalletToVault",
 		executePaymentPayload,
-	).Get(ctx, &updatedPayout)
+	).Get(ctx, &response)
 
-	if errEP == nil {
-		return updatedPayout, nil
+	walletToBankTransferEventPaylaod := &dto.CreateWalletToBankCreditEvent{
+		EventID:   uuid.New(),
+		EventType: string(constants.EventTypeSampayToBankCreditRequested),
+		Payload: &dto.CreateWalletToBankEventRequest{
+			ReferenecID:   payout.ID,
+			WalletID:      *payout.SourceWalletID,
+			BankAccountID: payout.DestinationBankAccountID,
+			Amount:        payout.Amount,
+			Currency:      payout.Currency,
+		},
+	}
+	var event *models.Event
+	err = workflow.ExecuteActivity(
+		ctx,
+		"PublishWalletToBankTransferEvent",
+		walletToBankTransferEventPaylaod,
+		workflowID,
+	).Get(ctx, &event)
+	if err != nil {
+		return nil, err
+	}
+
+	signalCh := workflow.GetSignalChannel(
+		ctx,
+		WalletToBankTransferSignal,
+	)
+
+	timer := workflow.NewTimer(ctx, 10*time.Minute)
+	var walletToBankResponse *dto.WalletToBankTransferCompletedPayload
+	var timedOut bool
+	var receivedMatchingResponse bool
+
+	for !receivedMatchingResponse && !timedOut {
+		selector := workflow.NewSelector(ctx)
+
+		selector.AddReceive(
+			signalCh,
+			func(c workflow.ReceiveChannel, more bool) {
+				var response dto.WalletToBankTransferCompletedPayload
+				c.Receive(ctx, &response)
+
+				if response.Payload.RequestedEventID == event.EventID {
+					walletToBankResponse = &response
+					receivedMatchingResponse = true
+				}
+			},
+		)
+
+		selector.AddFuture(
+			timer,
+			func(workflow.Future) {
+				timedOut = true
+			},
+		)
+
+		selector.Select(ctx)
+	}
+
+	if timedOut && !receivedMatchingResponse {
+		return nil, fmt.Errorf(
+			"timed out waiting for bank account creation: %s",
+			event.EventID,
+		)
+	}
+
+	var finalPayout *models.Payout
+	err = workflow.ExecuteActivity(
+		ctx,
+		"ExecuteVaultToBankAccount",
+		walletToBankResponse.Event,
+		request.DestinationBankAccountID,
+		response.LedgerTransaction,
+		response.Payout,
+		fees,
+	).Get(ctx, &finalPayout)
+
+	if err == nil{
+		return finalPayout, nil
 	}
 
 	failedStatus := constants.TransactionStatusFailed
