@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 
 	"github.com/Srivastava-samarth/sampay/constants"
@@ -91,8 +92,7 @@ func (ws *Services) TopUpWalletFromPrimaryBank(
 		return nil, errors.New("no primary linked bank account found")
 	}
 
-	bankAccount, err := repo.
-		GetBankAccountByID(linkedBankAccount.BankAccountID)
+	bankAccount, err := ws.Libs.GetBankAccount(context.Background(), linkedBankAccount.BankAccountID)
 	if err != nil {
 		return nil, err
 	}
@@ -112,9 +112,10 @@ func (ws *Services) TopUpWalletFromPrimaryBank(
 		)
 	}
 
-	updatedBankAccount, err := repo.UpdateBankAccount(
+	updatedBankAccount, err := ws.Libs.UpdateBankAccountBalance(
+		context.Background(),
 		linkedBankAccount.BankAccountID,
-		&dto.UpdateBankAccountRequest{
+		&dto.UpdateBankAccountBalance{
 			Balance: remainingBankBalance,
 		},
 	)

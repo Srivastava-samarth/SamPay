@@ -91,6 +91,9 @@ func StartWorkers(
 				w.RegisterActivity(activityRegistry.CalculateFees)
 				w.RegisterActivity(activityRegistry.ValidatePayoutWalletToBankRequest)
 				w.RegisterActivity(activityRegistry.ValidatePayoutBankToBankRequest)
+				w.RegisterActivity(activityRegistry.ExecuteVaultToBankAccount)
+				w.RegisterActivity(activityRegistry.PublishWalletToBankTransferEvent)
+				w.RegisterActivity(activityRegistry.ExecutePayoutWalletToVault)
 			},
 		},
 		{
@@ -106,6 +109,9 @@ func StartWorkers(
 				w.RegisterActivity(activityRegistry.CalculateFees)
 				w.RegisterActivity(activityRegistry.ValidatePayoutWalletToBankRequest)
 				w.RegisterActivity(activityRegistry.ValidatePayoutBankToBankRequest)
+				w.RegisterActivity(activityRegistry.ExecuteVaultToBankAccount)
+				w.RegisterActivity(activityRegistry.PublishWalletToBankTransferEvent)
+				w.RegisterActivity(activityRegistry.ExecutePayoutWalletToVault)
 			},
 		},
 		{

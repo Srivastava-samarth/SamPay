@@ -98,6 +98,10 @@ func (a *Registry) ActivateMerchantOnboarding(
 	merchantID uuid.UUID,
 	userID uuid.UUID,
 ) (*models.User, error){
+	_, errUM := a.Repo.UpdateMerchantStatus(merchantID, constants.MerchantStatusActive)
+	if errUM != nil{
+		return nil, errUM
+	}
 	_, errW := a.Repo.UpdateWalletStatus(merchantID, constants.MerchantStatusActive)
 	if errW != nil{
 		return nil, errW
