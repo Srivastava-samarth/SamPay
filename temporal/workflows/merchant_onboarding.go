@@ -87,7 +87,7 @@ func MerchantONboardingWorkflow(
 	// 5. Persist and publish the bank-account creation request.
 	// This Activity must return the original request EventID.
 	bankAccoutnCreationEventPayload := &dto.BankAccountCreationRequestEvent{
-		EventID: uuid.New(),
+		EventID:   uuid.New(),
 		EventType: string(constants.EventTypeSampayToBankAccountCreateRequested),
 		Payload: &dto.CreateBankAccountRequest{
 			AccountName: request.MerchantName,
@@ -183,6 +183,16 @@ func MerchantONboardingWorkflow(
 		"ActivateMerchantOnboarding",
 		merchantID,
 		provisionedUser.User.ID,
+	).Get(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	err = workflow.ExecuteActivity(
+		ctx,
+		"UpdateEventStatus",
+		bankResponse.Event.EventID,
+		constants.EventStatusProcessed,
 	).Get(ctx, nil)
 	if err != nil {
 		return err

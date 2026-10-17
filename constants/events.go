@@ -4,7 +4,9 @@ type EventType string
 
 const (
 	EventTypeSampayToBankAccountCreateRequested EventType = "sampay.bank.account.create.requested"
-	EventTypeBankToSampayBankAccountCreated EventType = "bank.sampay.account.created"
+	EventTypeBankToSampayBankAccountCreated     EventType = "bank.sampay.account.created"
+	EventTypeSampayToBankCreditRequested        EventType = "sampay.bank.wallet.bank.credit.requested"
+	EventTypeWalletToBankTransferCompleted      EventType = "bank.sampay.wallet.to.bank.transfer.completed"
 )
 
 type EventDirection string
@@ -13,7 +15,6 @@ const (
 	EventDirectionInbound  EventDirection = "inbound"
 	EventDirectionOutbound EventDirection = "outbound"
 )
-
 
 type EventStatus string
 
