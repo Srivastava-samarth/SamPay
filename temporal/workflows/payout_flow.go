@@ -15,6 +15,7 @@ import (
 )
 
 const WalletToBankTransferSignal = "WalletToBankTransferResult"
+const BankToBankTransferSignal = "BankToBankTransferResult"
 
 func PayoutFlow(
 	ctx workflow.Context,
@@ -189,6 +190,7 @@ func PayoutFlowBankToBank(
 	request *dto.CreateBankToBankRequest,
 	merchantID uuid.UUID,
 ) (*models.Payout, error) {
+	workflowID := "payout-flow-bank-to-bank" + merchantID.String()
 	activityOptions := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Minute,
 		RetryPolicy: &temporal.RetryPolicy{
@@ -212,6 +214,18 @@ func PayoutFlowBankToBank(
 		return nil, err
 	}
 
+	var fees decimal.Decimal
+
+	errCF := workflow.ExecuteActivity(
+		ctx,
+		"CalculateFees",
+		request.Amount,
+	).Get(ctx, &fees)
+
+	if errCF != nil {
+		return nil, errCF
+	}
+
 	var payout *models.Payout
 	errCP := workflow.ExecuteActivity(
 		ctx,
@@ -225,21 +239,95 @@ func PayoutFlowBankToBank(
 		return nil, errCP
 	}
 
-	executePaymentPayload := &activities.PayoutWorkflowBankToBanRequest{
-		PayoutReference: payout.PayoutReference,
-		MerchantID:      merchantID,
-		Fee:             decimal.Zero,
-		Request:         *request,
-	}
 	var updatedPayout *models.Payout
+	errUP := workflow.ExecuteActivity(
+		ctx,
+		"UpdatePayoutStatus",
+		constants.TransactionStatusProcessing,
+		payout.PayoutReference,
+	).Get(ctx, &updatedPayout)
+
+	if errUP != nil{
+		return nil, errUP
+	} 
+
+	bankToBankTransferEventPayload := &dto.CreateBankToBankTransferEvent{
+		EventID: uuid.New(),
+		EventType: string(constants.EventTypeBankToBankTrasferRequested),
+		Payload: &dto.CreateBankToBankTransferRequest{
+			ReferenecID: payout.ID,
+			SenderAccountID: request.SourceBankAccountID,
+			ReceiverAccountID: request.DestinationBankAccountID,
+			Amount: request.Amount,
+			Currency: request.Currency,
+		},
+	}
+
+	var event *models.Event
+	err = workflow.ExecuteActivity(
+		ctx,
+		"PublishBankToBankTransferEvent",
+		bankToBankTransferEventPayload,
+		workflowID,
+	).Get(ctx, &event)
+	if err != nil {
+		return nil, err
+	}
+
+	signalCh := workflow.GetSignalChannel(
+		ctx,
+		BankToBankTransferSignal,
+	)
+
+	timer := workflow.NewTimer(ctx, 10*time.Minute)
+	var bankToBankResponse *dto.BankToBankTransferCompletedPayload
+	var timedOut bool
+	var receivedMatchingResponse bool
+
+	for !receivedMatchingResponse && !timedOut {
+		selector := workflow.NewSelector(ctx)
+
+		selector.AddReceive(
+			signalCh,
+			func(c workflow.ReceiveChannel, more bool) {
+				var response dto.BankToBankTransferCompletedPayload
+				c.Receive(ctx, &response)
+
+				if response.Payload.RequestedEventID == event.EventID {
+					bankToBankResponse = &response
+					receivedMatchingResponse = true
+				}
+			},
+		)
+
+		selector.AddFuture(
+			timer,
+			func(workflow.Future) {
+				timedOut = true
+			},
+		)
+
+		selector.Select(ctx)
+	}
+
+	if timedOut && !receivedMatchingResponse {
+		return nil, fmt.Errorf(
+			"timed out waiting for bank account creation: %s",
+			event.EventID,
+		)
+	}
+
+	var finalPayout *models.Payout
 	errEP := workflow.ExecuteActivity(
 		ctx,
 		"ExecutePayoutBankToBank",
-		executePaymentPayload,
-	).Get(ctx, &updatedPayout)
+		bankToBankResponse.Event,
+		updatedPayout,
+		request,
+	).Get(ctx, &finalPayout)
 
 	if errEP == nil {
-		return updatedPayout, nil
+		return finalPayout, nil
 	}
 
 	failedStatus := constants.TransactionStatusFailed
