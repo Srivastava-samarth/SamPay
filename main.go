@@ -113,21 +113,18 @@ func main() {
 )
 defer stop()
 
-	// Create the durable JetStream consumer.
 	bankingConsumer, err :=
 		natsClient.CreateBankingResponsesConsumer(ctx)
 	if err != nil {
 		logger.Fatalf("Failed to create banking consumer: %v", err)
 	}
 
-	// Start consuming bank-service responses.
 	consumeContext, err :=
 		natsClient.ConsumeBankingCommands(ctx, bankingConsumer)
 	if err != nil {
 		logger.Fatalf("Failed to start banking consumer: %v", err)
 	}
 
-	// Stop the consumer during shutdown.
 	defer consumeContext.Stop()
 
 	logger.Println("NATS banking consumer started")
