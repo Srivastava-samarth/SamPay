@@ -109,3 +109,52 @@ func (c *NatsClient) handleBankAccountCredit(
 		Payload: &response,
 	}, nil
 }
+
+func (c *NatsClient) handleBankTransfer(
+	ctx context.Context,
+	event *security.SignedEvent,
+) (*dto.BankToBankTransferCompletedPayload, error) {
+
+	newEvent, errE := c.repo.CreateEvent(ctx, &dto.CreateEventRequest{
+		EventID:   event.EventID,
+		EventType: string(constants.EventTypeBankTransferCompleted),
+		Direction: string(constants.EventDirectionInbound),
+		WorkflowID: "bank-to-sampay",
+		Payload:   datatypes.JSON(event.Payload),
+		Status:    constants.ComplianceStatusPending,
+	})
+
+	if errE != nil {
+		return nil, errE
+	}
+
+	var response dto.BankToBankEventResponsePayload
+
+	if err := json.Unmarshal(event.Payload, &response); err != nil {
+		return nil, fmt.Errorf(
+			"unmarshal bank account response payload: %w",
+			err,
+		)
+	}
+
+	if response.EventID == uuid.Nil {
+		return nil, fmt.Errorf("bank account response event ID is missing")
+	}
+
+	if response.RequestedEventID == uuid.Nil {
+		return nil, fmt.Errorf("requested event ID is missing")
+	}
+
+	if response.TransferID == uuid.Nil {
+		return nil, fmt.Errorf("bank account ID is missing")
+	}
+
+	if len(response.Payload) == 0 {
+		return nil, fmt.Errorf("bank account model payload is empty")
+	}
+
+	return &dto.BankToBankTransferCompletedPayload{
+		Event:   newEvent,
+		Payload: &response,
+	}, nil
+}

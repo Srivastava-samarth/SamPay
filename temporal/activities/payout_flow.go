@@ -444,93 +444,18 @@ func (a *Registry) ExecutePayoutWalletToBank(
 
 func (a *Registry) ExecutePayoutBankToBank(
 	ctx context.Context,
-	request *PayoutWorkflowBankToBanRequest,
+	event *models.Event,
+	payout *models.Payout,
+	request *dto.CreateBankToBankRequest,
 ) (*models.Payout, error) {
 
 	var finalPayoutAfterUpdate *models.Payout
 	err := a.DB.Transaction(
 		func(tx *gorm.DB) error {
-
-			payoutRequest := request.Request
-			fees := request.Fee
-			totalAmount := payoutRequest.Amount.Add(fees)
-
-			// Transaction-aware repositories
 			repo := a.Repo.WithTx(tx)
-
-			payoutStatus := constants.TransactionStatusProcessing
-
-			payout, err := repo.UpdatePayoutStatus(
-				request.PayoutReference,
-				payoutStatus,
-			)
-			if err != nil {
-				return fmt.Errorf(
-					"update payout status to processing: %w",
-					err,
-				)
-			}
-
-			isBalanceSufficient, err := a.Services.CheckBankBalance(
-				request.Request.SourceBankAccountID,
-				totalAmount,
-			)
-			if err != nil {
-				return fmt.Errorf(
-					"balance check failed: %w",
-					err,
-				)
-			}
-
-			if !isBalanceSufficient {
-				return fmt.Errorf(
-					"balance is insufficient: %w",
-					err,
-				)
-			}
-
-			senderBankAccount, err := a.Services.GetBankAccount(request.Request.SourceBankAccountID)
-			if err != nil {
-				return fmt.Errorf(
-					"get sender wallet: %w",
-					err,
-				)
-			}
-
-			updatedSenderBankAccount, err := a.Services.UpdateBankAccountBalance(
-				ctx,
-				senderBankAccount.ID,
-				&dto.UpdateBankAccountBalance{
-					Balance: senderBankAccount.Balance.Sub(totalAmount),
-				},
-			)
-			if err != nil {
-				return fmt.Errorf(
-					"update sender bank account balance: %w",
-					err,
-				)
-			}
-
-			receiverBankAccount, errRBA := a.Services.GetBankAccount(request.Request.DestinationBankAccountID)
-			if errRBA != nil {
-				return fmt.Errorf(
-					"getting receiver bank account: %w",
-					errRBA,
-				)
-			}
-
-			updateReceiverBankAccount, errURBA := a.Services.UpdateBankAccountBalance(
-				ctx,
-				receiverBankAccount.ID,
-				&dto.UpdateBankAccountBalance{
-					Balance: receiverBankAccount.Balance.Add(totalAmount),
-				},
-			)
-			if errURBA != nil {
-				return fmt.Errorf(
-					"update receiver bank account: %w",
-					errRBA,
-				)
+			_, errE := repo.UpdateEventStatus(ctx, event.EventID, string(constants.EventStatusProcessing))
+			if errE != nil{
+				return errE
 			}
 
 			_, errLT := a.Services.PostTransaction(
@@ -545,16 +470,16 @@ func (a *Registry) ExecutePayoutBankToBank(
 				[]*models.LedgerEntry{
 					{
 						AccountType: constants.LedgerAccountTypeBankAccount,
-						AccountID:   updatedSenderBankAccount.ID,
+						AccountID:   request.SourceBankAccountID,
 						EntryType:   constants.LedgerEntryTypeDebit,
-						Amount:      totalAmount,
+						Amount:      request.Amount,
 						Currency:    "INR",
 					},
 					{
 						AccountType: constants.LedgerAccountTypeBankAccount,
-						AccountID:   updateReceiverBankAccount.ID,
+						AccountID:   request.DestinationBankAccountID,
 						EntryType:   constants.LedgerEntryTypeCredit,
-						Amount:      totalAmount,
+						Amount:      request.Amount,
 						Currency:    "INR",
 					},
 				},
@@ -575,6 +500,11 @@ func (a *Registry) ExecutePayoutBankToBank(
 					"update payment status to completed: %w",
 					err,
 				)
+			}
+
+			_, errUE := repo.UpdateEventStatus(ctx, event.EventID, string(constants.EventStatusProcessed))
+			if errUE != nil{
+				return errUE
 			}
 
 			finalPayoutAfterUpdate = updatedPayout
@@ -789,6 +719,49 @@ func (a *Registry) ExecutePayoutWalletToVault(
 func (a *Registry) PublishWalletToBankTransferEvent(
 	ctx context.Context,
 	request *dto.CreateWalletToBankCreditEvent,
+	workflowID string,
+) (*models.Event, error) {
+	payload := request.Payload
+	p, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("marshal response payload: %w", err)
+	}
+
+	newEvent, errNE := a.CreateEvent(context.Background(), &dto.CreateEventRequest{
+		EventID:    request.EventID,
+		EventType:  request.EventType,
+		Direction:  string(constants.EventDirectionOutbound),
+		Payload:    p,
+		WorkflowID: workflowID,
+		Status:     string(constants.EventStatusProcessing),
+	})
+	if errNE != nil {
+		return nil, errNE
+	}
+
+	jsonPayload := datatypes.JSON(p)
+
+	errP := a.nats.Publish(context.Background(), constants.EventType(newEvent.EventType), security.EventEnvelope{
+		EventID:   newEvent.EventID,
+		EventType: newEvent.EventType,
+		Payload:   json.RawMessage(jsonPayload),
+	})
+
+	if errP != nil {
+		return nil, errP
+	}
+
+	updatedEvent, errUE := a.UpdateEventStatus(context.Background(), newEvent.EventID, string(constants.EventStatusProcessed))
+	if errUE != nil {
+		return nil, errUE
+	}
+
+	return updatedEvent, nil
+}
+
+func (a *Registry) PublishBankToBankTransferEvent(
+	ctx context.Context,
+	request *dto.CreateBankToBankTransferEvent,
 	workflowID string,
 ) (*models.Event, error) {
 	payload := request.Payload
