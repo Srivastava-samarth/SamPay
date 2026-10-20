@@ -54,3 +54,42 @@ type WalletToBankEventResponsePayload struct {
 	TransferID       uuid.UUID      `json:"transfer_id"`
 	Payload          datatypes.JSON `json:"payload"`
 }
+type CreateBankToBankTransferEvent struct {
+	EventID   uuid.UUID                        `json:"event_id" binding:"required"`
+	EventType string                           `json:"event_type" binding:"required"`
+	Payload   *CreateBankToBankTransferRequest `josn:"payload" binding:"required"`
+}
+
+type CreateBankToBankTransferRequest struct {
+	ReferenecID       uuid.UUID       `json:"reference_id" binding:"required"`
+	SenderAccountID   uuid.UUID       `json:"sender_account_id" binding:"required"`
+	ReceiverAccountID uuid.UUID       `json:"receiver_account_id" binding:"required"`
+	Amount            decimal.Decimal `json:"amount" binding:"required"`
+	Currency          string          `json:"currency" binding:"required"`
+}
+
+type BankToBankTransferCompletedPayload struct {
+	Event   *models.Event
+	Payload *BankToBankEventResponsePayload
+}
+
+type BankToBankEventResponsePayload struct {
+	EventID          uuid.UUID      `json:"event_id"`
+	RequestedEventID uuid.UUID      `json:"requested_event_id"`
+	TransferID       uuid.UUID      `json:"transfer_id"`
+	Payload          datatypes.JSON `json:"payload"`
+}
+
+type CreateBankToWalletDebitEvent struct {
+	EventID   uuid.UUID                  `json:"event_id" binding:"required"`
+	EventType string                     `json:"event_type" binding:"required"`
+	Payload   *CreateBankToWalletRequest `josn:"payload" binding:"required"`
+}
+
+type CreateBankToWalletRequest struct {
+	ReferenecID   uuid.UUID       `json:"reference_id" binding:"required"`
+	WalletID      uuid.UUID       `json:"wallet_id" binding:"required"`
+	BankAccountID uuid.UUID       `json:"bank_account_id" binding:"required"`
+	Amount        decimal.Decimal `json:"amount" binding:"required"`
+	Currency      string          `json:"currency" binding:"required"`
+}
