@@ -113,6 +113,7 @@ func StartWorkers(
 				w.RegisterActivity(activityRegistry.ExecuteVaultToBankAccount)
 				w.RegisterActivity(activityRegistry.PublishWalletToBankTransferEvent)
 				w.RegisterActivity(activityRegistry.ExecutePayoutWalletToVault)
+				w.RegisterActivity(activityRegistry.PublishBankToBankTransferEvent)
 			},
 		},
 		{
