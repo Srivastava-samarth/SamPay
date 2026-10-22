@@ -4,9 +4,13 @@ import (
 	"net/http"
 
 	"github.com/Srivastava-samarth/sampay/constants"
+	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
+	"github.com/Srivastava-samarth/sampay/temporal"
+	"github.com/Srivastava-samarth/sampay/temporal/workflows"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"go.temporal.io/sdk/client"
 )
 
 func (wc *Controller) GetWallet() gin.HandlerFunc {
@@ -259,7 +263,7 @@ func (wc *Controller) TopUpWallet() gin.HandlerFunc {
 			return
 		}
 
-		wallet, errW := wc.Services.GetWalletByMerchantID(parsedMerchantID)
+		_, errW := wc.Services.GetWalletByMerchantID(parsedMerchantID)
 		if errW != nil {
 			dto.Fail(
 				c,
@@ -269,17 +273,48 @@ func (wc *Controller) TopUpWallet() gin.HandlerFunc {
 			)
 		}
 
-		updatedWallet, errUW := wc.Services.TopUpWalletFromPrimaryBank(wc.DB, wallet, request.Amount)
-		if errUW != nil {
+		workflowID := "bank-to-wallet-" + merchantID
+
+		workflowOptions := client.StartWorkflowOptions{
+			ID:        workflowID,
+			TaskQueue: temporal.TopUpTaskQueue,
+		}
+
+		workflowRun, errW := wc.TemporalClient.ExecuteWorkflow(
+			c.Request.Context(),
+			workflowOptions,
+			workflows.TopUpFlow,
+			request,
+			parsedMerchantID,
+		)
+
+		if errW != nil {
 			dto.Fail(
 				c,
 				http.StatusInternalServerError,
-				"ERROR_TOPING_UP_WALLET",
-				errUW.Error(),
+				"WORKFLOW_START_FAILED",
+				errW.Error(),
 			)
 			return
 		}
 
+		var updatedWallet *models.Wallets
+
+		errPV := workflowRun.Get(
+			c.Request.Context(),
+			&updatedWallet,
+		)
+
+		if errPV != nil{
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"POPULATING_ERROR",
+				errP.Error(),
+			)
+			return
+		}
+		
 		dto.Respond(
 			c,
 			http.StatusOK,

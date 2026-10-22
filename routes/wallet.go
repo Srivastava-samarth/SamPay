@@ -33,7 +33,8 @@ func (wr *Router) WalletRoutes(
 	)
 	wallet.PUT(
 		"/:merchant_id/wallet/topup",
-		middlewares.RequireRole("super_admin"),
+		middlewares.RequireRole("super_admin","owner"),
+		middlewares.RequireMerchantAccess("super_admin"),
 		wr.Controller.TopUpWallet(),
 	)
 }

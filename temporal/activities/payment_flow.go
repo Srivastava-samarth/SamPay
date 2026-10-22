@@ -114,17 +114,7 @@ func (a *Registry) ExecutePayment(
 			updatedWallet := senderWallet
 
 			if !senderWallet.AvailableBalance.GreaterThanOrEqual(totalAmount) {
-				updatedWallet, err = a.Services.TopUpWalletFromPrimaryBank(
-					tx,
-					senderWallet,
-					totalAmount,
-				)
-				if err != nil {
-					return fmt.Errorf(
-						"auto top-up failed: %w",
-						err,
-					)
-				}
+				return errors.New("insufficient_balance")
 			}
 
 			// ---------------------------------------------------------

@@ -9,6 +9,8 @@ const (
 	EventTypeWalletToBankTransferCompleted      EventType = "bank.sampay.wallet.to.bank.transfer.completed"
 	EventTypeBankToBankTrasferRequested         EventType = "sampay.bank.transfer.requested"
 	EventTypeBankTransferCompleted              EventType = "bank.sampay.transfer.completed"
+	EventTypeBankToWalletDebitRequested         EventType = "sampay.bank.wallet.bank.debit.requested"
+	EventTypeBankToWalletTransferCompleted      EventType = "bank.sampay.bank.to.wallet.transfer.completed"
 )
 
 type EventDirection string

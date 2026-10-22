@@ -166,13 +166,13 @@ func PayoutFlow(
 
 	failedStatus := constants.TransactionStatusFailed
 
-	var finalUpdatedPayment *models.Payout
+	var finalUpdatedPayout *models.Payout
 	failErr := workflow.ExecuteActivity(
 		ctx,
 		"UpdatePayoutStatus",
 		&failedStatus,
 		payout.PayoutReference,
-	).Get(ctx, &finalUpdatedPayment)
+	).Get(ctx, &finalUpdatedPayout)
 
 	if failErr != nil {
 		return nil, fmt.Errorf(
@@ -182,7 +182,23 @@ func PayoutFlow(
 		)
 	}
 
-	return finalUpdatedPayment, nil
+	var finalEvent *models.Event
+	failErr = workflow.ExecuteActivity(
+		ctx,
+		"UpdateEventStatus",
+		walletToBankResponse.Event.EventID,
+		constants.EventStatusFailed,
+	).Get(ctx, &finalEvent)
+
+	if failErr != nil {
+		return nil, fmt.Errorf(
+			"event failed: %w; failed to mark event as failed: %v",
+			errEP,
+			failErr,
+		)
+	}
+
+	return finalUpdatedPayout, nil
 }
 
 func PayoutFlowBankToBank(

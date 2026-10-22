@@ -109,12 +109,7 @@ func (a *Registry) RefundFromMerchantWallet(
 			}
 
 			if refundSenderWallet.AvailableBalance.LessThan(Amount) {
-				topupSenderWallet, errTSW := a.Services.TopUpWalletFromPrimaryBank(tx, refundSenderWallet, Amount)
-				if errTSW != nil {
-					return errTSW
-				}
-
-				refundSenderWallet = topupSenderWallet
+				return errors.New("insufficient_balance")
 			}
 
 			updateSenderAvailableAmount := refundSenderWallet.AvailableBalance.Sub(Amount)
