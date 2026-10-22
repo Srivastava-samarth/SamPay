@@ -20,6 +20,7 @@ const (
 	UpdateKycFlow               = "UPDATE_KYC_FLOW"
 	BankAccountTaskQueue        = "BANK_ACCOUNT"
 	TopUpTaskQueue              = "TOPUP_FLOW"
+	CompanyVaultTopupTaskQueue  = "COMPANY_VAULT_TOPUP_FLOW"
 )
 
 type WorkerConfig struct {
@@ -178,6 +179,16 @@ func StartWorkers(
 				w.RegisterActivity(activityRegistry.GetBankAccountByMerchantID)
 				w.RegisterActivity(activityRegistry.PublishBankToWalletTransferEvent)
 				w.RegisterActivity(activityRegistry.ExecuteBankToWallet)
+				w.RegisterActivity(activityRegistry.UpdateEventStatus)
+			},
+		},
+		{
+			TaskQueue: CompanyVaultTopupTaskQueue,
+			Register: func(w worker.Worker) {
+				w.RegisterWorkflow(workflows.CompanyVaultTopUpFlow)
+				w.RegisterActivity(activityRegistry.GetVault)
+				w.RegisterActivity(activityRegistry.PublishVaultTopupEvent)
+				w.RegisterActivity(activityRegistry.ExecuteVaultTopUp)
 				w.RegisterActivity(activityRegistry.UpdateEventStatus)
 			},
 		},

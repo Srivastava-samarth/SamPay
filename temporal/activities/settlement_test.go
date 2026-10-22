@@ -79,6 +79,7 @@ func TestGetUnsettledPayment(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -109,6 +110,7 @@ func TestGetUnsettledPayment(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -134,6 +136,7 @@ func TestExecuteSettlementByMerchant(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -273,6 +276,7 @@ func TestExecuteSettlementByMerchant(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,

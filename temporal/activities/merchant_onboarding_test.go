@@ -15,6 +15,7 @@ import (
 func TestPerformComplianceCheck(t *testing.T) {
 	registry := NewRegistry(
 		db,
+		cfg,
 		testServices.NotificationService,
 		testServices,
 		testRepo,
@@ -244,6 +245,7 @@ func TestSendWelcomeEmail(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -277,6 +279,7 @@ func TestSendKYCReattemptEmail(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -306,6 +309,7 @@ func TestUpdateMerchantCompliance(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -338,6 +342,7 @@ func TestUpdateMerchantCompliance(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -370,6 +375,7 @@ func TestUpdateMerchantCompliance(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,

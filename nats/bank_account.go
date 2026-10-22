@@ -169,7 +169,7 @@ func (c *NatsClient) handleBankTransfer(
 		Direction: string(constants.EventDirectionInbound),
 		WorkflowID: "bank-to-sampay",
 		Payload:   datatypes.JSON(event.Payload),
-		Status:    constants.ComplianceStatusPending,
+		Status:    string(constants.EventStatusPending),
 	})
 
 	if errE != nil {
@@ -202,6 +202,54 @@ func (c *NatsClient) handleBankTransfer(
 	}
 
 	return &dto.BankToBankTransferCompletedPayload{
+		Event:   newEvent,
+		Payload: &response,
+	}, nil
+}
+
+func (c *NatsClient) handleVaultTopup(
+	ctx context.Context,
+	event *security.SignedEvent,
+) (*dto.CompanyBankToVaultTransferCompletedPayload, error){
+	newEvent, errE := c.repo.CreateEvent(ctx, &dto.CreateEventRequest{
+		EventID:   event.EventID,
+		EventType: string(constants.EventTypeVaultTopupCompleted),
+		Direction: string(constants.EventDirectionInbound),
+		WorkflowID: "bank-to-sampay",
+		Payload:   datatypes.JSON(event.Payload),
+		Status:    string(constants.EventStatusPending),
+	})
+
+	if errE != nil {
+		return nil, errE
+	}
+
+	var response dto.CompanyBankToVaultEventResponsePayload
+
+	if err := json.Unmarshal(event.Payload, &response); err != nil {
+		return nil, fmt.Errorf(
+			"unmarshal bank account response payload: %w",
+			err,
+		)
+	}
+
+	if response.EventID == uuid.Nil {
+		return nil, fmt.Errorf("bank account response event ID is missing")
+	}
+
+	if response.RequestedEventID == uuid.Nil {
+		return nil, fmt.Errorf("requested event ID is missing")
+	}
+
+	if response.TransferID == uuid.Nil {
+		return nil, fmt.Errorf("bank account ID is missing")
+	}
+
+	if len(response.Payload) == 0 {
+		return nil, fmt.Errorf("bank account model payload is empty")
+	}
+
+	return &dto.CompanyBankToVaultTransferCompletedPayload{
 		Event:   newEvent,
 		Payload: &response,
 	}, nil

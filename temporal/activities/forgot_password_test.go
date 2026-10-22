@@ -33,6 +33,7 @@ func TestForgotPassword(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			notificationService,
 			services,
 			testRepo,
@@ -88,6 +89,7 @@ func TestForgotPassword(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			notificationService,
 			services,
 			testRepo,

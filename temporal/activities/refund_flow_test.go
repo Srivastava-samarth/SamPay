@@ -20,6 +20,7 @@ func TestValidateRefundRequest(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -49,6 +50,7 @@ func TestValidateRefundRequest(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -91,6 +93,7 @@ func TestValidateRefundRequest(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -129,6 +132,7 @@ func TestValidateRefundRequest(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -164,6 +168,7 @@ func TestValidateRefundRequest(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -199,6 +204,7 @@ func TestValidateRefundRequest(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -230,6 +236,7 @@ func TestValidateRefundRequest(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -302,6 +309,7 @@ func TestValidateRefundRequest(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -371,6 +379,7 @@ func TestValidateRefundRequest(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -441,6 +450,7 @@ func TestValidateRefundRequest(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -532,6 +542,7 @@ func TestUpdateRefundStatus(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -561,6 +572,7 @@ func TestUpdateRefundStatus(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -655,6 +667,7 @@ func TestUpdateRefundStatus(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -769,6 +782,7 @@ func TestGetRefundByPaymentID(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -879,6 +893,7 @@ func TestGetRefundByPaymentID(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -968,6 +983,7 @@ func TestGetRefundByPaymentID(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -998,6 +1014,7 @@ func TestGetPaymentByID(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -1097,6 +1114,7 @@ func TestGetPaymentByID(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -1127,6 +1145,7 @@ func TestCreateRefund(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -1222,6 +1241,7 @@ func TestCreateRefund(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -1332,6 +1352,7 @@ func TestCreateRefund(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -1498,6 +1519,7 @@ func TestRefundFromMerchantWallet(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -1528,6 +1550,7 @@ func TestRefundFromMerchantWallet(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -1559,6 +1582,7 @@ func TestRefundFromMerchantWallet(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -1764,6 +1788,7 @@ func TestRefundFromMerchantWallet(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -1928,6 +1953,7 @@ func TestRefundFromMerchantWallet(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -1985,6 +2011,7 @@ func TestRefundFromMerchantWallet(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -2062,6 +2089,7 @@ func TestRefundFromMerchantWallet(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -2151,6 +2179,7 @@ func TestRefundFromPaymentVault(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -2185,6 +2214,7 @@ func TestRefundFromPaymentVault(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -2228,6 +2258,7 @@ func TestRefundFromPaymentVault(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -2281,6 +2312,7 @@ func TestRefundFromPaymentVault(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -2348,6 +2380,7 @@ func TestRefundFromPaymentVault(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
@@ -2442,6 +2475,7 @@ func TestRefundFromPaymentVault(t *testing.T) {
 
 		registry := NewRegistry(
 			db,
+			cfg,
 			testServices.NotificationService,
 			testServices,
 			testRepo,
