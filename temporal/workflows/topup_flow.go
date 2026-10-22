@@ -2,24 +2,24 @@ package workflows
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/Srivastava-samarth/sampay/constants"
 	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
-	"github.com/Srivastava-samarth/sampay/temporal/activities"
 	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
+
+const BankToWalletTransferSignal = "BankToWalletTransferResult"
 
 func TopUpFlow(
 	ctx workflow.Context,
 	request *dto.TopupWalletBalanceRequest,
 	merchantID uuid.UUID,
 ) (*models.Wallets, error) {
+	workflowID := "bank-to-wallet-" + merchantID.String()
 	activityOptions := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Minute,
 		RetryPolicy: &temporal.RetryPolicy{
@@ -59,30 +59,73 @@ func TopUpFlow(
 		EventID: uuid.New(),
 		EventType: string(constants.EventTypeBankToWalletDebitRequested),
 		Payload: &dto.CreateBankToWalletRequest{
-			ReferenecID: payout.ID,
-			SenderAccountID: request.SourceBankAccountID,
-			ReceiverAccountID: request.DestinationBankAccountID,
+			ReferenecID: uuid.New(),
+			WalletID: wallet.ID,
+			BankAccountID: linkedBankAccount.BankAccountID,
 			Amount: request.Amount,
-			Currency: request.Currency,
+			Currency: "INR",
 		},
 	}
 
 	var event *models.Event
 	err = workflow.ExecuteActivity(
 		ctx,
-		"PublishBankToBankTransferEvent",
-		bankToBankTransferEventPayload,
+		"PublishBankToWalletTransferEvent",
+		bankToWalletTransferEventPayload,
 		workflowID,
 	).Get(ctx, &event)
 	if err != nil {
 		return nil, err
 	}
 
+	signalCh := workflow.GetSignalChannel(
+		ctx,
+		BankToWalletTransferSignal,
+	)
+
+	timer := workflow.NewTimer(ctx, 10*time.Minute)
+	var bankToWalletResponse *dto.BankToWalletTransferCompletedPayload
+	var timedOut bool
+	var receivedMatchingResponse bool
+
+	for !receivedMatchingResponse && !timedOut {
+		selector := workflow.NewSelector(ctx)
+
+		selector.AddReceive(
+			signalCh,
+			func(c workflow.ReceiveChannel, more bool) {
+				var response dto.BankToWalletTransferCompletedPayload
+				c.Receive(ctx, &response)
+
+				if response.Payload.RequestedEventID == event.EventID {
+					bankToWalletResponse = &response
+					receivedMatchingResponse = true
+				}
+			},
+		)
+
+		selector.AddFuture(
+			timer,
+			func(workflow.Future) {
+				timedOut = true
+			},
+		)
+
+		selector.Select(ctx)
+	}
+
+	if timedOut && !receivedMatchingResponse {
+		return nil, fmt.Errorf(
+			"timed out waiting for bank account creation: %s",
+			event.EventID,
+		)
+	}
+
 	var updatedWallet *models.Wallets
 	errW := workflow.ExecuteActivity(
 		ctx,
 		"ExecuteBankToWallet",
-		event,
+		bankToWalletResponse.Event,
 		merchantID,
 		request,
 	).Get(ctx, &updatedWallet)
@@ -91,5 +134,23 @@ func TopUpFlow(
 		return updatedWallet, nil 
 	}
 
-	var updated
+	failedStatus := constants.EventStatusFailed
+
+	var finalEvent *models.Event
+	failErr := workflow.ExecuteActivity(
+		ctx,
+		"UpdateEventStatus",
+		bankToWalletResponse.Event.EventID,
+		failedStatus,
+	).Get(ctx, &finalEvent)
+
+	if failErr != nil {
+		return nil, fmt.Errorf(
+			"event failed: %w; failed to mark event as failed: %v",
+			errW,
+			failErr,
+		)
+	}
+
+	return wallet, nil
 }

@@ -19,6 +19,7 @@ const (
 	RefundFlowTaskQueue         = "REFUND_FLOW"
 	UpdateKycFlow               = "UPDATE_KYC_FLOW"
 	BankAccountTaskQueue        = "BANK_ACCOUNT"
+	TopUpTaskQueue              = "TOPUP_FLOW"
 )
 
 type WorkerConfig struct {
@@ -166,6 +167,17 @@ func StartWorkers(
 				w.RegisterWorkflow(workflows.CreateBankAccount)
 				w.RegisterActivity(activityRegistry.CreateLinkedBankAccount)
 				w.RegisterActivity(activityRegistry.PublishBankAccountCreationRequest)
+			},
+		},
+		{
+			TaskQueue: TopUpTaskQueue,
+			Register: func(w worker.Worker) {
+				w.RegisterWorkflow(workflows.TopUpFlow)
+				w.RegisterActivity(activityRegistry.GetWalletByMerchantID)
+				w.RegisterActivity(activityRegistry.GetBankAccountByMerchantID)
+				w.RegisterActivity(activityRegistry.PublishBankToWalletTransferEvent)
+				w.RegisterActivity(activityRegistry.ExecuteBankToWallet)
+				w.RegisterActivity(activityRegistry.UpdateEventStatus)
 			},
 		},
 	}

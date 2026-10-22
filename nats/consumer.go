@@ -200,6 +200,54 @@ func (c *NatsClient) handleBankingEvents(
 
         return nil
         
+    case "bank.sampay.bank.to.wallet.transfer.completed":
+            result, err := c.handleBankAccountDebit(ctx, event)
+        if err != nil {
+            return err
+        }
+
+        if result == nil || result.Payload == nil {
+            return fmt.Errorf("wallet to bank transfe response is empty")
+        }
+        // Find the original outgoing request.
+        originalEvent, err := c.repo.GetEventByEventID(
+            ctx,
+            result.Payload.RequestedEventID,
+        )
+        if err != nil {
+            return fmt.Errorf("get original bank request: %w", err)
+        }
+
+        if originalEvent == nil {
+            return fmt.Errorf(
+                "original wallet to bank transfer request not found: %s",
+                result.Payload.RequestedEventID,
+            )
+        }
+
+        if originalEvent.WorkflowID == "" {
+            return fmt.Errorf(
+                "workflow ID missing for request event: %s",
+                originalEvent.EventID,
+            )
+        }
+
+        // Signal the workflow waiting for this response.
+        err = c.temporalClient.SignalWorkflow(
+            ctx,
+            originalEvent.WorkflowID,
+            "",
+            "BankToWalletTransferResult",
+            result,
+        )
+        if err != nil {
+            return fmt.Errorf(
+                "signal merchant onboarding workflow: %w",
+                err,
+            )
+        }
+
+        return nil
     default:
         return fmt.Errorf(
             "unsupported banking event type: %s",

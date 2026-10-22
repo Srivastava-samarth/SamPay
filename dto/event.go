@@ -48,6 +48,18 @@ type WalletToBankTransferCompletedPayload struct {
 	Payload *WalletToBankEventResponsePayload
 }
 
+type BankToWalletTransferCompletedPayload struct {
+	Event   *models.Event
+	Payload *BankToWalletEventResponsePayload
+}
+
+type BankToWalletEventResponsePayload struct {
+	EventID          uuid.UUID      `json:"event_id"`
+	RequestedEventID uuid.UUID      `json:"requested_event_id"`
+	TransferID       uuid.UUID      `json:"transfer_id"`
+	Payload          datatypes.JSON `json:"payload"`
+}
+
 type WalletToBankEventResponsePayload struct {
 	EventID          uuid.UUID      `json:"event_id"`
 	RequestedEventID uuid.UUID      `json:"requested_event_id"`
