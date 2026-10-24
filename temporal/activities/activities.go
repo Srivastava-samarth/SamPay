@@ -3,6 +3,7 @@ package activities
 import (
 	"gorm.io/gorm"
 
+	"github.com/Srivastava-samarth/sampay/config"
 	"github.com/Srivastava-samarth/sampay/nats"
 	"github.com/Srivastava-samarth/sampay/notifications"
 	repositories "github.com/Srivastava-samarth/sampay/respositories"
@@ -11,6 +12,7 @@ import (
 
 type Registry struct {
 	DB                  *gorm.DB
+	InternalConfig      *config.InternalConfig
 	NotificationService *notifications.EmailService
 	Services            *services.Services
 	Repo                *repositories.Repository
@@ -19,6 +21,7 @@ type Registry struct {
 
 func NewRegistry(
 	db *gorm.DB,
+	config *config.InternalConfig,
 	notificationService *notifications.EmailService,
 	services *services.Services,
 	repo *repositories.Repository,
@@ -26,6 +29,7 @@ func NewRegistry(
 ) *Registry {
 	return &Registry{
 		DB:                  db,
+		InternalConfig:      config,
 		NotificationService: notificationService,
 		Services:            services,
 		Repo:                repo,

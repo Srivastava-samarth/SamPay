@@ -17,6 +17,7 @@ import (
 
 var (
 	db           *gorm.DB
+	cfg          *config.InternalConfig
 	testRepo     *repositories.Repository
 	testServices *services.Services
 	testNats     *nats.NatsClient

@@ -4,9 +4,13 @@ import (
 	"context"
 	"net/http"
 
+	models "github.com/Srivastava-samarth/sampay/database/models"
 	"github.com/Srivastava-samarth/sampay/dto"
+	"github.com/Srivastava-samarth/sampay/temporal"
+	"github.com/Srivastava-samarth/sampay/temporal/workflows"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"go.temporal.io/sdk/client"
 )
 
 func (vc *Controller) CreateVault() gin.HandlerFunc {
@@ -179,6 +183,67 @@ func (vc *Controller) UpdateVaultStatus() gin.HandlerFunc {
 			c,
 			http.StatusOK,
 			updatedVault,
+		)
+	}
+}
+
+func (vc *Controller) UpdateCompanyVaultBalance() gin.HandlerFunc{
+	return func(c *gin.Context) {
+		var request *dto.VaultTopupRequest
+		err := c.ShouldBindJSON(&request)
+		if err != nil {
+			dto.Fail(
+				c,
+				http.StatusBadRequest,
+				"BINDING_ERROR",
+				err.Error(),
+			)
+			return
+		}
+
+		workflowOptions := client.StartWorkflowOptions{
+			ID:        "bank-to-vault-" + request.VaultID.String(),
+			TaskQueue: temporal.CompanyVaultTopupTaskQueue,
+		}
+
+		workflowRun, errW := vc.TemporalClient.ExecuteWorkflow(
+			c.Request.Context(),
+			workflowOptions,
+			workflows.CompanyVaultTopUpFlow,
+			request,
+		)
+
+		if errW != nil {
+			dto.Fail(
+				c,
+				http.StatusInternalServerError,
+				"WORKFLOW_START_FAILED",
+				errW.Error(),
+			)
+			return
+		}
+
+		var vault *models.Vault
+
+		errV := workflowRun.Get(
+			c.Request.Context(),
+			&vault,
+		)
+
+		if errV != nil{
+			dto.Fail(
+					c,
+					http.StatusInternalServerError,
+					"FAILED_MARSHALLING",
+					errV.Error(),
+				)
+			return 
+		}
+
+		dto.Respond(
+			c,
+			http.StatusOK,
+			vault,
 		)
 	}
 }

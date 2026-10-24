@@ -17,10 +17,11 @@ type Config struct {
 }
 
 type InternalConfig struct {
-	SampayPrivateKey string
-	BankPublicKey    string
-	SampayBankURL    string
-	XAPIKey          string
+	SampayPrivateKey    string
+	BankPublicKey       string
+	SampayBankURL       string
+	XAPIKey             string
+	SampayBankAccountID string
 }
 
 type SMTPConfig struct {
@@ -89,8 +90,9 @@ func Load() (*Config, error) {
 		Internal: InternalConfig{
 			SampayPrivateKey: os.Getenv("SAMPAY_PRIVATE_KEY"),
 			BankPublicKey:    os.Getenv("SAMPAY_BANK_PUBLIC_KEY"),
-			SampayBankURL: os.Getenv("SAMPAY_BANK_URL"),
-			XAPIKey: os.Getenv("X_API_KEY"),
+			SampayBankURL:    os.Getenv("SAMPAY_BANK_URL"),
+			XAPIKey:          os.Getenv("X_API_KEY"),
+			SampayBankAccountID: os.Getenv("SAMPAY_BANK_ACCOUNT_ID"),
 		},
 	}
 
@@ -152,11 +154,14 @@ func (cfg Config) validate() error {
 	if cfg.Internal.BankPublicKey == "" {
 		return errors.New("missing required configuration: SAMPAY_BANK_PUBLIC_KEY")
 	}
-	if cfg.Internal.SampayBankURL == ""{
+	if cfg.Internal.SampayBankURL == "" {
 		return errors.New("missing required configuration: SAMPAY_BANK_URL")
-	} 
-	if cfg.Internal.XAPIKey == ""{
+	}
+	if cfg.Internal.XAPIKey == "" {
 		return errors.New("missing required configuration: X-API-KEY")
+	}
+	if cfg.Internal.SampayBankAccountID == ""{
+		return errors.New("missing required configuration: SAMPAY_BANK_ACCOUNT_ID")
 	}
 	return nil
 }

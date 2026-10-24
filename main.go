@@ -87,6 +87,7 @@ func main() {
 
 	activityRegistry := activities.NewRegistry(
 		db,
+		&cfg.Internal,
 		notificationService,
 		services,
 		repo,
