@@ -89,6 +89,7 @@ func TestMain(m *testing.M) {
 
 	activityRegistry := activities.NewRegistry(
 		db,
+		&config.InternalConfig{},
 		notificationService,
 		testServices,
 		testRepo,
