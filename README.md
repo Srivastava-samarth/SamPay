@@ -1,7 +1,7 @@
 # SamPay 💳
 
 <p align="center">
-  <strong>A backend-focused fintech system built with Go to explore payments, accounting, workflows, concurrency, and distributed systems.</strong>
+  <strong>A distributed payment and banking platform built with Go, PostgreSQL, Temporal, and NATS JetStream.</strong>
 </p>
 
 <p align="center">
@@ -9,404 +9,225 @@
   <img src="https://img.shields.io/badge/Gin-Web%20Framework-00ADD8?logo=gin&logoColor=white" alt="Gin">
   <img src="https://img.shields.io/badge/PostgreSQL-Database-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL">
   <img src="https://img.shields.io/badge/Temporal-Workflows-000000?logo=temporal&logoColor=white" alt="Temporal">
+  <img src="https://img.shields.io/badge/NATS-JetStream-27AAE1?logo=natsdotio&logoColor=white" alt="NATS">
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Status-In%20Development-yellow" alt="Status">
-  <img src="https://img.shields.io/badge/Focus-Fintech%20%7C%20Backend%20%7C%20Distributed%20Systems-blue" alt="Focus">
+  <img src="https://img.shields.io/badge/Architecture-Two%20Services-blue" alt="Two Services">
+  <img src="https://img.shields.io/badge/Test%20Coverage-77%25-brightgreen" alt="77% Test Coverage">
+  <img src="https://img.shields.io/badge/Project-Personal%20Engineering%20Project-lightgrey" alt="Personal Engineering Project">
 </p>
 
 ---
 
-## 🚀 What is SamPay?
+## 🚀 Overview
 
-**SamPay** is a backend-focused fintech system built with Go.
+**SamPay** is a backend-focused payment and banking platform built to explore the engineering challenges behind financial systems: accounting correctness, concurrent transactions, asynchronous communication, workflow orchestration, and failure recovery.
 
-The goal is not to build another CRUD application. SamPay is being developed as a practical environment for understanding the engineering problems behind financial systems:
+The system separates payment-platform responsibilities from banking operations through two services that communicate asynchronously using **NATS JetStream**. PostgreSQL maintains persistent financial state, while Temporal orchestrates long-running business processes and recovery.
 
-* 💳 Payment processing
-* 💰 Wallets and vaults
-* 📒 Double-entry accounting
-* 🔐 Idempotency
-* 💸 Payouts
-* ↩️ Refunds
-* 📅 Settlement
-* 🔎 Reconciliation
-* ⏱️ Temporal workflows
-* ⚡ Concurrency and transaction safety
-* 📈 Load testing
-* 📡 Service-to-service communication
-* 🧪 Failure and recovery testing
-* 🚀 Distributed system design
+### Key capabilities
 
-The project follows a simple engineering philosophy:
+- 💳 Payment processing and payment lifecycle management
+- 💰 Wallets, payment vaults, and company vaults
+- 📒 Double-entry ledger and financial transaction tracking
+- 💸 Wallet-to-bank and bank-to-bank transfers
+- 🔄 Bank-to-wallet and bank-to-vault transfers
+- ↩️ Refunds and payouts
+- 📅 Settlement and internal ledger reconciliation
+- 🔁 Idempotent APIs and duplicate-request handling
+- 🔒 Wallet reservations, database transactions, and row-level locking
+- ⚡ Asynchronous service-to-service communication with NATS JetStream
+- ⏱️ Temporal workflows, retries, and failure recovery
+- 🧪 Automated tests and concurrent-request testing
 
-> **Build it → Understand it → Break it → Scale it → Fix it**
+SamPay is a personal engineering project, not a production payment service. Its purpose is to build and test realistic backend financial workflows while exploring the trade-offs involved in distributed systems.
 
----
+## 🏗️ Architecture
 
-# 🏗️ Architecture
+SamPay consists of two services:
 
-## Current Architecture
+- **Payment Service:** Exposes payment APIs and coordinates payments, refunds, payouts, wallets, settlements, reconciliation, and related financial workflows.
+- **Banking Service:** Handles banking operations and transfer flows, communicating asynchronously with the Payment Service through NATS JetStream.
 
-SamPay currently uses a modular backend architecture with PostgreSQL as the primary source of financial state and Temporal for workflow orchestration.
+Temporal orchestrates long-running business workflows. PostgreSQL stores persistent application and financial state.
 
-```mermaid
-flowchart TB
-    Client[Client / API Consumer]
+### Design principles
 
-    Client --> API[Go + Gin API]
+- **Financial correctness:** Represent money movement explicitly through ledger entries and database transactions.
+- **Clear service boundaries:** Keep payment orchestration separate from banking operations.
+- **Asynchronous communication:** Use NATS JetStream for communication between services.
+- **Durable workflow orchestration:** Use Temporal for long-running processes, retries, and recovery.
+- **Safe retries:** Combine API idempotency, workflow identity, and transactional safeguards to control duplicate processing.
+- **Testability:** Validate financial state transitions and failure paths, not just successful API responses.
 
-    API --> Auth[Authentication]
-    API --> Payment[Payment Service]
-    API --> Payout[Payout Service]
-    API --> Refund[Refund Service]
-    API --> Wallet[Wallet Service]
+## 💰 Financial Architecture
 
-    Payment --> DB[(PostgreSQL)]
-    Payout --> DB
-    Refund --> DB
-    Wallet --> DB
+### Double-entry ledger
 
-    DB --> Ledger[Double-Entry Ledger]
+SamPay uses a double-entry ledger to represent financial movements across **five transaction types and three account types**.
 
-    Temporal[Temporal]
-
-    Temporal --> PaymentWF[Payment Workflow]
-    Temporal --> PayoutWF[Payout Workflow]
-    Temporal --> RefundWF[Refund Workflow]
-    Temporal --> SettlementWF[Settlement Workflow]
-    Temporal --> ReconWF[Reconciliation Workflow]
-
-    PaymentWF --> Payment
-    PayoutWF --> Payout
-    RefundWF --> Refund
-    SettlementWF --> Wallet
-    ReconWF --> Ledger
-```
-
-The current architecture deliberately keeps financial operations inside the application while using Temporal to orchestrate longer-running business workflows.
-
----
-
-# 🎯 Engineering Goals
-
-SamPay is being developed around several backend engineering problems that are particularly important in financial systems.
-
-### Financial correctness
-
-* Atomic financial transactions
-* Double-entry ledgering
-* Balance consistency
-* Wallet and vault accounting
-* Settlement
-* Reconciliation
-
-### Reliability
-
-* Idempotent APIs
-* Temporal retries
-* Failure recovery
-* Concurrent request handling
-* Database locking
-* Transaction rollback
-
-### Scalability
-
-* Baseline load testing
-* Redis
-* Multiple application instances
-* Load balancing
-* Asynchronous service communication
-* NATS
-
-The infrastructure is intentionally being introduced **incrementally** rather than adding distributed components before there is a baseline to compare against.
-
----
-
-# 💰 Financial Architecture
-
-SamPay uses a **double-entry ledger** to represent financial movements.
-
-Every ledger transaction must satisfy:
+Each ledger transaction must satisfy the accounting invariant:
 
 ```text
-Total Debit == Total Credit
+Total Debits = Total Credits
 ```
 
-Financial balances and ledger entries are updated within database transactions to maintain consistency.
+Financial mutations and associated ledger entries are coordinated within database transactions to maintain consistency.
 
-## Example: Wallet → Bank Payout
+The ledger supports tracking movements between merchant wallets, payment vaults, company vaults, and banking-related accounts.
 
-For a ₹1,000 payout with a ₹10 fee:
+### Example: Wallet-to-bank payout
+
+For a payout of ₹1,000 with a ₹10 fee:
 
 ```text
 Merchant Wallet
-      │
-      │ Debit ₹1,010
-      ▼
- Payout Vault
-      │
-      ├── Credit ₹1,000 → Bank Account
-      │
-      └── Debit ₹10
-              │
-              ▼
-        Company Vault
-```
-
-Ledger representation:
-
-```text
-Wallet        DR  ₹1,010
-Payout Vault  CR  ₹1,010
-
-Payout Vault  DR  ₹1,000
-Bank Account  CR  ₹1,000
-
-Payout Vault  DR  ₹10
-Company Vault  CR  ₹10
-```
-
-The reconciliation system can subsequently verify the accounting integrity of these transactions.
-
----
-
-# 💳 Core Financial Flows
-
-## Payment
-
-```text
-Client
-  │
-  ▼
-Payment API
-  │
-  ▼
-Temporal Payment Workflow
-  │
-  ├── Validate Request
-  ├── Calculate Fees
-  ├── Create Payment
-  └── Execute Payment
-          │
-          ├── Wallet Balance
-          ├── Payment Vault
-          ├── Company Vault
-          └── Ledger
-```
-
-Implemented concepts include:
-
-* Payment creation
-* Payment status management
-* Idempotency
-* Payment expiry
-* Long-lived payments
-* Manual payment refresh
-* Wallet reservation
-* Automatic wallet top-up
-* Payment vault accounting
-* Fee accounting
-* Double-entry ledger entries
-
----
-
-## 💸 Payout
-
-### Wallet → Bank
-
-```text
-Merchant Wallet
-       ↓
+      |
+      | Debit ₹1,010
+      v
   Payout Vault
-       ↓
-   Bank Account
+      |
+      +---- Credit ₹1,000 ----> Bank Account
+      |
+      +---- Credit ₹10 -------> Company Vault
 ```
 
-Supports:
+The corresponding ledger entries record the movement of the payout amount and the fee. The transaction must balance before the financial operation is committed.
 
-* Balance validation
-* Fee calculation
-* Wallet reservation
-* Vault movement
-* Bank account credit
-* Company fee collection
-* Ledger entries
+## 💳 Core Financial Flows
 
-### Bank → Bank
+### Payments
 
-```text
-Source Bank
-     ↓
-Destination Bank
-```
+The payment flow coordinates validation, fee calculation, payment creation, wallet operations, vault movements, and ledger updates.
 
-The bank-to-bank flow currently operates without payout fees.
+Implemented capabilities include:
 
----
+- Payment creation and status management
+- Idempotency-key handling
+- Payment expiry and long-lived payment flows
+- Manual payment refresh
+- Wallet reservations
+- Automated wallet top-ups
+- Payment-vault and company-vault accounting
+- Fee accounting and double-entry ledger entries
 
-## ↩️ Refund
+### Payouts and transfers
 
-Refund funding depends on the settlement state of the original payment.
+SamPay supports several transfer paths across the payment and banking services.
 
-### Before Settlement
+| Transfer flow | Description |
+|---|---|
+| Wallet → Bank | Transfers funds from a wallet to a bank account, including applicable fees and ledger entries. |
+| Bank → Bank | Transfers funds between source and destination bank accounts. |
+| Bank → Wallet | Moves funds from a bank account into a wallet. |
+| Bank → Vault | Moves funds from a bank account into a vault. |
 
-```text
-Payment Vault
-      ↓
-Merchant / Customer Wallet
-```
+The banking flows communicate across service boundaries using NATS JetStream rather than relying exclusively on synchronous in-process calls.
 
-### After Settlement
+### Refunds
 
-```text
-Merchant Wallet
-      ↓
-Customer / Sender Wallet
-```
+Refund processing depends on the settlement state of the original payment.
 
-If the merchant wallet does not have sufficient funds after settlement, SamPay can automatically top up the wallet from the linked primary bank account before processing the refund.
+- **Before settlement:** Funds can be returned from the payment vault.
+- **After settlement:** Refunds can be funded from the merchant wallet.
+- **Insufficient wallet balance:** The system can initiate an automated top-up from the linked primary bank account before processing the refund.
 
----
+Refund execution, financial mutations, and ledger updates are coordinated through the corresponding business flow.
 
-## 🔄 Auto Top-Up
+### Automated wallet top-ups
 
-Automatic top-up is treated as a financial transaction rather than simply modifying a balance.
+Automatic top-ups are treated as financial transactions, not direct balance modifications.
 
-```text
-Bank Account
-     │
-     │ DR ₹1,000
-     ▼
-Merchant Wallet
-     │
-     │ CR ₹1,000
-```
+A top-up records the movement from a linked bank account into the merchant wallet and creates corresponding ledger entries. This makes the operation auditable and available for reconciliation.
 
-The movement is represented in the ledger and therefore participates in reconciliation.
+### Settlement
 
----
+Settlement moves eligible merchant funds from reserved balances into available balances and updates the corresponding payment state.
 
-# 📅 Settlement
+Temporal orchestrates settlement workflows, including scheduled execution.
 
-Settlement moves merchant funds from reserved state into available funds and marks the corresponding payments as settled.
+## 🔎 Reconciliation
 
-```text
-Reserved Balance
-       ↓
-Available Balance
-       ↓
-Payment = SETTLED
-```
+SamPay implements internal ledger reconciliation to validate accounting integrity.
 
-Settlement is orchestrated using a Temporal workflow and can be triggered through scheduled execution.
+The reconciliation process:
 
----
+1. Retrieves ledger transactions and their entries.
+2. Groups entries by transaction.
+3. Calculates total debits and credits.
+4. Identifies transactions where the totals do not match.
+5. Records discrepancies and generates a report.
+6. Supports delivery of the reconciliation report through email.
 
-# 🔎 Reconciliation
+A discrepancy report can include:
 
-SamPay currently focuses on **internal ledger reconciliation**.
+- Ledger transaction ID
+- Reference ID
+- Total debit
+- Total credit
+- Difference between the two totals
 
-The reconciliation flow verifies that every ledger transaction balances:
+This provides a way to identify accounting inconsistencies instead of relying solely on API responses or payment statuses.
 
-```text
-Ledger Transactions
-        ↓
-Ledger Entries
-        ↓
-Group by Transaction
-        ↓
-Calculate Debit / Credit
-        ↓
-Debit == Credit ?
-       /       \
-     YES        NO
-      ↓          ↓
-   Matched     Failed
-```
+## ⏱️ Temporal Workflow Orchestration
 
-Failed reconciliation records include information such as:
+Temporal manages long-running business processes that should not depend entirely on a single HTTP request remaining active.
 
-* Ledger transaction ID
-* Reference ID
-* Total debit
-* Total credit
-* Difference
+SamPay implements **nine Temporal workflows** spanning payment operations, refunds, merchant onboarding, and reconciliation.
 
-A reconciliation report can then be generated and delivered through email.
+Workflow orchestration covers:
 
----
+- Payment processing
+- Payouts and refunds
+- Settlement and reconciliation
+- Merchant onboarding
+- Activity retries and failure handling
+- Recovery following temporary workflow-service interruptions
 
-# ⏱️ Temporal Workflows
+Deterministic workflow IDs are used to control duplicate workflow starts across retries and restarts.
 
-Temporal is used for business processes that should not depend entirely on a single synchronous HTTP request.
+The workflow layer coordinates business operations, while financial mutations are handled by application services and activities. Idempotency and database safeguards remain important because workflow retries do not, by themselves, guarantee exactly-once execution of external side effects.
 
-Current workflows include:
+## 📡 NATS JetStream
 
-```text
-Payment
-Payout
-Refund
-Settlement
-Reconciliation
-```
+NATS JetStream provides asynchronous communication between the Payment Service and Banking Service.
 
-Scheduled workflows include:
+The integration uses a dedicated banking event stream and explicit message acknowledgements.
 
-```text
-Daily Settlement
-Daily Reconciliation
-```
+Current messaging conventions include:
 
-The workflow layer is intentionally focused on **orchestration**, while business and financial operations are implemented within activities and services.
+| Component | Configuration |
+|---|---|
+| Stream | `BANKING_EVENTS` |
+| Payment-to-banking subjects | `sampay.bank.>` |
+| Banking-to-payment subjects | `bank.sampay.>` |
+| Durable consumer | `BANKING_COMMANDS` |
+| Acknowledgement strategy | Explicit acknowledgement |
 
----
+This separation allows the services to communicate through messages and handle banking operations independently of the initiating API request.
 
-# 🔐 Idempotency
+Message delivery and workflow recovery still require application-level safeguards to prevent duplicate financial effects.
 
-Payment requests support idempotency keys.
+## 🔐 Idempotency and Concurrency
 
-The database enforces uniqueness using:
+Financial systems must handle retries, simultaneous requests, and ambiguous failures without creating unintended duplicate transactions.
+
+### Idempotency
+
+Payment requests support idempotency keys scoped to the merchant.
 
 ```text
 (merchant_id, idempotency_key)
 ```
 
-The implementation uses an atomic insert-first approach rather than a separate:
+The implementation uses a database-enforced uniqueness constraint and an atomic insert-first approach rather than relying on a separate read-then-write sequence.
 
-```text
-SELECT → INSERT
-```
+The API distinguishes between requests that are still processing and requests that can return a previously stored response.
 
-flow.
+### Database transactions and locking
 
-Concurrent requests using the same key are therefore prevented from creating duplicate payments.
-
-Example behavior:
-
-```text
-10 concurrent requests
-        │
-        ▼
- Same Idempotency-Key
-        │
-        ├── 1 request → Payment processing
-        │
-        ├── Requests during processing
-        │        → 409 REQUEST_IN_PROGRESS
-        │
-        └── Retry after completion
-                 → Stored response
-```
-
----
-
-# 🔒 Concurrency & Transaction Safety
-
-Financial operations use PostgreSQL transactions and row-level locking where required.
-
-For example, concurrent wallet operations can use:
+SamPay uses PostgreSQL transactions and row-level locking where required.
 
 ```sql
 SELECT ...
@@ -415,550 +236,208 @@ WHERE merchant_id = ?
 FOR UPDATE;
 ```
 
-This prevents multiple concurrent operations from reading and modifying the same financial balance without synchronization.
+These mechanisms help serialize conflicting balance updates and prevent concurrent operations from modifying the same financial state without synchronization.
 
-The payment execution flow performs its financial mutations inside a single database transaction.
+Wallet reservations and timeout-based release logic further help manage funds during in-progress operations.
 
-If an operation fails, the transaction is rolled back.
+The objective is to preserve financial invariants across concurrent requests, retries, and failures—not merely to return successful HTTP responses.
 
----
+## 🧪 Testing and Reliability
 
-# 🧪 Testing & Reliability
+The project includes automated tests across core payment logic and APIs, with **77% test coverage**.
 
-Testing is being approached as an engineering exercise rather than simply checking whether API endpoints return `200`.
+Testing focuses on financial state transitions, concurrency, and failure handling.
 
-## Payment Workflow Testing
+Areas covered include:
 
-The payment workflow has currently been tested for:
+- Payment processing and transactional financial updates
+- Idempotency under concurrent requests
+- Concurrent payment and automated top-up scenarios
+- Temporal activity failure and retry behavior
+- Workflow recovery following Temporal interruptions
+- Financial state and ledger consistency
 
-| Test                              | Result |
-| --------------------------------- | :----: |
-| Sustained Payment Load            |    ✅   |
-| Concurrent Payments               |    ✅   |
-| Concurrent Auto Top-Up            |    ✅   |
-| Idempotency Under Concurrency     |    ✅   |
-| Transactional Financial Updates   |    ✅   |
-| Temporal Activity Failure & Retry |    ✅   |
-| Temporal Server Outage & Recovery |    ✅   |
+### Workflow retry experiment
 
-### Temporal Activity Retry
+A temporary failure was injected into the payment execution activity to verify retry behavior.
 
-A temporary failure was injected into `ExecutePayment`.
-
-Configured retry policy:
+Example retry configuration:
 
 ```text
-Initial Interval:     2 seconds
-Backoff Coefficient:  2.0
-Maximum Interval:     30 seconds
-Maximum Attempts:     5
+Initial interval:      2 seconds
+Backoff coefficient:   2.0
+Maximum interval:      30 seconds
+Maximum attempts:      5
 ```
 
-Observed behavior:
+The workflow retried the failed activity and completed after a subsequent successful attempt.
+
+### Temporal interruption experiment
+
+A load test was also performed while Temporal was temporarily stopped and restarted.
+
+One recorded experiment used:
 
 ```text
-ExecutePayment Attempt 1
-        ↓
-Temporary Failure
-        ↓
-Retry
-        ↓
-ExecutePayment Attempt 2
-        ↓
-Success
+Request rate:            2 requests/second
+Duration:                30 seconds
+Total requests:          60
 ```
 
-The workflow successfully recovered and the API ultimately returned `200`.
+During that experiment, some HTTP requests returned errors while their underlying workflows subsequently completed after Temporal recovered. This demonstrated why an HTTP error does not always mean the financial operation failed, and why idempotency and state inspection are important when clients retry after ambiguous outcomes.
 
-### Temporal Server Outage
+These results describe a specific development experiment, not a guarantee of production availability or fault tolerance.
 
-Payment load testing was performed while temporarily stopping and restarting Temporal.
+## ⚡ Load Testing
 
-One test used:
+SamPay includes custom Go-based load-testing utilities for evaluating API behavior and financial consistency under concurrent requests.
 
-```text
-2 RPS × 30 seconds
-60 requests
-```
+The testing approach considers:
 
-Observed:
+- Request throughput
+- Response latency
+- Success and failure rates
+- Concurrent financial operations
+- Database contention
+- Balance consistency
+- Workflow behavior during infrastructure interruptions
 
-```text
-HTTP 200              23
-HTTP 500              37
-Completed Payments    24
-Pending Payments       0
-Failed Payments        0
-Payment Ledger Txns   24
-```
+Load-testing results are used to identify correctness issues and understand system behavior before introducing further complexity.
 
-No duplicate payment ledger transactions were observed.
+## 🛠️ Technology Stack
 
-An important behavior identified during this test is that an HTTP request can return `500` while the underlying Temporal workflow subsequently completes after Temporal recovers.
+| Technology | Purpose |
+|---|---|
+| **Go** | Backend services and business logic |
+| **Gin** | HTTP API framework |
+| **GORM** | Database access |
+| **PostgreSQL** | Persistent application and financial state |
+| **Temporal** | Durable workflow orchestration, retries, and recovery |
+| **NATS JetStream** | Asynchronous service-to-service communication |
+| **Docker** | Local infrastructure where configured |
+| **Go testing tools** | Automated tests and reliability validation |
 
-This highlights the importance of idempotency when clients retry requests after ambiguous failures.
+## 🚀 Local Setup
 
----
+SamPay requires its application dependencies and infrastructure services to be configured locally.
 
-# 🧪 Remaining Testing
+### Prerequisites
 
-The payment workflow has been sufficiently tested for the current development phase.
+- [Go](https://go.dev/)
+- [PostgreSQL](https://www.postgresql.org/)
+- [Temporal CLI](https://docs.temporal.io/cli)
+- [NATS Server with JetStream](https://docs.nats.io/)
+- Git
+- Docker, if using a containerized local environment
 
-Remaining financial-flow testing will focus on:
-
-* Payouts
-* Refunds
-* Settlement edge cases
-* Reconciliation edge cases
-
-More advanced failure scenarios around activity failure after financial side effects may be explored later.
-
----
-
-# ⚡ Load Testing
-
-SamPay includes custom Go-based load-testing utilities.
-
-The objective is to establish a measurable baseline before introducing additional infrastructure.
-
-Current testing focuses on:
-
-* Requests per second
-* Concurrent execution
-* Latency
-* Success/failure rate
-* Database consistency
-* Financial balance consistency
-* Workflow behavior under failure
-
-The load tests will continue to be used throughout development to compare system behavior as new components are introduced.
-
----
-
-# 🚀 Distributed System Roadmap
-
-The system will progressively evolve from the current architecture toward a distributed architecture.
-
-## Target Architecture
-
-```mermaid
-flowchart TB
-    Client[Client]
-
-    LB[Load Balancer]
-
-    App1[SamPay Instance 1]
-    App2[SamPay Instance 2]
-
-    Redis[(Redis)]
-    DB[(PostgreSQL)]
-
-    NATS[NATS]
-    Bank[Bank Service]
-
-    Client --> LB
-
-    LB --> App1
-    LB --> App2
-
-    App1 --> Redis
-    App2 --> Redis
-
-    App1 --> DB
-    App2 --> DB
-
-    App1 --> NATS
-    App2 --> NATS
-
-    NATS --> Bank
-    Bank --> DB
-```
-
-The distributed architecture will be introduced gradually.
-
----
-
-# 📚 Redis
-
-Redis is the next infrastructure component being explored.
-
-Potential SamPay use cases include:
-
-* Caching
-* Rate limiting
-* Frequently accessed data
-* Temporary state
-* Reducing unnecessary database reads
-* Atomic operations
-
-Redis will first be explored independently before being integrated into SamPay.
-
-The goal is to understand **why Redis is useful**, rather than simply adding it because it is a popular technology.
-
----
-
-# 📡 NATS
-
-NATS will eventually be introduced for asynchronous service-to-service communication.
-
-Planned architecture:
-
-```text
-SamPay
-   │
-   │ NATS
-   ▼
-Bank Service
-```
-
-Potential use cases include:
-
-* Bank service communication
-* Event-driven processing
-* Asynchronous operations
-* Decoupling services
-
----
-
-# 🏦 Bank Service Separation
-
-The banking functionality will eventually be extracted into a separate service.
-
-Initial target:
-
-```text
-┌───────────────┐
-│    SamPay     │
-└───────┬───────┘
-        │
-       NATS
-        │
-        ▼
-┌───────────────┐
-│  Bank Service │
-└───────┬───────┘
-        │
-        ▼
-   PostgreSQL
-```
-
-This will provide an opportunity to explore:
-
-* Service boundaries
-* Asynchronous communication
-* Message delivery
-* Failure handling
-* Eventual consistency
-* Distributed transactions
-
----
-
-# 🔀 Multiple Application Instances
-
-The application will eventually run as multiple instances:
-
-```text
-                  ┌─────────────────┐
-                  │  Load Balancer  │
-                  │      :8080      │
-                  └────────┬────────┘
-                           │
-                ┌──────────┴──────────┐
-                ▼                     ▼
-         ┌─────────────┐       ┌─────────────┐
-         │ SamPay #1   │       │ SamPay #2   │
-         │    :8081    │       │    :8082    │
-         └──────┬──────┘       └──────┬──────┘
-                │                     │
-                └──────────┬──────────┘
-                           ▼
-                     PostgreSQL
-```
-
-The purpose is to understand what changes when the application is no longer running as a single process.
-
----
-
-# 🧪 Failure Experiments
-
-Once the distributed architecture is introduced, SamPay will be used to experiment with failures such as:
-
-* Concurrent requests
-* Duplicate requests
-* Database contention
-* Redis failures
-* NATS failures
-* Application instance failures
-* Service downtime
-* Message delivery failures
-* Workflow failures
-* Partial system failures
-* Recovery after infrastructure failures
-
-The goal is not simply to make the system "work", but to understand **how and why it fails**.
-
----
-
-# 🛠️ Tech Stack
-
-| Technology     | Purpose                                    |
-| -------------- | ------------------------------------------ |
-| **Go**         | Backend application                        |
-| **Gin**        | HTTP framework                             |
-| **GORM**       | Database access                            |
-| **PostgreSQL** | Primary database                           |
-| **Temporal**   | Workflow orchestration                     |
-| **Redis**      | Planned caching / rate limiting            |
-| **NATS**       | Planned service communication              |
-| **Docker**     | Planned infrastructure / local environment |
-
----
-
-# 🧠 What I'm Learning
-
-SamPay is being used to develop practical understanding of:
-
-* Backend architecture
-* Financial accounting
-* Double-entry bookkeeping
-* Database transactions
-* Row-level locking
-* Idempotency
-* Workflow orchestration
-* Concurrency
-* Distributed systems
-* Asynchronous communication
-* Caching
-* Scalability
-* Fault tolerance
-* Reconciliation
-* Load testing
-* Failure recovery
-* Service boundaries
-
----
-
-# 🗺️ Roadmap
-
-```text
-                 SamPay
-                    │
-                    ▼
-          Core Financial Flows
-                    │
-       ┌────────────┼────────────┐
-       ▼            ▼            ▼
-    Payment       Payout       Refund
-       │            │            │
-       └────────────┼────────────┘
-                    ▼
-                Settlement
-                    │
-                    ▼
-             Reconciliation
-                    │
-                    ▼
-               Refactoring
-                    │
-                    ▼
-            Automated Testing
-                    │
-                    ▼
-              Load Testing
-                    │
-                    ▼
-                 Redis
-                    │
-                    ▼
-           Bank Service Split
-                    │
-                    ▼
-                  NATS
-                    │
-                    ▼
-          Multiple Instances
-                    │
-                    ▼
-             Load Balancer
-                    │
-                    ▼
-           Failure Experiments
-                    │
-                    ▼
-          Production Hardening
-```
-
----
-
-# 🚀 Local Setup
-
-## Prerequisites
-
-Make sure the following are installed:
-
-* [Go](https://go.dev/)
-* [PostgreSQL](https://www.postgresql.org/)
-* [Temporal CLI](https://docs.temporal.io/cli)
-* Git
-
-Optional:
-
-* Postman / Bruno / Insomnia
-* Docker
-
----
-
-## Clone the Repository
+### 1. Clone the repository
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/Srivastava-samarth/SamPay.git
 cd SamPay
 ```
 
----
-
-## Install Dependencies
+### 2. Install Go dependencies
 
 ```bash
 go mod download
 ```
 
----
+### 3. Configure PostgreSQL
 
-## Configure PostgreSQL
+Create the required database or databases and configure the connection settings expected by each service.
 
-Create a PostgreSQL database for SamPay.
-
-Example:
+Example database creation:
 
 ```sql
 CREATE DATABASE sampay;
 ```
 
-Update the application configuration with your local PostgreSQL connection details.
+Use the repository's application configuration for connection details, credentials, and any additional banking-service persistence requirements.
 
-Example:
+### 4. Start Temporal
 
-```text
-Host:     localhost
-Port:     5432
-Database: sampay
-User:     postgres
-```
-
----
-
-## Start Temporal
+For local development, start a Temporal development server:
 
 ```bash
 temporal server start-dev
 ```
 
-Default local endpoints:
+The default local endpoints are:
 
 ```text
 Temporal Server: localhost:7233
 Temporal UI:     http://localhost:8233
 ```
 
-The Temporal UI can be used to inspect:
+### 5. Start NATS JetStream
 
-* Workflows
-* Activities
-* Retries
-* Failures
-* Workflow history
+Start a NATS server with JetStream enabled and configure the connection settings expected by both services.
 
----
+Ensure the banking event stream, subjects, and durable consumer are configured consistently with the application.
 
-## Start SamPay
+### 6. Configure and start the services
 
-From the project root:
+Set the database, Temporal, NATS, and application settings required by the repository. Start the Payment Service and Banking Service according to their respective entry points and configuration.
 
-```bash
-go run .
-```
-
-The API runs on:
+The Payment Service API uses port `8080` in the existing local setup.
 
 ```text
 http://localhost:8080
 ```
 
----
+### 7. Run tests
 
-## Run Tests
-
-Run all tests:
+Run the Go test suite:
 
 ```bash
 go test ./...
 ```
 
-Run with the race detector:
+Run tests with the race detector:
 
 ```bash
 go test -race ./...
 ```
 
-Run verbose:
+Run tests with verbose output:
 
 ```bash
 go test -v ./...
 ```
 
----
+## 📁 Project Focus
 
-# ⚠️ Project Status
+SamPay explores the engineering trade-offs involved in building financial backends, particularly:
 
-SamPay is an **actively evolving engineering project**.
+- Double-entry accounting and financial invariants
+- Transactional database operations
+- Idempotency and duplicate-request handling
+- Concurrent balance updates and row-level locking
+- Durable workflow orchestration
+- Asynchronous service communication
+- Banking and payment service boundaries
+- Reconciliation and discrepancy reporting
+- Retry behavior and failure recovery
+- Automated testing and load testing
 
-The core financial flows are implemented, and the project is currently moving from:
+## ⚠️ Disclaimer
 
-```text
-Working Financial Backend
-        ↓
-Testing & Benchmarking
-        ↓
-Distributed Systems
-        ↓
-Failure Experiments
-        ↓
-Production Hardening
-```
+SamPay is a personal learning and engineering project. It is **not intended to process real money or serve as a production payment platform**.
 
-The project intentionally prioritizes **understanding the engineering trade-offs** over prematurely introducing infrastructure.
-
----
-
-# ⚠️ Disclaimer
-
-SamPay is a **learning and experimentation project**.
-
-It is not intended to process real money or be used as a production payment platform.
-
-Financial flows, APIs, architecture, and infrastructure will continue to evolve throughout development.
-
----
-
-# 📈 Project Philosophy
-
-> **Build it → Understand it → Break it → Scale it → Fix it**
-
-The goal is to take a working financial backend and progressively evolve it into a system capable of handling:
-
-**scale · concurrency · failures · distributed execution**
-
----
+Its implementation demonstrates selected payment and distributed-systems concepts, but it has not been represented as independently audited, production-certified, or ready for real financial operations.
 
 ## 👨‍💻 Author
 
 **Samarth Srivastava**
 
-Backend Software Engineer focused on:
+Backend Software Engineer focused on payment systems, financial workflows, Go, and distributed systems.
 
-**Go · Fintech · Backend Engineering · Distributed Systems**
+- [GitHub](https://github.com/Srivastava-samarth)
+- [LinkedIn](https://www.linkedin.com/in/samarth-srivastava94)
 
 ---
 
-⭐ If you're interested in backend engineering, fintech systems, or distributed systems, feel free to explore the project.
+<p align="center">
+  <strong>Build it. Understand it. Break it. Scale it. Fix it.</strong>
+</p>
