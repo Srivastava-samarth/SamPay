@@ -51,6 +51,41 @@ SamPay consists of two services:
 - **Banking Service:** Handles banking operations and transfer flows, communicating asynchronously with the Payment Service through NATS JetStream.
 
 Temporal orchestrates long-running business workflows. PostgreSQL stores persistent application and financial state.
+```mermaid
+graph TD
+    Client["Client / API Consumer"]
+
+    subgraph Payment_Service["Payment Service"]
+        API["Go + Gin API"]
+        Flows["Payments, Refunds, Payouts"]
+        Wallets["Wallets and Vaults"]
+        Ledger["Double-Entry Ledger"]
+        Temporal["Temporal Workflows"]
+        PaymentDB[("PostgreSQL")]
+
+        API --> Flows
+        Flows --> Wallets
+        Flows --> Ledger
+        Flows --> PaymentDB
+        Wallets --> PaymentDB
+        Ledger --> PaymentDB
+        Temporal --> Flows
+    end
+
+    subgraph Messaging["Asynchronous Messaging"]
+        NATS["NATS JetStream"]
+    end
+
+    subgraph Banking_Service["Banking Service"]
+        BankOps["Banking Operations"]
+        BankDB[("Banking Persistence")]
+        BankOps --> BankDB
+    end
+
+    Client --> API
+    Flows <--> NATS
+    NATS <--> BankOps
+```
 
 ### Design principles
 
