@@ -32,7 +32,7 @@ func main() {
 
 	cfg, err := config.Load()
 	if err != nil {
-		logger.Fatalf("Failed to load configuration: %v", err)
+		logger.Fatalf("Failed to load config: %v", err)
 	}
 
 	sampayPrivateKey, errD := base64.StdEncoding.DecodeString(cfg.Internal.SampayPrivateKey)
