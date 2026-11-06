@@ -96,7 +96,6 @@ func TestMain(m *testing.M) {
 		natsClient,
 	)
 
-	// Forgot Password Worker
 	forgotPasswordWorker := worker.New(
 		temporalClient,
 		temporal.ForgotPasswordTaskQueue,
